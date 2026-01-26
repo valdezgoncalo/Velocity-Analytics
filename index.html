@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SoccerAnalyst Pro - Elite Scout</title>
+    <title>SoccerAnalyst Pro - Ultra Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,13 +11,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { background-color: #020617; touch-action: manipulation; color: white; }
+        body { background-color: #020617; touch-action: manipulation; color: white; -webkit-overflow-scrolling: touch; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        button { transition: all 0.2s; }
-        .active-btn:active { transform: scale(0.95); }
-        .timeline-bar { height: 45px; background: #0f172a; border-radius: 12px; position: relative; overflow: hidden; border: 1px solid #1e293b; }
-        .event-marker { position: absolute; width: 2px; height: 100%; opacity: 0.6; }
-        .goal-marker { position: absolute; width: 4px; height: 100%; background: #fbbf24; z-index: 10; box-shadow: 0 0 15px #fbbf24; }
+        .active-btn:active { transform: scale(0.96); opacity: 0.8; }
+        .timeline-bar { height: 60px; background: #0f172a; border-radius: 16px; position: relative; border: 1px solid #1e293b; margin-top: 20px; }
+        .event-marker { position: absolute; width: 2px; height: 30%; bottom: 0; transform: translateX(-50%); }
+        .goal-marker { position: absolute; width: 4px; height: 100%; top: 0; background: #fbbf24; z-index: 10; box-shadow: 0 0 15px #fbbf24; transform: translateX(-50%); }
+        .time-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: 900; color: #64748b; white-space: nowrap; }
+        @media (min-width: 1024px) { .main-container { max-width: 1200px; margin: 0 auto; } }
     </style>
 </head>
 <body class="font-sans select-none overflow-hidden">
@@ -43,22 +44,18 @@
 
         function App() {
             const [view, setView] = useState('folders'); 
-            const [folders, setFolders] = useState(() => JSON.parse(localStorage.getItem('soccer_elite_db')) || []);
+            const [folders, setFolders] = useState(() => JSON.parse(localStorage.getItem('soccer_v4_db')) || []);
             const [currentFolderId, setCurrentFolderId] = useState(null);
             const [currentGame, setCurrentGame] = useState(null);
             const [isActive, setIsActive] = useState(false);
             const [showNotes, setShowNotes] = useState(false);
 
-            useEffect(() => {
-                localStorage.setItem('soccer_elite_db', JSON.stringify(folders));
-            }, [folders]);
+            useEffect(() => { localStorage.setItem('soccer_v4_db', JSON.stringify(folders)); }, [folders]);
 
             useEffect(() => {
                 let interval = null;
                 if (isActive && currentGame) {
-                    interval = setInterval(() => {
-                        updateCurrentGameData('time', currentGame.time + 1);
-                    }, 1000);
+                    interval = setInterval(() => { updateCurrentGameData('time', currentGame.time + 1); }, 1000);
                 }
                 return () => clearInterval(interval);
             }, [isActive, currentGame]);
@@ -78,17 +75,11 @@
             const formatFullTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
 
             const addStat = (id) => {
-                if(!isActive) return alert("Inicia o Cronómetro!");
+                if(!isActive) return alert("Inicia o Cronómetro primeiro!");
                 const stat = currentGame.stats.find(s => s.id === id);
+                const isGoal = stat.name.toLowerCase().includes('golo');
                 const newStats = currentGame.stats.map(s => s.id === id ? { ...s, count: s.count + 1 } : s);
-                
-                const newEvent = { 
-                    time: currentGame.time, 
-                    type: stat.type, 
-                    name: stat.name,
-                    isGoal: stat.name.toLowerCase().includes('golo')
-                };
-
+                const newEvent = { time: currentGame.time, type: stat.type, name: stat.name, isGoal };
                 updateCurrentGameData('stats', newStats);
                 updateCurrentGameData('events', [...currentGame.events, newEvent]);
             };
@@ -105,145 +96,137 @@
                 const element = document.getElementById('report-area');
                 const canvas = await html2canvas(element, { backgroundColor: '#020617', scale: 2, useCORS: true });
                 const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
-                pdf.save(`Scout_${currentGame.opponent}_${currentGame.date}.pdf`);
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Relatorio_${currentGame.opponent}.pdf`);
             };
 
-            // VIEWS (FOLDERS & GAMES)
             if (view === 'folders') return (
-                <div className="p-6 h-screen bg-slate-950 overflow-y-auto">
-                    <h1 className="text-3xl font-black text-indigo-500 mb-8 italic tracking-tighter">SOCCER ANALYST PRO</h1>
-                    <button onClick={() => {const n = prompt("Nome da Pasta:"); if(n) setFolders([...folders, {id: Date.now(), name: n, games: []}])}} className="w-full p-5 mb-6 border-2 border-dashed border-slate-800 rounded-3xl text-slate-500 font-bold active-btn">+ Nova Pasta</button>
-                    {folders.map(f => (
-                        <div key={f.id} onClick={() => {setCurrentFolderId(f.id); setView('games')}} className="bg-slate-900 p-6 rounded-3xl mb-4 flex justify-between items-center active-btn border border-slate-800">
-                            <div><h3 className="font-black text-white uppercase italic">{f.name}</h3><p className="text-[10px] text-slate-500 font-bold uppercase">{f.games.length} Jogos Guardados</p></div>
-                            <span className="text-indigo-500">→</span>
-                        </div>
-                    ))}
+                <div className="p-6 h-screen bg-slate-950 overflow-y-auto main-container">
+                    <h1 className="text-4xl font-black text-indigo-500 mb-8 italic tracking-tighter">SCOUT MANAGER</h1>
+                    <button onClick={() => {const n = prompt("Nome da Pasta:"); if(n) setFolders([...folders, {id: Date.now(), name: n, games: []}])}} className="w-full p-6 mb-8 border-2 border-dashed border-slate-800 rounded-[2rem] text-slate-500 font-bold active-btn">+ Nova Época / Competição</button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {folders.map(f => (
+                            <div key={f.id} onClick={() => {setCurrentFolderId(f.id); setView('games')}} className="bg-slate-900 p-8 rounded-[2rem] flex justify-between items-center active-btn border border-slate-800 shadow-2xl">
+                                <div><h3 className="font-black text-white uppercase italic text-xl">{f.name}</h3><p className="text-xs text-indigo-400 font-bold uppercase mt-1">{f.games.length} Jogos</p></div>
+                                <span className="text-2xl">📁</span>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
 
             if (view === 'games') {
                 const folder = folders.find(f => f.id === currentFolderId);
                 return (
-                    <div className="p-6 h-screen bg-slate-950">
-                        <button onClick={() => setView('folders')} className="text-[10px] font-black text-slate-500 mb-6 uppercase">← Voltar</button>
-                        <h2 className="text-2xl font-black mb-8 uppercase italic text-indigo-400">{folder.name}</h2>
-                        <button onClick={() => {const o = prompt("Adversário:"); if(o) setFolders(folders.map(f => f.id === currentFolderId ? {...f, games: [{id: Date.now(), opponent: o, time: 0, stats: INITIAL_STATS, events: [], notes: "", pic: null, date: new Date().toLocaleDateString('pt-PT')}, ...f.games]} : f))}} className="w-full p-5 bg-indigo-600 rounded-3xl font-black uppercase italic mb-8 active-btn">Adicionar Jogo</button>
-                        <div className="space-y-4">{folder.games.map(g => (
-                            <div key={g.id} onClick={() => {setCurrentGame(g); setView('tracking')}} className="bg-slate-900 p-5 rounded-3xl flex justify-between items-center active-btn border border-slate-800">
-                                <span className="font-black uppercase italic">{g.opponent}</span>
-                                <span className="text-[10px] text-slate-500 font-bold">{g.date}</span>
-                            </div>
-                        ))}</div>
+                    <div className="p-6 h-screen bg-slate-950 main-container">
+                        <button onClick={() => setView('folders')} className="text-xs font-black text-slate-500 mb-6 uppercase tracking-widest">← Voltar</button>
+                        <h2 className="text-3xl font-black mb-8 uppercase italic text-indigo-500 border-l-4 border-indigo-500 pl-4">{folder.name}</h2>
+                        <button onClick={() => {const o = prompt("Nome do Adversário:"); if(o) setFolders(folders.map(f => f.id === currentFolderId ? {...f, games: [{id: Date.now(), opponent: o, time: 0, stats: INITIAL_STATS, events: [], notes: "", pic: null, date: new Date().toLocaleDateString('pt-PT')}, ...f.games]} : f))}} className="w-full p-6 bg-indigo-600 rounded-[2rem] font-black uppercase italic mb-8 shadow-xl active-btn">Adicionar Novo Jogo</button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {folder.games.map(g => (
+                                <div key={g.id} onClick={() => {setCurrentGame(g); setView('tracking')}} className="bg-slate-900 p-6 rounded-[2rem] flex justify-between items-center active-btn border border-slate-800">
+                                    <span className="font-black uppercase italic text-lg">{g.opponent}</span>
+                                    <span className="text-xs text-slate-500 font-bold">{g.date}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 );
             }
 
             if (view === 'report') return (
-                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-                    <div className="p-4 flex justify-between border-b border-slate-800 shrink-0">
-                        <button onClick={() => setView('tracking')} className="text-xs font-bold text-slate-500 uppercase">← Voltar</button>
-                        <button onClick={exportPDF} className="bg-indigo-600 px-6 py-2 rounded-xl font-black text-xs italic active-btn">GERAR PDF</button>
+                <div className="h-screen flex flex-col bg-slate-950 text-white">
+                    <div className="p-4 flex justify-between border-b border-slate-800 bg-slate-900 shrink-0">
+                        <button onClick={() => setView('tracking')} className="text-xs font-bold text-slate-400">← PAINEL</button>
+                        <button onClick={exportPDF} className="bg-indigo-600 px-8 py-2 rounded-full font-black text-xs italic active-btn shadow-lg">BAIXAR PDF</button>
                     </div>
                     <div id="report-area" className="flex-1 overflow-y-auto p-10 bg-slate-950">
-                        <div className="flex justify-between items-start mb-12">
+                        <div className="flex justify-between items-center mb-16">
                             <div>
-                                <h2 className="text-5xl font-black italic uppercase text-indigo-500 leading-none">{currentGame.opponent}</h2>
-                                <p className="text-slate-400 font-bold text-sm mt-3 uppercase tracking-[0.3em]">{currentGame.date} | FINAL: {formatFullTime(currentGame.time)}</p>
+                                <h2 className="text-6xl font-black italic uppercase text-indigo-500 leading-none">{currentGame.opponent}</h2>
+                                <p className="text-slate-400 font-bold text-sm mt-4 uppercase tracking-[0.4em]">{currentGame.date} | FINAL: {formatFullTime(currentGame.time)}</p>
                             </div>
-                            {currentGame.pic && <img src={currentGame.pic} className="w-24 h-24 rounded-2xl object-cover border-4 border-slate-800 shadow-2xl" />}
+                            {currentGame.pic && <img src={currentGame.pic} className="w-32 h-32 rounded-3xl object-cover border-4 border-slate-800 shadow-2xl" />}
                         </div>
 
-                        {/* TIMELINE */}
-                        <div className="mb-12">
-                            <h3 className="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest">Cronologia de Eventos</h3>
-                            <div className="timeline-bar">
+                        {/* TIMELINE COM MINUTOS */}
+                        <div className="mb-20">
+                            <h3 className="text-xs font-black uppercase text-slate-500 mb-8 tracking-widest text-center">Fluxo Cronológico e Golos</h3>
+                            <div className="timeline-bar shadow-2xl">
                                 {currentGame.events.map((e, i) => (
-                                    <div key={i} className={e.isGoal ? 'goal-marker' : 'event-marker ' + (e.type === 'ataque' ? 'bg-indigo-500' : 'bg-red-600')} 
-                                         style={{ left: `${(e.time / (currentGame.time || 1)) * 100}%` }}></div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* DESTAQUES / GOLOS */}
-                        <div className="mb-12 bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
-                            <h3 className="text-xs font-black uppercase text-indigo-500 mb-4 tracking-widest italic">Ações Decisivas (Minutos)</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                {currentGame.events.filter(e => e.isGoal).map((e, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <span className="text-amber-400 font-black text-lg">{formatMin(e.time)}</span>
-                                        <span className="text-[10px] font-bold uppercase text-white">{e.name}</span>
+                                    <div key={i} className={e.isGoal ? 'goal-marker' : 'event-marker ' + (e.type === 'ataque' ? 'bg-indigo-500/40' : 'bg-red-600/40')} 
+                                         style={{ left: `${(e.time / (currentGame.time || 1)) * 100}%` }}>
+                                         {e.isGoal && <span className="time-label text-amber-400">{formatMin(e.time)}</span>}
+                                         {!e.isGoal && i % 5 === 0 && <span className="time-label">{formatMin(e.time)}</span>}
                                     </div>
                                 ))}
-                                {currentGame.events.filter(e => e.isGoal).length === 0 && <p className="text-slate-600 text-[10px] uppercase font-bold">Sem golos registados</p>}
                             </div>
                         </div>
 
-                        {/* STATS TABLE */}
-                        <div className="grid grid-cols-2 gap-12">
+                        <div className="grid grid-cols-2 gap-16">
                             {['ataque', 'defesa'].map(type => (
-                                <div key={type} className="space-y-4">
-                                    <h4 className={`text-xl font-black uppercase italic border-l-4 ${type === 'ataque' ? 'border-indigo-500 text-indigo-400' : 'border-red-600 text-red-500'} pl-3 mb-6`}>{type}</h4>
+                                <div key={type}>
+                                    <h4 className={`text-2xl font-black uppercase italic mb-8 border-b-2 pb-2 ${type === 'ataque' ? 'border-indigo-500 text-indigo-400' : 'border-red-600 text-red-500'}`}>{type}</h4>
                                     {currentGame.stats.filter(s => s.type === type).map(s => (
-                                        <div key={s.id} className="flex justify-between items-end border-b border-slate-900 pb-2">
-                                            <span className="text-[11px] font-bold text-slate-500 uppercase">{s.name}</span>
-                                            <span className="text-xl font-black">{s.count}</span>
+                                        <div key={s.id} className="flex justify-between items-center border-b border-slate-900 py-4">
+                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.name}</span>
+                                            <span className="text-2xl font-black">{s.count}</span>
                                         </div>
                                     ))}
                                 </div>
                             ))}
                         </div>
-                        {currentGame.notes && <div className="mt-12 p-8 bg-slate-900 rounded-3xl text-sm italic text-slate-400 border border-slate-800">"{currentGame.notes}"</div>}
+                        {currentGame.notes && <div className="mt-20 p-10 bg-slate-900 rounded-[2.5rem] border border-slate-800 italic text-slate-400 text-lg leading-relaxed shadow-inner">"{currentGame.notes}"</div>}
                     </div>
                 </div>
             );
 
-            // TRACKING
             return (
-                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-                    <header className="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
+                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden main-container">
+                    <header className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="bg-slate-950 px-3 py-1 rounded-xl border border-slate-800 text-xl font-mono font-black text-indigo-400">{formatFullTime(currentGame.time)}</div>
-                            <button onClick={undoAction} className="bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center active-btn shadow-lg">↩</button>
+                            <div className="bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800 text-2xl font-mono font-black text-indigo-400 shadow-inner">{formatFullTime(currentGame.time)}</div>
+                            <button onClick={undoAction} className="bg-slate-800 w-12 h-12 rounded-2xl flex items-center justify-center active-btn shadow-lg text-xl border border-slate-700">↩</button>
                         </div>
-                        <div className="flex gap-2">
-                            <div className="relative w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 active-btn overflow-hidden">
-                                {currentGame.pic ? <img src={currentGame.pic} className="w-full h-full object-cover" /> : <span className="text-xs">📷</span>}
+                        <div className="flex gap-3">
+                            <div className="relative w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700 active-btn overflow-hidden shadow-lg">
+                                {currentGame.pic ? <img src={currentGame.pic} className="w-full h-full object-cover" /> : <span className="text-xl">📷</span>}
                                 <input type="file" onChange={(e) => {const f=e.target.files[0]; if(f){const r=new FileReader(); r.onloadend=()=>updateCurrentGameData('pic', r.result); r.readAsDataURL(f)}}} className="absolute inset-0 opacity-0" />
                             </div>
-                            <button onClick={() => setShowNotes(!showNotes)} className={`w-10 h-10 rounded-xl flex items-center justify-center ${currentGame.notes ? 'bg-indigo-600' : 'bg-slate-800'}`}>📝</button>
-                            <button onClick={() => setIsActive(!isActive)} className={`px-4 rounded-xl font-black text-[10px] uppercase transition-all ${isActive ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`}>{isActive ? 'STOP' : 'START'}</button>
-                            <button onClick={() => setView('report')} className="bg-white text-black px-4 rounded-xl text-[10px] font-black uppercase italic active-btn">RELATÓRIO</button>
+                            <button onClick={() => setShowNotes(!showNotes)} className={`w-12 h-12 rounded-2xl flex items-center justify-center border border-slate-700 shadow-lg ${currentGame.notes ? 'bg-indigo-600 border-indigo-500' : 'bg-slate-800'}`}>📝</button>
+                            <button onClick={() => setIsActive(!isActive)} className={`px-6 rounded-2xl font-black text-xs uppercase shadow-xl transition-all ${isActive ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`}>{isActive ? 'STOP' : 'START'}</button>
+                            <button onClick={() => setView('report')} className="bg-white text-black px-6 rounded-2xl text-xs font-black uppercase italic active-btn shadow-xl">PDF</button>
                         </div>
                     </header>
 
                     {showNotes && (
-                        <div className="p-4 bg-slate-900 border-b border-slate-800 shrink-0"><textarea value={currentGame.notes} onChange={(e) => updateCurrentGameData('notes', e.target.value)} placeholder="Observações táticas..." className="w-full h-24 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs outline-none" /></div>
+                        <div className="p-4 bg-slate-900 border-b border-slate-800 shrink-0"><textarea value={currentGame.notes} onChange={(e) => updateCurrentGameData('notes', e.target.value)} placeholder="Notas táticas do jogo..." className="w-full h-32 bg-slate-950 border border-slate-800 rounded-[1.5rem] p-5 text-sm outline-none shadow-inner focus:border-indigo-500 transition-colors" /></div>
                     )}
 
                     <div className="flex-1 flex overflow-hidden">
                         {['ataque', 'defesa'].map(type => (
                             <div key={type} className="flex-1 flex flex-col border-r border-slate-900 last:border-r-0">
-                                <div className="flex justify-between items-center px-4 py-2 bg-slate-900/50 border-b border-slate-800 shrink-0">
-                                    <span className={`${type === 'ataque' ? 'text-indigo-400' : 'text-red-500'} text-[9px] font-black uppercase italic tracking-widest`}>{type}</span>
-                                    <button onClick={() => {const n=prompt("Nova ação:"); if(n) updateCurrentGameData('stats', [...currentGame.stats, {id: Date.now(), name: n, count: 0, type}])}} className="text-lg bg-slate-800 w-6 h-6 rounded flex items-center justify-center">+</button>
+                                <div className="flex justify-between items-center px-6 py-3 bg-slate-900/50 border-b border-slate-800 shrink-0">
+                                    <span className={`${type === 'ataque' ? 'text-indigo-400' : 'text-red-500'} font-black uppercase italic tracking-widest text-[10px]`}>{type}</span>
+                                    <button onClick={() => {const n=prompt("Nova ação:"); if(n) updateCurrentGameData('stats', [...currentGame.stats, {id: Date.now(), name: n, count: 0, type}])}} className="text-xl bg-slate-800 w-8 h-8 rounded-xl border border-slate-700 flex items-center justify-center active-btn">+</button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-3 no-scrollbar pb-24">
+                                <div className="flex-1 overflow-y-auto p-3 space-y-4 no-scrollbar pb-32">
                                     {currentGame.stats.filter(s => s.type === type).map(s => (
-                                        <div key={s.id} className="flex items-center">
-                                            <button onClick={() => addStat(s.id)} className="flex-1 h-16 bg-slate-900 rounded-l-2xl flex items-center px-4 border-l-4 border-slate-800 active:border-indigo-500 shadow-xl active-btn">
-                                                <span className={`text-2xl font-black mr-3 italic ${s.count > 0 ? 'text-white' : 'text-slate-800'}`}>{s.count}</span>
-                                                <span className="text-[10px] font-black uppercase text-slate-400 text-left leading-tight tracking-tighter">{s.name}</span>
+                                        <div key={s.id} className="flex items-center group">
+                                            <button onClick={() => addStat(s.id)} className="flex-1 h-20 bg-slate-900 rounded-l-[1.5rem] flex items-center px-5 border-l-4 border-slate-800 active:border-indigo-500 shadow-2xl active-btn">
+                                                <span className={`text-3xl font-black mr-4 italic ${s.count > 0 ? 'text-white' : 'text-slate-800'}`}>{s.count}</span>
+                                                <span className="text-[11px] font-black uppercase text-slate-400 text-left leading-tight tracking-tighter">{s.name}</span>
                                             </button>
-                                            <button onClick={() => {const n=prompt("Editar nome:", s.name); if(n) updateCurrentGameData('stats', currentGame.stats.map(st=>st.id===s.id?{...st, name:n}:st))}} className="w-10 h-16 bg-slate-900/50 rounded-r-2xl border-l border-slate-800/20 text-[10px] opacity-20 flex items-center justify-center">✎</button>
+                                            <button onClick={() => {const n=prompt("Editar nome:", s.name); if(n) updateCurrentGameData('stats', currentGame.stats.map(st=>st.id===s.id?{...st, name:n}:st))}} className="w-12 h-20 bg-slate-900/30 rounded-r-[1.5rem] border-l border-slate-800/20 text-xs opacity-20 hover:opacity-100 flex items-center justify-center transition-opacity">✎</button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <button onClick={() => setView('folders')} className="absolute bottom-6 left-6 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border border-slate-700 active-btn">🏠</button>
+                    <button onClick={() => setView('folders')} className="absolute bottom-8 left-8 w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)] border border-slate-700 active-btn text-2xl">🏠</button>
                 </div>
             );
         }
