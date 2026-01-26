@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SoccerAnalyst Pro - Smart Reset</title>
+    <title>SoccerAnalyst Pro - Elite Scout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,14 +11,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { background-color: #020617; touch-action: manipulation; -webkit-tap-highlight-color: transparent; color: white; }
+        body { background-color: #020617; touch-action: manipulation; color: white; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        button { touch-action: manipulation; transition: all 0.2s; }
+        button { transition: all 0.2s; }
         .active-btn:active { transform: scale(0.95); }
-        .timeline-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%); }
+        .timeline-bar { height: 45px; background: #0f172a; border-radius: 12px; position: relative; overflow: hidden; border: 1px solid #1e293b; }
+        .event-marker { position: absolute; width: 2px; height: 100%; opacity: 0.6; }
+        .goal-marker { position: absolute; width: 4px; height: 100%; background: #fbbf24; z-index: 10; box-shadow: 0 0 15px #fbbf24; }
     </style>
 </head>
-<body class="font-sans select-none overflow-hidden text-white">
+<body class="font-sans select-none overflow-hidden">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -41,14 +43,14 @@
 
         function App() {
             const [view, setView] = useState('folders'); 
-            const [folders, setFolders] = useState(() => JSON.parse(localStorage.getItem('soccer_db_v3')) || []);
+            const [folders, setFolders] = useState(() => JSON.parse(localStorage.getItem('soccer_elite_db')) || []);
             const [currentFolderId, setCurrentFolderId] = useState(null);
             const [currentGame, setCurrentGame] = useState(null);
             const [isActive, setIsActive] = useState(false);
             const [showNotes, setShowNotes] = useState(false);
 
             useEffect(() => {
-                localStorage.setItem('soccer_db_v3', JSON.stringify(folders));
+                localStorage.setItem('soccer_elite_db', JSON.stringify(folders));
             }, [folders]);
 
             useEffect(() => {
@@ -72,46 +74,26 @@
                 setCurrentGame(prev => ({ ...prev, [field]: value }));
             };
 
-            const resetGameStats = () => {
-                if(confirm("Deseja colocar as ações deste jogo a zero? As notas e o tempo também serão reiniciados.")) {
-                    updateCurrentGameData('stats', INITIAL_STATS);
-                    updateCurrentGameData('events', []);
-                    updateCurrentGameData('time', 0);
-                    updateCurrentGameData('notes', "");
-                    setIsActive(false);
-                }
-            };
+            const formatMin = (s) => `${Math.floor(s/60)}'`;
+            const formatFullTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
 
-            const createFolder = () => {
-                const name = prompt("Nome da Pasta:");
-                if (name) setFolders([...folders, { id: Date.now(), name, games: [] }]);
-            };
+            const addStat = (id) => {
+                if(!isActive) return alert("Inicia o Cronómetro!");
+                const stat = currentGame.stats.find(s => s.id === id);
+                const newStats = currentGame.stats.map(s => s.id === id ? { ...s, count: s.count + 1 } : s);
+                
+                const newEvent = { 
+                    time: currentGame.time, 
+                    type: stat.type, 
+                    name: stat.name,
+                    isGoal: stat.name.toLowerCase().includes('golo')
+                };
 
-            const createGame = (folderId) => {
-                const opponent = prompt("Nome do Adversário:");
-                if (opponent) {
-                    const newGame = {
-                        id: Date.now(),
-                        opponent,
-                        time: 0,
-                        stats: INITIAL_STATS,
-                        events: [],
-                        notes: "",
-                        date: new Date().toLocaleDateString('pt-PT')
-                    };
-                    setFolders(folders.map(f => f.id === folderId ? { ...f, games: [newGame, ...f.games] } : f));
-                }
-            };
-
-            const addStat = (stat) => {
-                if(!isActive) { alert("Inicia o cronómetro (START) primeiro!"); return; }
-                const newStats = currentGame.stats.map(s => s.id === stat.id ? { ...s, count: s.count + 1 } : s);
-                const newEvent = { time: currentGame.time, name: stat.name, type: stat.type };
                 updateCurrentGameData('stats', newStats);
                 updateCurrentGameData('events', [...currentGame.events, newEvent]);
             };
 
-            const undoLast = () => {
+            const undoAction = () => {
                 if (currentGame.events.length === 0) return;
                 const lastEvent = currentGame.events[currentGame.events.length - 1];
                 const newStats = currentGame.stats.map(s => s.name === lastEvent.name ? { ...s, count: Math.max(0, s.count - 1) } : s);
@@ -119,123 +101,149 @@
                 updateCurrentGameData('events', currentGame.events.slice(0, -1));
             };
 
-            const formatTime = (s) => `${(s/60|0)}:${(s%60).toString().padStart(2,'0')}`;
+            const exportPDF = async () => {
+                const element = document.getElementById('report-area');
+                const canvas = await html2canvas(element, { backgroundColor: '#020617', scale: 2, useCORS: true });
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
+                pdf.save(`Scout_${currentGame.opponent}_${currentGame.date}.pdf`);
+            };
 
+            // VIEWS (FOLDERS & GAMES)
             if (view === 'folders') return (
                 <div className="p-6 h-screen bg-slate-950 overflow-y-auto">
-                    <h1 className="text-2xl font-black text-indigo-500 mb-6 italic uppercase tracking-tighter">SoccerAnalyst Pro</h1>
-                    <button onClick={createFolder} className="w-full p-4 mb-6 border-2 border-dashed border-slate-800 rounded-2xl text-slate-500 font-bold active-btn">+ Criar Pasta de Época</button>
-                    <div className="space-y-3">
-                        {folders.map(f => (
-                            <div key={f.id} className="bg-slate-900 p-5 rounded-2xl flex justify-between items-center shadow-lg active-btn" onClick={() => { setCurrentFolderId(f.id); setView('games'); }}>
-                                <div>
-                                    <h3 className="font-black text-white uppercase italic">{f.name}</h3>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase">{f.games.length} Jogos</p>
-                                </div>
-                                <button onClick={(e) => { e.stopPropagation(); if(confirm("Apagar pasta?")) setFolders(folders.filter(fold => fold.id !== f.id)); }} className="text-slate-700 text-xs">Apagar</button>
-                            </div>
-                        ))}
-                    </div>
+                    <h1 className="text-3xl font-black text-indigo-500 mb-8 italic tracking-tighter">SOCCER ANALYST PRO</h1>
+                    <button onClick={() => {const n = prompt("Nome da Pasta:"); if(n) setFolders([...folders, {id: Date.now(), name: n, games: []}])}} className="w-full p-5 mb-6 border-2 border-dashed border-slate-800 rounded-3xl text-slate-500 font-bold active-btn">+ Nova Pasta</button>
+                    {folders.map(f => (
+                        <div key={f.id} onClick={() => {setCurrentFolderId(f.id); setView('games')}} className="bg-slate-900 p-6 rounded-3xl mb-4 flex justify-between items-center active-btn border border-slate-800">
+                            <div><h3 className="font-black text-white uppercase italic">{f.name}</h3><p className="text-[10px] text-slate-500 font-bold uppercase">{f.games.length} Jogos Guardados</p></div>
+                            <span className="text-indigo-500">→</span>
+                        </div>
+                    ))}
                 </div>
             );
 
             if (view === 'games') {
                 const folder = folders.find(f => f.id === currentFolderId);
                 return (
-                    <div className="p-6 h-screen bg-slate-950 overflow-y-auto text-white">
-                        <button onClick={() => setView('folders')} className="text-[10px] font-black text-slate-500 mb-4 tracking-widest uppercase">← Voltar às Pastas</button>
-                        <h2 className="text-xl font-black mb-6 uppercase italic text-indigo-400 border-l-4 border-indigo-500 pl-3">{folder.name}</h2>
-                        <button onClick={() => createGame(folder.id)} className="w-full p-4 bg-indigo-600 rounded-2xl font-black uppercase italic mb-6 shadow-xl active-btn">Adicionar Novo Jogo</button>
-                        <div className="space-y-3">
-                            {folder.games.map(g => (
-                                <div key={g.id} onClick={() => { setCurrentGame(g); setView('tracking'); }} className="bg-slate-900 p-5 rounded-2xl flex justify-between items-center active-btn">
-                                    <span className="font-black uppercase italic text-sm">{g.opponent}</span>
-                                    <span className="text-[10px] text-slate-600 font-bold">{g.date}</span>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="p-6 h-screen bg-slate-950">
+                        <button onClick={() => setView('folders')} className="text-[10px] font-black text-slate-500 mb-6 uppercase">← Voltar</button>
+                        <h2 className="text-2xl font-black mb-8 uppercase italic text-indigo-400">{folder.name}</h2>
+                        <button onClick={() => {const o = prompt("Adversário:"); if(o) setFolders(folders.map(f => f.id === currentFolderId ? {...f, games: [{id: Date.now(), opponent: o, time: 0, stats: INITIAL_STATS, events: [], notes: "", pic: null, date: new Date().toLocaleDateString('pt-PT')}, ...f.games]} : f))}} className="w-full p-5 bg-indigo-600 rounded-3xl font-black uppercase italic mb-8 active-btn">Adicionar Jogo</button>
+                        <div className="space-y-4">{folder.games.map(g => (
+                            <div key={g.id} onClick={() => {setCurrentGame(g); setView('tracking')}} className="bg-slate-900 p-5 rounded-3xl flex justify-between items-center active-btn border border-slate-800">
+                                <span className="font-black uppercase italic">{g.opponent}</span>
+                                <span className="text-[10px] text-slate-500 font-bold">{g.date}</span>
+                            </div>
+                        ))}</div>
                     </div>
                 );
             }
 
             if (view === 'report') return (
-                <div className="h-screen bg-slate-950 flex flex-col overflow-hidden text-white">
-                    <div className="p-4 border-b border-slate-800 flex justify-between shrink-0">
-                        <button onClick={() => setView('tracking')} className="text-xs font-bold text-slate-500 uppercase">← Painel</button>
-                        <button onClick={() => window.print()} className="bg-white text-black px-6 py-1 rounded-xl text-[10px] font-black uppercase italic">Exportar PDF</button>
+                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
+                    <div className="p-4 flex justify-between border-b border-slate-800 shrink-0">
+                        <button onClick={() => setView('tracking')} className="text-xs font-bold text-slate-500 uppercase">← Voltar</button>
+                        <button onClick={exportPDF} className="bg-indigo-600 px-6 py-2 rounded-xl font-black text-xs italic active-btn">GERAR PDF</button>
                     </div>
-                    <div id="report-area" className="flex-1 overflow-y-auto p-8 bg-slate-950">
-                        <h2 className="text-4xl font-black italic uppercase text-indigo-500 mb-1">{currentGame.opponent}</h2>
-                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-10">{currentGame.date} | Duração: {formatTime(currentGame.time)}</p>
+                    <div id="report-area" className="flex-1 overflow-y-auto p-10 bg-slate-950">
+                        <div className="flex justify-between items-start mb-12">
+                            <div>
+                                <h2 className="text-5xl font-black italic uppercase text-indigo-500 leading-none">{currentGame.opponent}</h2>
+                                <p className="text-slate-400 font-bold text-sm mt-3 uppercase tracking-[0.3em]">{currentGame.date} | FINAL: {formatFullTime(currentGame.time)}</p>
+                            </div>
+                            {currentGame.pic && <img src={currentGame.pic} className="w-24 h-24 rounded-2xl object-cover border-4 border-slate-800 shadow-2xl" />}
+                        </div>
 
-                        <div className="mb-10">
-                            <h3 className="text-[10px] font-black uppercase text-slate-500 mb-3 tracking-[0.2em]">Fluxo de Jogo (Timeline)</h3>
-                            <div className="relative w-full h-12 bg-slate-900 rounded-xl border border-slate-800 flex items-center overflow-hidden">
+                        {/* TIMELINE */}
+                        <div className="mb-12">
+                            <h3 className="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest">Cronologia de Eventos</h3>
+                            <div className="timeline-bar">
                                 {currentGame.events.map((e, i) => (
-                                    <div key={i} className={`timeline-dot ${e.type === 'ataque' ? 'bg-indigo-500 shadow-[0_0_8px_indigo]' : 'bg-red-600 shadow-[0_0_8px_red]'}`} 
-                                         style={{ left: `${(e.time / (currentGame.time || 1)) * 100}%`, top: e.type === 'ataque' ? '25%' : '65%' }}></div>
+                                    <div key={i} className={e.isGoal ? 'goal-marker' : 'event-marker ' + (e.type === 'ataque' ? 'bg-indigo-500' : 'bg-red-600')} 
+                                         style={{ left: `${(e.time / (currentGame.time || 1)) * 100}%` }}></div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-8">
-                            {['ataque', 'defesa'].map(t => (
-                                <div key={t}>
-                                    <h4 className={`text-xs font-black uppercase mb-4 ${t === 'ataque' ? 'text-indigo-400' : 'text-red-500'}`}>{t}</h4>
-                                    {currentGame.stats.filter(s => s.type === t).map(s => (
-                                        <div key={s.id} className="flex justify-between text-xs border-b border-slate-900 py-2">
-                                            <span className="text-slate-400 uppercase font-bold text-[10px]">{s.name}</span>
-                                            <span className="font-black text-sm">{s.count}</span>
+                        {/* DESTAQUES / GOLOS */}
+                        <div className="mb-12 bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
+                            <h3 className="text-xs font-black uppercase text-indigo-500 mb-4 tracking-widest italic">Ações Decisivas (Minutos)</h3>
+                            <div className="grid grid-cols-3 gap-4">
+                                {currentGame.events.filter(e => e.isGoal).map((e, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <span className="text-amber-400 font-black text-lg">{formatMin(e.time)}</span>
+                                        <span className="text-[10px] font-bold uppercase text-white">{e.name}</span>
+                                    </div>
+                                ))}
+                                {currentGame.events.filter(e => e.isGoal).length === 0 && <p className="text-slate-600 text-[10px] uppercase font-bold">Sem golos registados</p>}
+                            </div>
+                        </div>
+
+                        {/* STATS TABLE */}
+                        <div className="grid grid-cols-2 gap-12">
+                            {['ataque', 'defesa'].map(type => (
+                                <div key={type} className="space-y-4">
+                                    <h4 className={`text-xl font-black uppercase italic border-l-4 ${type === 'ataque' ? 'border-indigo-500 text-indigo-400' : 'border-red-600 text-red-500'} pl-3 mb-6`}>{type}</h4>
+                                    {currentGame.stats.filter(s => s.type === type).map(s => (
+                                        <div key={s.id} className="flex justify-between items-end border-b border-slate-900 pb-2">
+                                            <span className="text-[11px] font-bold text-slate-500 uppercase">{s.name}</span>
+                                            <span className="text-xl font-black">{s.count}</span>
                                         </div>
                                     ))}
                                 </div>
                             ))}
                         </div>
-                        {currentGame.notes && <div className="mt-12 p-5 bg-slate-900 rounded-2xl text-xs text-slate-400 italic border-l-4 border-indigo-500 uppercase font-medium">"{currentGame.notes}"</div>}
+                        {currentGame.notes && <div className="mt-12 p-8 bg-slate-900 rounded-3xl text-sm italic text-slate-400 border border-slate-800">"{currentGame.notes}"</div>}
                     </div>
                 </div>
             );
 
+            // TRACKING
             return (
-                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden text-white">
+                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
                     <header className="p-3 bg-slate-900 border-b border-slate-800 flex justify-between items-center shrink-0">
-                        <div className="flex items-center gap-2">
-                            <div className="bg-slate-950 px-3 py-1 rounded-lg border border-slate-800">
-                                <span className="text-xl font-mono font-black text-indigo-400">{formatTime(currentGame.time)}</span>
-                            </div>
-                            <button onClick={undoLast} className="bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center active-btn">↩</button>
+                        <div className="flex items-center gap-3">
+                            <div className="bg-slate-950 px-3 py-1 rounded-xl border border-slate-800 text-xl font-mono font-black text-indigo-400">{formatFullTime(currentGame.time)}</div>
+                            <button onClick={undoAction} className="bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center active-btn shadow-lg">↩</button>
                         </div>
                         <div className="flex gap-2">
+                            <div className="relative w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 active-btn overflow-hidden">
+                                {currentGame.pic ? <img src={currentGame.pic} className="w-full h-full object-cover" /> : <span className="text-xs">📷</span>}
+                                <input type="file" onChange={(e) => {const f=e.target.files[0]; if(f){const r=new FileReader(); r.onloadend=()=>updateCurrentGameData('pic', r.result); r.readAsDataURL(f)}}} className="absolute inset-0 opacity-0" />
+                            </div>
                             <button onClick={() => setShowNotes(!showNotes)} className={`w-10 h-10 rounded-xl flex items-center justify-center ${currentGame.notes ? 'bg-indigo-600' : 'bg-slate-800'}`}>📝</button>
-                            <button onClick={() => setIsActive(!isActive)} className={`px-4 rounded-xl font-black text-[10px] uppercase transition-colors ${isActive ? 'bg-red-600' : 'bg-green-600'}`}>{isActive ? 'STOP' : 'START'}</button>
-                            <button onClick={resetGameStats} className="bg-slate-800 w-10 h-10 rounded-xl flex items-center justify-center text-xs text-red-500 font-bold active-btn">R</button>
-                            <button onClick={() => setView('games')} className="bg-slate-800 p-2 rounded-xl text-xl active-btn">🏠</button>
+                            <button onClick={() => setIsActive(!isActive)} className={`px-4 rounded-xl font-black text-[10px] uppercase transition-all ${isActive ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`}>{isActive ? 'STOP' : 'START'}</button>
+                            <button onClick={() => setView('report')} className="bg-white text-black px-4 rounded-xl text-[10px] font-black uppercase italic active-btn">RELATÓRIO</button>
                         </div>
                     </header>
 
                     {showNotes && (
-                        <div className="p-4 bg-slate-900 border-b border-slate-800 shrink-0">
-                            <textarea value={currentGame.notes} onChange={(e) => updateCurrentGameData('notes', e.target.value)} placeholder="Notas táticas deste jogo..." className="w-full h-20 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs outline-none text-white focus:border-indigo-500" />
-                        </div>
+                        <div className="p-4 bg-slate-900 border-b border-slate-800 shrink-0"><textarea value={currentGame.notes} onChange={(e) => updateCurrentGameData('notes', e.target.value)} placeholder="Observações táticas..." className="w-full h-24 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs outline-none" /></div>
                     )}
 
                     <div className="flex-1 flex overflow-hidden">
                         {['ataque', 'defesa'].map(type => (
                             <div key={type} className="flex-1 flex flex-col border-r border-slate-900 last:border-r-0">
-                                <div className="px-3 py-1 bg-slate-900/50 text-[9px] font-black uppercase tracking-widest text-slate-500 text-center">{type}</div>
+                                <div className="flex justify-between items-center px-4 py-2 bg-slate-900/50 border-b border-slate-800 shrink-0">
+                                    <span className={`${type === 'ataque' ? 'text-indigo-400' : 'text-red-500'} text-[9px] font-black uppercase italic tracking-widest`}>{type}</span>
+                                    <button onClick={() => {const n=prompt("Nova ação:"); if(n) updateCurrentGameData('stats', [...currentGame.stats, {id: Date.now(), name: n, count: 0, type}])}} className="text-lg bg-slate-800 w-6 h-6 rounded flex items-center justify-center">+</button>
+                                </div>
                                 <div className="flex-1 overflow-y-auto p-2 space-y-3 no-scrollbar pb-24">
                                     {currentGame.stats.filter(s => s.type === type).map(s => (
-                                        <button key={s.id} onClick={() => addStat(s)} className="w-full h-16 bg-slate-900 rounded-2xl flex items-center px-4 border-l-4 border-slate-800 active:border-indigo-500 shadow-xl active-btn">
-                                            <span className="text-2xl font-black mr-3 italic">{s.count}</span>
-                                            <span className="text-[10px] font-black uppercase text-slate-400 text-left leading-tight tracking-tighter line-clamp-2">{s.name}</span>
-                                        </button>
+                                        <div key={s.id} className="flex items-center">
+                                            <button onClick={() => addStat(s.id)} className="flex-1 h-16 bg-slate-900 rounded-l-2xl flex items-center px-4 border-l-4 border-slate-800 active:border-indigo-500 shadow-xl active-btn">
+                                                <span className={`text-2xl font-black mr-3 italic ${s.count > 0 ? 'text-white' : 'text-slate-800'}`}>{s.count}</span>
+                                                <span className="text-[10px] font-black uppercase text-slate-400 text-left leading-tight tracking-tighter">{s.name}</span>
+                                            </button>
+                                            <button onClick={() => {const n=prompt("Editar nome:", s.name); if(n) updateCurrentGameData('stats', currentGame.stats.map(st=>st.id===s.id?{...st, name:n}:st))}} className="w-10 h-16 bg-slate-900/50 rounded-r-2xl border-l border-slate-800/20 text-[10px] opacity-20 flex items-center justify-center">✎</button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
                         ))}
                     </div>
-                    
-                    <button onClick={() => setView('report')} className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white text-black px-10 py-4 rounded-full font-black uppercase italic shadow-2xl active-btn">Finalizar e PDF</button>
+                    <button onClick={() => setView('folders')} className="absolute bottom-6 left-6 w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center shadow-2xl border border-slate-700 active-btn">🏠</button>
                 </div>
             );
         }
