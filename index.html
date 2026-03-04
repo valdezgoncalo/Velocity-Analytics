@@ -37,259 +37,114 @@
             user-select: none;
         }
         h1, h2, h3, .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
-        .mono { font-family: 'Space Mono', monospace; }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .active-btn:active { transform: scale(0.95); opacity: 0.85; }
 
-        /* ─── TIMELINE ─── */
-        .timeline-wrap {
-            position: relative;
-            padding: 36px 0 16px;
-        }
+        .timeline-wrap { position: relative; padding: 36px 0 20px; }
         .timeline-track {
-            height: 56px;
-            background: var(--surface);
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: visible;
+            height: 56px; background: var(--surface);
+            border-radius: 14px; border: 1px solid var(--border);
+            position: relative; overflow: visible;
         }
         .timeline-half {
-            position: absolute;
-            top: 0; bottom: 0;
+            position: absolute; top: 0; bottom: 0;
             background: rgba(255,255,255,0.015);
             border-right: 1px dashed var(--border);
-            width: 50%;
-            left: 0;
-            border-radius: 14px 0 0 14px;
+            width: 50%; left: 0; border-radius: 14px 0 0 14px;
         }
-        .tl-minute-mark {
-            position: absolute;
-            top: 0; bottom: 0;
-            width: 1px;
-            background: rgba(255,255,255,0.04);
-        }
+        .tl-minute-mark { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.04); }
         .tl-label-top {
-            position: absolute;
-            top: -24px;
-            font-family: 'Space Mono', monospace;
-            font-size: 8px;
-            color: var(--muted);
-            transform: translateX(-50%);
-            white-space: nowrap;
+            position: absolute; top: -22px;
+            font-family: 'Space Mono', monospace; font-size: 8px;
+            color: var(--muted); transform: translateX(-50%); white-space: nowrap;
         }
         .tl-event-dot {
-            position: absolute;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-            transition: all 0.15s;
-            z-index: 5;
+            position: absolute; width: 9px; height: 9px; border-radius: 50%;
+            top: 50%; transform: translate(-50%, -50%);
+            cursor: pointer; transition: all 0.15s; z-index: 5;
         }
-        .tl-event-dot:hover { transform: translate(-50%, -50%) scale(1.8); z-index: 10; }
+        .tl-event-dot:hover { transform: translate(-50%, -50%) scale(2); z-index: 10; }
         .tl-event-dot.goal {
-            width: 12px; height: 12px;
-            background: var(--gold);
+            width: 13px; height: 13px; background: var(--gold);
             box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4);
             animation: pulse-gold 2s infinite;
         }
         .tl-event-dot.ataque { background: var(--accent); box-shadow: 0 0 6px rgba(67,97,238,0.5); }
         .tl-event-dot.defesa { background: var(--red); box-shadow: 0 0 6px rgba(239,35,60,0.4); }
         .tl-tooltip {
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
+            position: absolute; bottom: calc(100% + 8px); left: 50%;
             transform: translateX(-50%);
-            background: var(--surface2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 4px 8px;
-            font-size: 9px;
-            font-family: 'Space Mono', monospace;
-            color: var(--text);
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.15s;
-            z-index: 20;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 8px; padding: 4px 8px;
+            font-size: 9px; font-family: 'Space Mono', monospace; color: var(--text);
+            white-space: nowrap; pointer-events: none; opacity: 0;
+            transition: opacity 0.15s; z-index: 20;
         }
         .tl-event-dot:hover .tl-tooltip { opacity: 1; }
-        .tl-period-label {
-            position: absolute;
-            bottom: -20px;
-            font-size: 8px;
-            font-family: 'Space Mono', monospace;
-            color: var(--muted);
-            transform: translateX(-50%);
-        }
         .tl-cluster {
-            position: absolute;
-            top: 50%;
+            position: absolute; top: 50%;
             transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2px;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 2px; cursor: pointer; z-index: 5;
+        }
+        .tl-period-label {
+            position: absolute; bottom: -22px;
+            font-size: 8px; font-family: 'Space Mono', monospace;
+            color: var(--muted); transform: translateX(-50%);
         }
         @keyframes pulse-gold {
             0%,100% { box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4); }
-            50% { box-shadow: 0 0 20px var(--gold), 0 0 40px rgba(249,199,79,0.7); }
+            50%      { box-shadow: 0 0 22px var(--gold), 0 0 44px rgba(249,199,79,0.7); }
         }
 
-        /* ─── CHARTS ─── */
-        .bar-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
+        .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .bar-label { font-size: 10px; color: var(--muted); min-width: 90px; font-weight: 600; text-transform: uppercase; }
-        .bar-track {
-            flex: 1;
-            height: 22px;
-            background: var(--surface);
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-        }
-        .bar-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-            position: relative;
-        }
-        .bar-value {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-family: 'Space Mono', monospace;
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(255,255,255,0.9);
-        }
-        .bar-value-outside {
-            font-family: 'Space Mono', monospace;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--muted);
-            min-width: 24px;
-            text-align: right;
-        }
+        .bar-track { flex: 1; height: 22px; background: var(--surface); border-radius: 6px; overflow: hidden; position: relative; }
+        .bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s cubic-bezier(0.23,1,0.32,1); position: relative; }
+        .bar-value { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: 'Space Mono',monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); }
 
-        /* ─── DONUT ─── */
-        .donut-svg { transform: rotate(-90deg); }
-        .donut-label {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 28px;
-            fill: white;
-        }
-        .donut-sublabel {
-            font-size: 9px;
-            fill: var(--muted);
-            font-family: 'DM Sans', sans-serif;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
 
-        /* ─── CARDS ─── */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-        }
-        .card-sm {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px 16px;
-        }
         .stat-btn {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            padding: 12px 14px;
-            gap: 10px;
-            cursor: pointer;
-            transition: all 0.15s;
-            width: 100%;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 14px; display: flex; align-items: center;
+            padding: 12px 14px; gap: 10px; cursor: pointer;
+            transition: all 0.15s; width: 100%;
         }
         .stat-btn:active { border-color: var(--accent); background: rgba(67,97,238,0.1); }
-        .stat-count { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.02em; line-height: 1; min-width: 36px; }
-        .stat-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); line-height: 1.2; }
+        .stat-count { font-family: 'Bebas Neue',sans-serif; font-size: 32px; letter-spacing: 0.02em; line-height: 1; min-width: 36px; }
+        .stat-name  { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); line-height: 1.2; }
 
-        /* ─── TOAST ─── */
         .toast {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            background: var(--surface2);
-            border: 1px solid var(--accent);
-            color: white;
-            padding: 10px 18px;
-            border-radius: 10px;
+            position: fixed; top: 16px; right: 16px;
+            background: var(--surface2); border: 1px solid var(--accent);
+            color: white; padding: 10px 18px; border-radius: 10px;
             box-shadow: 0 8px 30px rgba(67,97,238,0.3);
-            z-index: 9999;
-            animation: slideIn 0.25s ease-out;
-            font-weight: 700;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            pointer-events: none;
+            z-index: 9999; animation: slideIn 0.25s ease-out;
+            font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; pointer-events: none;
         }
-        .toast.goal-toast {
-            border-color: var(--gold);
-            box-shadow: 0 8px 30px rgba(249,199,79,0.4);
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 18px;
-        }
+        .toast.goal-toast { border-color: var(--gold); box-shadow: 0 8px 30px rgba(249,199,79,0.4); font-family: 'Bebas Neue',sans-serif; font-size: 18px; }
         @keyframes slideIn {
             from { transform: translateX(120%) scale(0.9); opacity: 0; }
-            to { transform: translateX(0) scale(1); opacity: 1; }
+            to   { transform: translateX(0) scale(1); opacity: 1; }
         }
-
         .slide-enter { animation: slideEnter 0.3s ease-out; }
         @keyframes slideEnter {
             from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            to   { transform: translateX(0); opacity: 1; }
         }
 
-        /* ─── PDF REPORT STYLES ─── */
-        #report-area {
-            font-family: 'DM Sans', sans-serif;
-            background: #050810;
-            color: white;
-        }
+        #report-area { font-family: 'DM Sans',sans-serif; background: #050810; color: white; }
         .report-section-title {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 11px;
-            letter-spacing: 0.15em;
-            color: var(--muted);
-            text-transform: uppercase;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            font-family: 'Bebas Neue',sans-serif; font-size: 11px; letter-spacing: 0.15em;
+            color: var(--muted); text-transform: uppercase; margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
         }
-        .report-section-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
+        .report-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
         input, textarea, select { background: var(--surface); color: var(--text); border: 1px solid var(--border); outline: none; transition: border-color 0.2s; }
         input:focus, textarea:focus, select:focus { border-color: var(--accent); }
@@ -300,85 +155,85 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
-// ─── STORAGE (robust, with backup) ───────────────────────────────────────────
-const DB_KEY = 'socceranalyst_v3';
-const DB_BACKUP_KEY = 'socceranalyst_v3_backup';
+/* ═══════════════════════════════════════════════════════════════
+   STORAGE — primary + automatic backup slot, never loses data
+═══════════════════════════════════════════════════════════════ */
+const DB_KEY        = 'socceranalyst_v4';
+const DB_BACKUP_KEY = 'socceranalyst_v4_bak';
 
 function loadDB() {
-    try {
-        const raw = localStorage.getItem(DB_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed;
-        }
-    } catch(e) {}
-    // try backup
-    try {
-        const raw = localStorage.getItem(DB_BACKUP_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed;
-        }
-    } catch(e) {}
+    for (const key of [DB_KEY, DB_BACKUP_KEY]) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+            }
+        } catch (_) {}
+    }
     return [];
 }
 
 function saveDB(folders) {
     try {
         const str = JSON.stringify(folders);
-        // save backup first, then primary
-        localStorage.setItem(DB_BACKUP_KEY, localStorage.getItem(DB_KEY) || '[]');
+        const prev = localStorage.getItem(DB_KEY);
+        if (prev) localStorage.setItem(DB_BACKUP_KEY, prev);
         localStorage.setItem(DB_KEY, str);
-    } catch(e) {
-        // quota exceeded? try smaller save
-        console.warn('Save failed:', e);
+    } catch (e) {
+        console.warn('SoccerAnalyst: save failed', e);
     }
 }
 
-// ─── INITIAL STATS ─────────────────────────────────────────────────────────
-const INITIAL_STATS = [
-    { id: 1,  name: 'Golo',         count: 0, type: 'ataque' },
-    { id: 2,  name: 'Remate',       count: 0, type: 'ataque' },
-    { id: 3,  name: 'Rem. Enquad.', count: 0, type: 'ataque' },
-    { id: 4,  name: 'Cantos',       count: 0, type: 'ataque' },
-    { id: 5,  name: 'Rem. Área',    count: 0, type: 'ataque' },
-    { id: 6,  name: 'Cruzam.',      count: 0, type: 'ataque' },
-    { id: 7,  name: 'Golo Sofr.',   count: 0, type: 'defesa' },
-    { id: 8,  name: 'Recuper.',     count: 0, type: 'defesa' },
-    { id: 9,  name: 'Rem. Conc.',   count: 0, type: 'defesa' },
-    { id: 10, name: 'Rem. Área C.', count: 0, type: 'defesa' },
-    { id: 11, name: 'Perdas Bola',  count: 0, type: 'defesa' },
-    { id: 12, name: 'Faltas',       count: 0, type: 'defesa' },
+/* ═══════════════════════════════════════════════════════════════
+   DEFAULT STAT TEMPLATE
+═══════════════════════════════════════════════════════════════ */
+const DEFAULT_TEMPLATE = [
+    { id: 1,  name: 'Golo',         type: 'ataque' },
+    { id: 2,  name: 'Remate',       type: 'ataque' },
+    { id: 3,  name: 'Rem. Enquad.', type: 'ataque' },
+    { id: 4,  name: 'Cantos',       type: 'ataque' },
+    { id: 5,  name: 'Rem. Área',    type: 'ataque' },
+    { id: 6,  name: 'Cruzam.',      type: 'ataque' },
+    { id: 7,  name: 'Golo Sofr.',   type: 'defesa' },
+    { id: 8,  name: 'Recuper.',     type: 'defesa' },
+    { id: 9,  name: 'Rem. Conc.',   type: 'defesa' },
+    { id: 10, name: 'Rem. Área C.', type: 'defesa' },
+    { id: 11, name: 'Perdas Bola',  type: 'defesa' },
+    { id: 12, name: 'Faltas',       type: 'defesa' },
 ];
-const createInitialStats = () => INITIAL_STATS.map(s => ({ ...s }));
 
-const promptText = (msg, def='') => {
+function statsFromTemplate(template) {
+    return template.map(t => ({ id: t.id, name: t.name, type: t.type, count: 0 }));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+const promptText = (msg, def = '') => {
     const r = prompt(msg, def);
     if (r === null) return null;
     const t = r.trim();
     return t.length ? t : null;
 };
-const parsePtDate = (v) => {
+const parsePtDate = v => {
     if (!v) return null;
     const p = v.split('/');
     if (p.length !== 3) return null;
     const [d, m, y] = p.map(Number);
-    if (!d||!m||!y) return null;
-    return new Date(y, m-1, d);
+    return (d && m && y) ? new Date(y, m - 1, d) : null;
 };
-const fmt = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-const fmtMin = (s) => `${Math.floor(s/60)}'`;
+const fmt    = s => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+const fmtMin = s => `${Math.floor(s / 60)}'`;
 
-// ─── TOAST ────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENTS
+═══════════════════════════════════════════════════════════════ */
 function Toast({ message, isGoal, onClose }) {
-    useEffect(() => {
-        const t = setTimeout(onClose, isGoal ? 3000 : 2000);
-        return () => clearTimeout(t);
-    }, [onClose]);
-    return <div className={`toast${isGoal?' goal-toast':''}`}>{message}</div>;
+    useEffect(() => { const t = setTimeout(onClose, isGoal ? 3000 : 2000); return () => clearTimeout(t); }, [onClose]);
+    return <div className={`toast${isGoal ? ' goal-toast' : ''}`}>{message}</div>;
 }
 
-// ─── BAR CHART ───────────────────────────────────────────────────────────
 function BarChart({ data, colorFn }) {
     const max = Math.max(...data.map(d => d.value), 1);
     return (
@@ -387,16 +242,10 @@ function BarChart({ data, colorFn }) {
                 <div key={i} className="bar-row">
                     <div className="bar-label">{d.label}</div>
                     <div className="bar-track">
-                        <div
-                            className="bar-fill"
-                            style={{
-                                width: `${(d.value / max) * 100}%`,
-                                background: colorFn ? colorFn(d, i) : 'var(--accent)',
-                            }}
-                        >
+                        <div className="bar-fill" style={{ width: `${(d.value / max) * 100}%`, background: colorFn ? colorFn(d, i) : 'var(--accent)' }}>
                             {d.value > 0 && <span className="bar-value">{d.value}</span>}
                         </div>
-                        {d.value === 0 && <span style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'var(--muted)',fontFamily:'Space Mono'}}>0</span>}
+                        {d.value === 0 && <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 10, color: 'var(--muted)', fontFamily: 'Space Mono' }}>0</span>}
                     </div>
                 </div>
             ))}
@@ -404,149 +253,103 @@ function BarChart({ data, colorFn }) {
     );
 }
 
-// ─── DONUT CHART ─────────────────────────────────────────────────────────
-function DonutChart({ value, max, color, label, sublabel, size=80 }) {
-    const r = 30;
-    const circ = 2 * Math.PI * r;
-    const pct = max > 0 ? Math.min(value/max, 1) : 0;
-    const dash = pct * circ;
+function DonutChart({ value, max, color, label, sublabel, size = 80 }) {
+    const r = 30, circ = 2 * Math.PI * r;
+    const dash = (max > 0 ? Math.min(value / max, 1) : 0) * circ;
     return (
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <svg width={size} height={size} viewBox="0 0 80 80">
-                <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="8"/>
-                <circle
-                    cx="40" cy="40" r={r} fill="none"
-                    stroke={color}
-                    strokeWidth="8"
-                    strokeDasharray={`${dash} ${circ - dash}`}
-                    strokeLinecap="round"
-                    style={{transform:'rotate(-90deg)',transformOrigin:'50% 50%',transition:'stroke-dasharray 0.8s cubic-bezier(0.23,1,0.32,1)'}}
-                />
-                <text x="40" y="38" textAnchor="middle" dominantBaseline="middle" style={{fill:'white',fontFamily:'Bebas Neue',fontSize:20,letterSpacing:1}}>{value}</text>
-                <text x="40" y="52" textAnchor="middle" dominantBaseline="middle" style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:7,fontWeight:600,textTransform:'uppercase'}}>{sublabel}</text>
+                <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="8" />
+                <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="8"
+                    strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%', transition: 'stroke-dasharray 0.8s cubic-bezier(0.23,1,0.32,1)' }} />
+                <text x="40" y="38" textAnchor="middle" dominantBaseline="middle"
+                    style={{ fill: 'white', fontFamily: 'Bebas Neue', fontSize: 20, letterSpacing: 1 }}>{value}</text>
+                <text x="40" y="52" textAnchor="middle" dominantBaseline="middle"
+                    style={{ fill: 'var(--muted)', fontFamily: 'DM Sans', fontSize: 7, fontWeight: 600, textTransform: 'uppercase' }}>{sublabel}</text>
             </svg>
-            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:'0.06em'}}>{label}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '0.06em' }}>{label}</div>
         </div>
     );
 }
 
-// ─── STACKED BAR ─────────────────────────────────────────────────────────
 function StackedBar({ leftVal, rightVal, leftColor, rightColor, leftLabel, rightLabel }) {
     const total = leftVal + rightVal;
-    const lp = total > 0 ? (leftVal/total)*100 : 50;
-    const rp = 100 - lp;
+    const lp = total > 0 ? (leftVal / total) * 100 : 50;
     return (
         <div>
-            <div style={{display:'flex',height:28,borderRadius:8,overflow:'hidden',gap:2}}>
-                <div style={{width:`${lp}%`,background:leftColor,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:lp>0?'30px':0}}>{leftVal>0?leftVal:''}</div>
-                <div style={{width:`${rp}%`,background:rightColor,display:'flex',alignItems:'center',justifyContent:'flex-start',paddingLeft:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:rp>0?'30px':0}}>{rightVal>0?rightVal:''}</div>
+            <div style={{ display: 'flex', height: 28, borderRadius: 8, overflow: 'hidden', gap: 2 }}>
+                <div style={{ width: `${lp}%`, background: leftColor, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8, fontSize: 11, fontFamily: 'Space Mono', fontWeight: 700, minWidth: lp > 0 ? '30px' : 0 }}>{leftVal > 0 ? leftVal : ''}</div>
+                <div style={{ width: `${100 - lp}%`, background: rightColor, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: 8, fontSize: 11, fontFamily: 'Space Mono', fontWeight: 700, minWidth: (100 - lp) > 0 ? '30px' : 0 }}>{rightVal > 0 ? rightVal : ''}</div>
             </div>
-            <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
-                <span style={{fontSize:9,color:leftColor,fontWeight:700,textTransform:'uppercase'}}>{leftLabel}</span>
-                <span style={{fontSize:9,color:rightColor,fontWeight:700,textTransform:'uppercase'}}>{rightLabel}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                <span style={{ fontSize: 9, color: leftColor, fontWeight: 700, textTransform: 'uppercase' }}>{leftLabel}</span>
+                <span style={{ fontSize: 9, color: rightColor, fontWeight: 700, textTransform: 'uppercase' }}>{rightLabel}</span>
             </div>
         </div>
     );
 }
 
-// ─── IMPROVED TIMELINE ────────────────────────────────────────────────────
-function Timeline({ events, totalTime, filter }) {
+function Timeline({ events, totalTime }) {
     const [hovered, setHovered] = useState(null);
     const displayTime = Math.max(totalTime, 90 * 60);
-
-    // cluster events that are close together
-    const CLUSTER_THRESHOLD = 0.025; // 2.5% of timeline
+    const THRESHOLD = 0.025;
     const clusters = [];
-    const sorted = [...events].sort((a,b) => a.time - b.time);
-    sorted.forEach(ev => {
+    [...events].sort((a, b) => a.time - b.time).forEach(ev => {
         const pct = ev.time / displayTime;
-        const last = clusters[clusters.length-1];
-        if (last && Math.abs(last.pct - pct) < CLUSTER_THRESHOLD) {
+        const last = clusters[clusters.length - 1];
+        if (last && Math.abs(last.pct - pct) < THRESHOLD) {
             last.events.push(ev);
-            last.pct = (last.pct * last.events.length + pct) / (last.events.length);
+            last.pct = last.events.reduce((s, e) => s + e.time / displayTime, 0) / last.events.length;
         } else {
             clusters.push({ pct, events: [ev] });
         }
     });
-
     const minutes = [15, 30, 45, 60, 75, 90];
-
     return (
         <div className="timeline-wrap">
-            {/* minute marks */}
             <div className="timeline-track">
                 <div className="timeline-half" />
                 {minutes.map(m => (
-                    <div key={m} className="tl-minute-mark" style={{left:`${(m*60/displayTime)*100}%`}}>
+                    <div key={m} className="tl-minute-mark" style={{ left: `${(m * 60 / displayTime) * 100}%` }}>
                         <span className="tl-label-top">{m}'</span>
                     </div>
                 ))}
-                {/* clusters */}
                 {clusters.map((cluster, ci) => {
-                    const hasGoal = cluster.events.some(e => e.isGoal);
-                    const isHovered = hovered === ci;
                     if (cluster.events.length === 1) {
                         const e = cluster.events[0];
-                        const cls = e.isGoal ? 'goal' : e.type;
                         return (
-                            <div
-                                key={ci}
-                                className={`tl-event-dot ${cls}`}
-                                style={{ left: `${cluster.pct*100}%` }}
-                                onMouseEnter={() => setHovered(ci)}
-                                onMouseLeave={() => setHovered(null)}
-                            >
+                            <div key={ci} className={`tl-event-dot ${e.isGoal ? 'goal' : e.type}`} style={{ left: `${cluster.pct * 100}%` }}
+                                onMouseEnter={() => setHovered(ci)} onMouseLeave={() => setHovered(null)}>
                                 <div className="tl-tooltip">{fmtMin(e.time)} {e.name}</div>
                             </div>
                         );
                     }
-                    // multiple events clustered
                     return (
-                        <div
-                            key={ci}
-                            className="tl-cluster"
-                            style={{ left: `${cluster.pct*100}%` }}
-                            onMouseEnter={() => setHovered(ci)}
-                            onMouseLeave={() => setHovered(null)}
-                        >
-                            {cluster.events.slice(0,3).map((e, ei) => {
-                                const cls = e.isGoal ? 'goal' : e.type;
-                                return (
-                                    <div key={ei} className={`tl-event-dot ${cls}`}
-                                        style={{position:'relative',transform:'none',top:'auto',left:'auto',marginBottom:1}}
-                                    />
-                                );
-                            })}
-                            {isHovered && (
-                                <div style={{
-                                    position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',
-                                    background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,
-                                    padding:'6px 10px',zIndex:20,whiteSpace:'nowrap',minWidth:120
-                                }}>
-                                    {cluster.events.map((e,ei) => (
-                                        <div key={ei} style={{fontSize:9,fontFamily:'Space Mono',color:'var(--text)',marginBottom:2}}>
-                                            {fmtMin(e.time)} {e.name}
-                                        </div>
+                        <div key={ci} className="tl-cluster" style={{ left: `${cluster.pct * 100}%` }}
+                            onMouseEnter={() => setHovered(ci)} onMouseLeave={() => setHovered(null)}>
+                            {cluster.events.slice(0, 4).map((e, ei) => (
+                                <div key={ei} className={`tl-event-dot ${e.isGoal ? 'goal' : e.type}`}
+                                    style={{ position: 'relative', transform: 'none', top: 'auto', left: 'auto', marginBottom: 1 }} />
+                            ))}
+                            {hovered === ci && (
+                                <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', zIndex: 20, whiteSpace: 'nowrap', minWidth: 120 }}>
+                                    {cluster.events.map((e, ei) => (
+                                        <div key={ei} style={{ fontSize: 9, fontFamily: 'Space Mono', color: 'var(--text)', marginBottom: 2 }}>{fmtMin(e.time)} {e.name}</div>
                                     ))}
                                 </div>
                             )}
                         </div>
                     );
                 })}
-                {/* period labels */}
-                <span className="tl-period-label" style={{left:'25%'}}>1º Tempo</span>
-                <span className="tl-period-label" style={{left:'75%'}}>2º Tempo</span>
+                <span className="tl-period-label" style={{ left: '25%' }}>1º Tempo</span>
+                <span className="tl-period-label" style={{ left: '75%' }}>2º Tempo</span>
             </div>
-            {/* legend */}
-            <div style={{display:'flex',gap:16,marginTop:28,justifyContent:'center'}}>
-                {[
-                    {color:'var(--gold)',label:'Golo'},
-                    {color:'var(--accent)',label:'Ataque'},
-                    {color:'var(--red)',label:'Defesa'},
-                ].map(l => (
-                    <div key={l.label} style={{display:'flex',alignItems:'center',gap:6}}>
-                        <div style={{width:8,height:8,borderRadius:'50%',background:l.color}}/>
-                        <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)'}}>{l.label}</span>
+            <div style={{ display: 'flex', gap: 16, marginTop: 28, justifyContent: 'center' }}>
+                {[{ color: 'var(--gold)', label: 'Golo' }, { color: 'var(--accent)', label: 'Ataque' }, { color: 'var(--red)', label: 'Defesa' }].map(l => (
+                    <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
+                        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>{l.label}</span>
                     </div>
                 ))}
             </div>
@@ -554,85 +357,118 @@ function Timeline({ events, totalTime, filter }) {
     );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════
+   APP
+═══════════════════════════════════════════════════════════════ */
 function App() {
-    const [view, setView] = useState('folders');
-    const [folders, setFolders] = useState(loadDB);
+    const [view,            setView]            = useState('folders');
+    const [folders,         setFolders]         = useState(loadDB);
     const [currentFolderId, setCurrentFolderId] = useState(null);
-    const [currentGameId, setCurrentGameId] = useState(null);
-    const [isActive, setIsActive] = useState(false);
-    const [showNotes, setShowNotes] = useState(false);
-    const [toast, setToast] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState('date');
-    const [eventFilter, setEventFilter] = useState('all');
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-    const [minGoalsFor, setMinGoalsFor] = useState('');
+    const [currentGameId,   setCurrentGameId]   = useState(null);
+    const [isActive,        setIsActive]        = useState(false);
+    const [showNotes,       setShowNotes]       = useState(false);
+    const [toast,           setToast]           = useState(null);
+    const [searchTerm,      setSearchTerm]      = useState('');
+    const [sortBy,          setSortBy]          = useState('date');
+    const [eventFilter,     setEventFilter]     = useState('all');
+    const [dateFrom,        setDateFrom]        = useState('');
+    const [dateTo,          setDateTo]          = useState('');
+    const [minGoalsFor,     setMinGoalsFor]     = useState('');
     const [minGoalsAgainst, setMinGoalsAgainst] = useState('');
     const importRef = useRef(null);
 
-    // current game derived from folders (always fresh)
-    const currentGame = currentGameId && currentFolderId
-        ? (folders.find(f=>f.id===currentFolderId)?.games||[]).find(g=>g.id===currentGameId) || null
+    // Always derive currentGame live from folders
+    const currentGame = (currentGameId && currentFolderId)
+        ? (folders.find(f => f.id === currentFolderId)?.games || []).find(g => g.id === currentGameId) || null
         : null;
 
-    // ─── SAVE on every folders change ───
-    useEffect(() => {
-        saveDB(folders);
-    }, [folders]);
+    // Persist every change
+    useEffect(() => { saveDB(folders); }, [folders]);
 
-    // ─── TIMER ───
+    // Timer
     useEffect(() => {
         if (!isActive || !currentGameId) return;
         const iv = setInterval(() => {
             setFolders(prev => prev.map(f => {
                 if (f.id !== currentFolderId) return f;
-                return {
-                    ...f,
-                    games: f.games.map(g => {
-                        if (g.id !== currentGameId) return g;
-                        return { ...g, time: g.time + 1 };
-                    })
-                };
+                return { ...f, games: f.games.map(g => g.id !== currentGameId ? g : { ...g, time: g.time + 1 }) };
             }));
         }, 1000);
         return () => clearInterval(iv);
     }, [isActive, currentGameId, currentFolderId]);
 
-    // ─── KEYBOARD ───
+    // Keyboard shortcut
     useEffect(() => {
-        const h = (e) => {
+        const h = e => {
             if (view === 'tracking' && e.code === 'Space' && !e.target.matches('textarea,input')) {
-                e.preventDefault();
-                setIsActive(p => !p);
+                e.preventDefault(); setIsActive(p => !p);
             }
         };
         window.addEventListener('keydown', h);
         return () => window.removeEventListener('keydown', h);
     }, [view]);
 
-    const showToast = useCallback((msg, goal=false) => {
-        setToast({ msg, goal });
-    }, []);
+    const showToast = useCallback((msg, goal = false) => setToast({ msg, goal }), []);
 
-    // ─── UPDATE GAME ───
-    const updateGame = useCallback((updater) => {
+    // Update current game only
+    const updateGame = useCallback(updater => {
         setFolders(prev => prev.map(f => {
             if (f.id !== currentFolderId) return f;
-            return {
-                ...f,
-                games: f.games.map(g => {
-                    if (g.id !== currentGameId) return g;
-                    return typeof updater === 'function' ? updater(g) : { ...g, ...updater };
-                })
-            };
+            return { ...f, games: f.games.map(g => g.id !== currentGameId ? g : (typeof updater === 'function' ? updater(g) : { ...g, ...updater })) };
         }));
     }, [currentFolderId, currentGameId]);
 
-    const adjustTime = (delta) => updateGame(g => ({ ...g, time: Math.max(0, g.time + delta) }));
+    // Get folder's stat template (falls back to DEFAULT_TEMPLATE)
+    const getFolderTemplate = useCallback(folderId => {
+        const folder = folders.find(f => f.id === folderId);
+        return folder?.statTemplate || DEFAULT_TEMPLATE.map(s => ({ ...s }));
+    }, [folders]);
 
-    const addStat = (id) => {
+    /**
+     * syncStatToFolder — core of the "shared actions" feature
+     *
+     * When a new stat is created (or renamed) in one game:
+     *  1. Add/update it in the folder's statTemplate
+     *  2. Add it (with count 0) to every OTHER game that doesn't have it yet
+     *
+     * This way every new game created afterwards also inherits it automatically
+     * (because new games are built from the template).
+     */
+    const syncStatToFolder = useCallback((folderId, newStat) => {
+        setFolders(prev => prev.map(f => {
+            if (f.id !== folderId) return f;
+
+            // 1. Update template
+            const template = f.statTemplate || DEFAULT_TEMPLATE.map(s => ({ ...s }));
+            const tplIdx   = template.findIndex(t => t.id === newStat.id);
+            const newTemplate = tplIdx >= 0
+                ? template.map(t => t.id === newStat.id ? { ...t, name: newStat.name, type: newStat.type } : t)
+                : [...template, { id: newStat.id, name: newStat.name, type: newStat.type }];
+
+            // 2. Propagate to all games: insert with count 0 if absent
+            const updatedGames = f.games.map(g => {
+                if (g.stats.find(s => s.id === newStat.id)) return g;
+                return { ...g, stats: [...g.stats, { id: newStat.id, name: newStat.name, type: newStat.type, count: 0 }] };
+            });
+
+            return { ...f, statTemplate: newTemplate, games: updatedGames };
+        }));
+    }, []);
+
+    /**
+     * renameStatAcrossFolder — rename in template AND in every game
+     */
+    const renameStatAcrossFolder = useCallback((folderId, statId, newName) => {
+        setFolders(prev => prev.map(f => {
+            if (f.id !== folderId) return f;
+            const template = (f.statTemplate || DEFAULT_TEMPLATE.map(s => ({ ...s }))).map(t => t.id === statId ? { ...t, name: newName } : t);
+            const games    = f.games.map(g => ({ ...g, stats: g.stats.map(s => s.id === statId ? { ...s, name: newName } : s) }));
+            return { ...f, statTemplate: template, games };
+        }));
+    }, []);
+
+    // Add a stat event (tracking)
+    const addStat = id => {
         if (!isActive) { showToast('⚠️ Inicia o Cronómetro!'); return; }
         let statName = '', isGoal = false;
         updateGame(g => {
@@ -642,46 +478,63 @@ function App() {
             isGoal = stat.name.toLowerCase().includes('golo') && stat.type === 'ataque';
             return {
                 ...g,
-                stats: g.stats.map(s => s.id===id ? {...s, count: s.count+1} : s),
-                events: [...g.events, { time: g.time, type: stat.type, name: stat.name, isGoal, statId: id }]
+                stats: g.stats.map(s => s.id === id ? { ...s, count: s.count + 1 } : s),
+                events: [...g.events, { time: g.time, type: stat.type, name: stat.name, isGoal, statId: id }],
             };
         });
-        if (navigator.vibrate) navigator.vibrate(isGoal ? [50,50,50] : 25);
+        if (navigator.vibrate) navigator.vibrate(isGoal ? [50, 50, 50] : 25);
         if (statName) showToast(isGoal ? '⚽ GOLOOO!' : `✓ ${statName}`, isGoal);
     };
 
-    const removeStat = (id) => {
+    // Remove last occurrence of a stat
+    const removeStat = id => {
+        let removed = false;
         updateGame(g => {
-            const stat = g.stats.find(s => s.id===id);
+            const stat = g.stats.find(s => s.id === id);
             if (!stat || stat.count <= 0) return g;
+            removed = true;
             const events = [...g.events];
-            const li = [...events].reverse().findIndex(e => e.statId===id);
-            if (li !== -1) events.splice(events.length-1-li, 1);
-            return {
-                ...g,
-                stats: g.stats.map(s => s.id===id ? {...s, count: s.count-1} : s),
-                events
-            };
+            const li = [...events].reverse().findIndex(e => e.statId === id);
+            if (li !== -1) events.splice(events.length - 1 - li, 1);
+            return { ...g, stats: g.stats.map(s => s.id === id ? { ...s, count: s.count - 1 } : s), events };
         });
-        showToast('↩ Removido');
+        if (removed) showToast('↩ Removido');
     };
 
     const undoLast = () => {
-        if (!currentGame || !currentGame.events.length) return;
-        const last = currentGame.events[currentGame.events.length-1];
-        removeStat(last.statId);
+        if (!currentGame?.events.length) return;
+        removeStat(currentGame.events[currentGame.events.length - 1].statId);
     };
 
-    const compressImage = (file) => new Promise(res => {
+    // Add a custom action and sync it to all games in the folder
+    const addCustomStat = type => {
+        const n = promptText(`Nova ação de ${type}:\n(será adicionada a todos os jogos desta pasta)`);
+        if (!n) return;
+        const newStat = { id: Date.now(), name: n, type, count: 0 };
+        updateGame(g => ({ ...g, stats: [...g.stats, newStat] }));
+        syncStatToFolder(currentFolderId, newStat);
+        showToast(`✓ "${n}" adicionado a todos os jogos`);
+    };
+
+    // Rename a stat and sync the name everywhere
+    const renameStat = (statId, currentName) => {
+        const n = promptText('Novo nome:', currentName);
+        if (!n || n === currentName) return;
+        renameStatAcrossFolder(currentFolderId, statId, n);
+        showToast('✓ Renomeado em todos os jogos');
+    };
+
+    const adjustTime = delta => updateGame(g => ({ ...g, time: Math.max(0, g.time + delta) }));
+
+    const compressImage = file => new Promise(res => {
         const r = new FileReader();
         r.onload = () => {
             const img = new Image();
             img.onload = () => {
-                const scale = Math.min(1, 512/Math.max(img.width, img.height));
+                const scale = Math.min(1, 512 / Math.max(img.width, img.height));
                 const c = document.createElement('canvas');
-                c.width = Math.round(img.width*scale);
-                c.height = Math.round(img.height*scale);
-                c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+                c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+                c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
                 res(c.toDataURL('image/jpeg', 0.8));
             };
             img.src = r.result;
@@ -689,74 +542,33 @@ function App() {
         r.readAsDataURL(file);
     });
 
-    const getPeriodInfo = (t) => {
-        const m = Math.floor(t/60);
-        if (m < 45) return { label:'1º TEMPO', color:'#2dc653' };
-        if (m < 90) return { label:'2º TEMPO', color:'#4361ee' };
-        return { label:'PRORROG.', color:'#f9c74f' };
+    const getPeriodInfo = t => {
+        const m = Math.floor(t / 60);
+        if (m < 45) return { label: '1º TEMPO', color: '#2dc653' };
+        if (m < 90) return { label: '2º TEMPO', color: '#4361ee' };
+        return { label: 'PRORROG.', color: '#f9c74f' };
     };
 
-    const getFolderSummary = (folder) => {
+    const getFolderSummary = folder => {
         if (!folder.games.length) return null;
-        const golos = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Golo')?.count||0), 0);
-        const sofr = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Golo Sofr.')?.count||0), 0);
-        const rem = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Remate')?.count||0), 0);
-        const ef = rem > 0 ? ((golos/rem)*100).toFixed(1) : 0;
+        const golos = folder.games.reduce((s, g) => s + (g.stats.find(x => x.name === 'Golo')?.count || 0), 0);
+        const sofr  = folder.games.reduce((s, g) => s + (g.stats.find(x => x.name === 'Golo Sofr.')?.count || 0), 0);
+        const rem   = folder.games.reduce((s, g) => s + (g.stats.find(x => x.name === 'Remate')?.count || 0), 0);
+        const ef    = rem > 0 ? ((golos / rem) * 100).toFixed(1) : 0;
         return { games: folder.games.length, golos, sofr, ef };
     };
 
-    const exportPDF = async () => {
-        showToast('📄 Gerando PDF...');
-        try {
-            const el = document.getElementById('report-area');
-            const canvas = await html2canvas(el, {
-                backgroundColor: '#050810',
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                scrollX: 0,
-                scrollY: -window.scrollY,
-                windowWidth: el.scrollWidth,
-                windowHeight: el.scrollHeight
-            });
-            const pdf = new jspdf.jsPDF('p','mm','a4');
-            const pw = pdf.internal.pageSize.getWidth();
-            const ph = pdf.internal.pageSize.getHeight();
-            const margin = 8;
-            const cw = pw - margin*2;
-            const ch = ph - margin*2;
-            const pxPerMm = canvas.width / cw;
-            const pageHPx = Math.floor(ch * pxPerMm);
-            const pageC = document.createElement('canvas');
-            const pCtx = pageC.getContext('2d');
-            let rendered = 0, page = 0;
-            while (rendered < canvas.height) {
-                const slice = Math.min(pageHPx, canvas.height - rendered);
-                pageC.width = canvas.width;
-                pageC.height = slice;
-                pCtx.clearRect(0,0,pageC.width,pageC.height);
-                pCtx.drawImage(canvas,0,rendered,canvas.width,slice,0,0,pageC.width,pageC.height);
-                if (page>0) pdf.addPage();
-                pdf.addImage(pageC.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,cw,slice/pxPerMm,undefined,'FAST');
-                rendered += slice; page++;
-            }
-            pdf.save(`SoccerAnalyst_${currentGame.opponent}_${currentGame.date.replace(/\//g,'-')}.pdf`);
-            showToast('✓ PDF Guardado');
-        } catch(e) {
-            showToast('⚠️ Erro ao gerar PDF');
-        }
-    };
-
     const handleExport = () => {
-        const blob = new Blob([JSON.stringify({version:3, exportedAt: new Date().toISOString(), folders})], {type:'application/json'});
+        const blob = new Blob([JSON.stringify({ version: 4, exportedAt: new Date().toISOString(), folders })], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.href = url; a.download = `socceranalyst_backup_${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
         showToast('✓ Backup Exportado');
     };
-    const handleImport = (file) => {
+
+    const handleImport = file => {
         if (!file) return;
         const r = new FileReader();
         r.onload = () => {
@@ -766,58 +578,93 @@ function App() {
                 if (!Array.isArray(imported)) { showToast('⚠️ Ficheiro inválido'); return; }
                 setFolders(imported);
                 showToast('✓ Dados Importados');
-            } catch(e) { showToast('⚠️ Erro ao importar'); }
+            } catch (_) { showToast('⚠️ Erro ao importar'); }
         };
         r.readAsText(file);
     };
 
-    // ─── VIEW: FOLDERS ───────────────────────────────────────────────────
+    const exportPDF = async () => {
+        showToast('📄 Gerando PDF...');
+        try {
+            const el = document.getElementById('report-area');
+            const canvas = await html2canvas(el, { backgroundColor: '#050810', scale: 2, useCORS: true, logging: false, scrollX: 0, scrollY: -window.scrollY, windowWidth: el.scrollWidth, windowHeight: el.scrollHeight });
+            const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+            const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+            const margin = 8, cw = pw - margin * 2, ch = ph - margin * 2;
+            const pxPerMm = canvas.width / cw, pageHPx = Math.floor(ch * pxPerMm);
+            const pageC = document.createElement('canvas'), pCtx = pageC.getContext('2d');
+            let rendered = 0, page = 0;
+            while (rendered < canvas.height) {
+                const slice = Math.min(pageHPx, canvas.height - rendered);
+                pageC.width = canvas.width; pageC.height = slice;
+                pCtx.clearRect(0, 0, pageC.width, pageC.height);
+                pCtx.drawImage(canvas, 0, rendered, canvas.width, slice, 0, 0, pageC.width, pageC.height);
+                if (page > 0) pdf.addPage();
+                pdf.addImage(pageC.toDataURL('image/jpeg', 0.95), 'JPEG', margin, margin, cw, slice / pxPerMm, undefined, 'FAST');
+                rendered += slice; page++;
+            }
+            pdf.save(`SoccerAnalyst_${currentGame.opponent}_${currentGame.date.replace(/\//g, '-')}.pdf`);
+            showToast('✓ PDF Guardado');
+        } catch (e) { showToast('⚠️ Erro ao gerar PDF'); }
+    };
+
+    /* ── BUTTON STYLE HELPERS ── */
+    const btnBase = (bg, color, extra = {}) => ({
+        border: '1px solid var(--border)', borderRadius: 10, background: bg,
+        color, cursor: 'pointer', fontFamily: 'DM Sans', fontWeight: 700, ...extra,
+    });
+
+    /* ══════════════════════════════════════════════════════
+       VIEW: FOLDERS
+    ══════════════════════════════════════════════════════ */
     if (view === 'folders') return (
-        <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:32}}>
-                <h1 style={{fontFamily:'Bebas Neue',fontSize:32,color:'var(--accent)',letterSpacing:3,lineHeight:1}}>SoccerAnalyst<br/><span style={{color:'var(--text)',fontSize:18,letterSpacing:6}}>PRO</span></h1>
-                <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                    <button onClick={handleExport} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Exportar</button>
-                    <button onClick={() => importRef.current?.click()} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Importar</button>
-                    <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
+        <div style={{ padding: 24, height: '100vh', overflowY: 'auto', background: 'var(--bg)' }} className="slide-enter no-scrollbar">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+                <h1 style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'var(--accent)', letterSpacing: 3, lineHeight: 1 }}>
+                    SoccerAnalyst<br /><span style={{ color: 'var(--text)', fontSize: 18, letterSpacing: 6 }}>PRO</span>
+                </h1>
+                <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={handleExport} style={{ padding: '8px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', cursor: 'pointer', letterSpacing: 1 }}>Exportar</button>
+                    <button onClick={() => importRef.current?.click()} style={{ padding: '8px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', cursor: 'pointer', letterSpacing: 1 }}>Importar</button>
+                    <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={e => handleImport(e.target.files[0])} />
                 </div>
             </div>
 
             <button
-                onClick={() => { const n=promptText("Nome da Pasta:"); if(n){ setFolders(prev=>[{id:Date.now(),name:n,games:[]},...prev]); showToast('✓ Pasta Criada'); }}}
-                style={{width:'100%',padding:'18px',marginBottom:24,border:'2px dashed var(--border)',borderRadius:16,background:'transparent',color:'var(--muted)',fontWeight:700,fontSize:13,textTransform:'uppercase',letterSpacing:2,cursor:'pointer',transition:'all 0.2s'}}
-                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
+                onClick={() => {
+                    const n = promptText('Nome da Pasta:');
+                    if (n) {
+                        setFolders(prev => [{ id: Date.now(), name: n, games: [], statTemplate: DEFAULT_TEMPLATE.map(s => ({ ...s })) }, ...prev]);
+                        showToast('✓ Pasta Criada');
+                    }
+                }}
+                style={{ width: '100%', padding: 18, marginBottom: 24, border: '2px dashed var(--border)', borderRadius: 16, background: 'transparent', color: 'var(--muted)', fontWeight: 700, fontSize: 13, textTransform: 'uppercase', letterSpacing: 2, cursor: 'pointer' }}
+                onMouseOver={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}
             >+ Nova Pasta</button>
 
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {folders.map(f => {
                     const s = getFolderSummary(f);
                     return (
-                        <div key={f.id} onClick={()=>{setCurrentFolderId(f.id);setView('games');}} className="card active-btn" style={{cursor:'pointer',transition:'all 0.2s'}}
-                            onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                            onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
-                        >
-                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:s?16:0}}>
+                        <div key={f.id} onClick={() => { setCurrentFolderId(f.id); setView('games'); }} className="card active-btn"
+                            style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                            onMouseOver={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                            onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: s ? 16 : 0 }}>
                                 <div>
-                                    <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2,color:'var(--text)'}}>{f.name}</div>
-                                    <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogos</div>
+                                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, letterSpacing: 2 }}>{f.name}</div>
+                                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--accent)', letterSpacing: 2, marginTop: 2 }}>{f.games.length} Jogos</div>
                                 </div>
-                                <button
-                                    onClick={e=>{e.stopPropagation();if(confirm("Apagar pasta?"))setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('🗑 Eliminada');}}
-                                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:8,fontSize:10,color:'var(--muted)',cursor:'pointer',fontWeight:700}}
-                                >✕</button>
+                                <button onClick={e => { e.stopPropagation(); if (confirm('Apagar pasta e todos os jogos?')) { setFolders(prev => prev.filter(x => x.id !== f.id)); showToast('🗑 Eliminada'); } }}
+                                    style={{ padding: '6px 12px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, fontSize: 10, color: 'var(--muted)', cursor: 'pointer', fontWeight: 700 }}>✕</button>
                             </div>
                             {s && (
-                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-                                    {[
-                                        {val:s.golos,label:'Golos',color:'var(--green)'},
-                                        {val:s.sofr,label:'Sofridos',color:'var(--red)'},
-                                        {val:`${s.ef}%`,label:'Eficácia',color:'var(--accent)'},
-                                    ].map(x=>(
-                                        <div key={x.label} style={{textAlign:'center',padding:'10px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)'}}>
-                                            <div style={{fontFamily:'Bebas Neue',fontSize:26,color:x.color,lineHeight:1}}>{x.val}</div>
-                                            <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',marginTop:2,letterSpacing:1}}>{x.label}</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                                    {[{ val: s.golos, label: 'Golos', color: 'var(--green)' }, { val: s.sofr, label: 'Sofridos', color: 'var(--red)' }, { val: `${s.ef}%`, label: 'Eficácia', color: 'var(--accent)' }].map(x => (
+                                        <div key={x.label} style={{ textAlign: 'center', padding: 10, background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)' }}>
+                                            <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: x.color, lineHeight: 1 }}>{x.val}</div>
+                                            <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', marginTop: 2, letterSpacing: 1 }}>{x.label}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -826,224 +673,228 @@ function App() {
                     );
                 })}
             </div>
-            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={() => setToast(null)} />}
         </div>
     );
 
-    // ─── VIEW: GAMES ─────────────────────────────────────────────────────
+    /* ══════════════════════════════════════════════════════
+       VIEW: GAMES
+    ══════════════════════════════════════════════════════ */
     if (view === 'games') {
-        const folder = folders.find(f=>f.id===currentFolderId);
+        const folder = folders.find(f => f.id === currentFolderId);
         if (!folder) { setView('folders'); return null; }
+
         const fromD = dateFrom ? new Date(dateFrom) : null;
-        const toD = dateTo ? (() => { const d=new Date(dateTo); d.setHours(23,59,59,999); return d; })() : null;
+        const toD   = dateTo   ? (() => { const d = new Date(dateTo); d.setHours(23, 59, 59, 999); return d; })() : null;
+
         const filtered = folder.games.filter(g => {
             if (!g.opponent.toLowerCase().includes(searchTerm.toLowerCase())) return false;
             const gd = parsePtDate(g.date);
-            if (fromD && (!gd||gd<fromD)) return false;
-            if (toD && (!gd||gd>toD)) return false;
-            const gf = g.stats.find(s=>s.name==='Golo')?.count||0;
-            const ga = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-            if (minGoalsFor && gf < Number(minGoalsFor)) return false;
+            if (fromD && (!gd || gd < fromD)) return false;
+            if (toD   && (!gd || gd > toD))   return false;
+            const gf = g.stats.find(s => s.name === 'Golo')?.count || 0;
+            const ga = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
+            if (minGoalsFor     && gf < Number(minGoalsFor))     return false;
             if (minGoalsAgainst && ga < Number(minGoalsAgainst)) return false;
             return true;
-        }).sort((a,b) => sortBy==='date' ? (parsePtDate(b.date)-parsePtDate(a.date)) : a.opponent.localeCompare(b.opponent));
+        }).sort((a, b) => sortBy === 'date' ? (parsePtDate(b.date) - parsePtDate(a.date)) : a.opponent.localeCompare(b.opponent));
 
-        const sumGF = filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
-        const sumGA = filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
+        const sumGF = filtered.reduce((s, g) => s + (g.stats.find(x => x.name === 'Golo')?.count || 0), 0);
+        const sumGA = filtered.reduce((s, g) => s + (g.stats.find(x => x.name === 'Golo Sofr.')?.count || 0), 0);
+
+        const addGame = () => {
+            const o = promptText('Adversário:');
+            if (!o) return;
+            const template = getFolderTemplate(currentFolderId);
+            const newGame = {
+                id: Date.now(), opponent: o, time: 0,
+                stats: statsFromTemplate(template),   // ← uses folder template (includes custom actions)
+                events: [], notes: '', notesHistory: [], pic: null,
+                date: new Date().toLocaleDateString('pt-PT'),
+            };
+            setFolders(prev => prev.map(f => f.id !== currentFolderId ? f : { ...f, games: [newGame, ...f.games] }));
+            showToast('✓ Jogo Adicionado');
+        };
 
         return (
-            <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
-                <button onClick={()=>setView('folders')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',marginBottom:20}}>← Voltar</button>
-                <h2 style={{fontFamily:'Bebas Neue',fontSize:28,letterSpacing:3,color:'var(--accent)',marginBottom:24,borderLeft:'4px solid var(--accent)',paddingLeft:12}}>{folder.name}</h2>
+            <div style={{ padding: 24, height: '100vh', overflowY: 'auto', background: 'var(--bg)' }} className="slide-enter no-scrollbar">
+                <button onClick={() => setView('folders')} style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 3, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20 }}>← Voltar</button>
+                <h2 style={{ fontFamily: 'Bebas Neue', fontSize: 28, letterSpacing: 3, color: 'var(--accent)', marginBottom: 24, borderLeft: '4px solid var(--accent)', paddingLeft: 12 }}>{folder.name}</h2>
 
-                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:24}}>
-                    <input type="text" placeholder="🔍 Pesquisar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{padding:'12px 16px',borderRadius:12,fontSize:13,width:'100%'}}/>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="number" min="0" placeholder="Min. Golos" value={minGoalsFor} onChange={e=>setMinGoalsFor(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="number" min="0" placeholder="Min. Sofr." value={minGoalsAgainst} onChange={e=>setMinGoalsAgainst(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                    <input type="text" placeholder="🔍 Pesquisar..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ padding: '12px 16px', borderRadius: 12, fontSize: 13, width: '100%' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={{ padding: '10px 12px', borderRadius: 10, fontSize: 12 }} />
+                        <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   style={{ padding: '10px 12px', borderRadius: 10, fontSize: 12 }} />
+                        <input type="number" min="0" placeholder="Min. Golos" value={minGoalsFor}     onChange={e => setMinGoalsFor(e.target.value)}     style={{ padding: '10px 12px', borderRadius: 10, fontSize: 12 }} />
+                        <input type="number" min="0" placeholder="Min. Sofr." value={minGoalsAgainst} onChange={e => setMinGoalsAgainst(e.target.value)} style={{ padding: '10px 12px', borderRadius: 10, fontSize: 12 }} />
                     </div>
-                    <div style={{display:'flex',gap:8}}>
-                        {['date','name'].map(s=>(
-                            <button key={s} onClick={()=>setSortBy(s)} style={{flex:1,padding:'8px',borderRadius:10,border:'1px solid var(--border)',background:sortBy===s?'var(--accent)':'var(--surface)',color:'white',fontSize:10,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:1}}>
-                                {s==='date'?'Data':'Nome'}
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        {['date', 'name'].map(s => (
+                            <button key={s} onClick={() => setSortBy(s)}
+                                style={{ flex: 1, padding: 8, borderRadius: 10, border: '1px solid var(--border)', background: sortBy === s ? 'var(--accent)' : 'var(--surface)', color: 'white', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: 1 }}>
+                                {s === 'date' ? 'Data' : 'Nome'}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                <button
-                    onClick={()=>{const o=promptText("Adversário:"); if(o){const now=new Date().toLocaleDateString('pt-PT'); setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[{id:Date.now(),opponent:o,time:0,stats:createInitialStats(),events:[],notes:'',notesHistory:[],pic:null,date:now},...f.games]})); showToast('✓ Jogo Adicionado');}}}
-                    style={{width:'100%',padding:'16px',marginBottom:20,borderRadius:14,border:'none',background:'linear-gradient(135deg, var(--accent), var(--accent2))',color:'white',fontFamily:'Bebas Neue',fontSize:18,letterSpacing:3,cursor:'pointer',boxShadow:'0 8px 24px rgba(67,97,238,0.3)'}}
-                >+ Adicionar Jogo</button>
+                <button onClick={addGame}
+                    style={{ width: '100%', padding: 16, marginBottom: 20, borderRadius: 14, border: 'none', background: 'linear-gradient(135deg, var(--accent), var(--accent2))', color: 'white', fontFamily: 'Bebas Neue', fontSize: 18, letterSpacing: 3, cursor: 'pointer', boxShadow: '0 8px 24px rgba(67,97,238,0.3)' }}>
+                    + Adicionar Jogo
+                </button>
 
                 {filtered.length > 0 && (
-                    <div className="card" style={{marginBottom:24}}>
-                        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:2,marginBottom:12}}>Resumo Filtrado</div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,textAlign:'center'}}>
-                            {[
-                                {val:filtered.length,label:'Jogos',color:'var(--accent)'},
-                                {val:(sumGF/filtered.length).toFixed(2),label:'Média Golos',color:'var(--green)'},
-                                {val:(sumGA/filtered.length).toFixed(2),label:'Média Sofr.',color:'var(--red)'},
-                            ].map(x=>(
+                    <div className="card" style={{ marginBottom: 24 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: 2, marginBottom: 12 }}>Resumo</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, textAlign: 'center' }}>
+                            {[{ val: filtered.length, label: 'Jogos', color: 'var(--accent)' }, { val: (sumGF / filtered.length).toFixed(2), label: 'Média Golos', color: 'var(--green)' }, { val: (sumGA / filtered.length).toFixed(2), label: 'Média Sofr.', color: 'var(--red)' }].map(x => (
                                 <div key={x.label}>
-                                    <div style={{fontFamily:'Bebas Neue',fontSize:24,color:x.color}}>{x.val}</div>
-                                    <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1}}>{x.label}</div>
+                                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: x.color }}>{x.val}</div>
+                                    <div style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: 1 }}>{x.label}</div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {filtered.map(g => {
-                        const gf = g.stats.find(s=>s.name==='Golo')?.count||0;
-                        const ga = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-                        const result = gf>ga?'W':gf<ga?'L':'D';
-                        const rc = {W:'var(--green)',L:'var(--red)',D:'var(--gold)'}[result];
+                        const gf = g.stats.find(s => s.name === 'Golo')?.count || 0;
+                        const ga = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
+                        const rc = { W: 'var(--green)', L: 'var(--red)', D: 'var(--gold)' }[gf > ga ? 'W' : gf < ga ? 'L' : 'D'];
                         return (
-                            <div key={g.id}
-                                onClick={()=>{setCurrentGameId(g.id);setView('tracking');}}
-                                className="card active-btn"
-                                style={{cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',transition:'all 0.2s'}}
-                                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
-                            >
-                                <div style={{flex:1}}>
-                                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                        <div style={{width:6,height:6,borderRadius:'50%',background:rc,flexShrink:0}}/>
-                                        <span style={{fontFamily:'Bebas Neue',fontSize:18,letterSpacing:1}}>{g.opponent}</span>
-                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--green)'}}>{gf}</span>
-                                        <span style={{color:'var(--muted)',fontSize:11}}>–</span>
-                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--red)'}}>{ga}</span>
+                            <div key={g.id} onClick={() => { setCurrentGameId(g.id); setView('tracking'); }} className="card active-btn"
+                                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}
+                                onMouseOver={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                                onMouseOut={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: rc, flexShrink: 0 }} />
+                                        <span style={{ fontFamily: 'Bebas Neue', fontSize: 18, letterSpacing: 1 }}>{g.opponent}</span>
+                                        <span style={{ fontFamily: 'Space Mono', fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>{gf}</span>
+                                        <span style={{ color: 'var(--muted)', fontSize: 11 }}>–</span>
+                                        <span style={{ fontFamily: 'Space Mono', fontSize: 13, fontWeight: 700, color: 'var(--red)' }}>{ga}</span>
                                     </div>
-                                    <div style={{fontSize:10,color:'var(--muted)',fontWeight:600}}>{g.date} · {fmt(g.time)}</div>
+                                    <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600 }}>{g.date} · {fmt(g.time)}</div>
                                 </div>
-                                <div style={{display:'flex',gap:6}}>
-                                    <button onClick={e=>{e.stopPropagation(); const ng={...g,id:Date.now(),opponent:`${g.opponent} (Cópia)`,time:0,stats:createInitialStats(),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')}; setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]})); showToast('📋 Duplicado');}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(67,97,238,0.1)',border:'1px solid rgba(67,97,238,0.2)',color:'var(--accent)',cursor:'pointer',fontSize:14}}>📋</button>
-                                    <button onClick={e=>{e.stopPropagation();if(confirm("Eliminar jogo?")){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('🗑 Eliminado');}}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(239,35,60,0.1)',border:'1px solid rgba(239,35,60,0.2)',color:'var(--red)',cursor:'pointer',fontSize:14}}>🗑</button>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                    <button onClick={e => {
+                                        e.stopPropagation();
+                                        const template = getFolderTemplate(currentFolderId);
+                                        const ng = { ...g, id: Date.now(), opponent: `${g.opponent} (Cópia)`, time: 0, stats: statsFromTemplate(template), events: [], notes: '', notesHistory: [], date: new Date().toLocaleDateString('pt-PT') };
+                                        setFolders(prev => prev.map(f => f.id !== currentFolderId ? f : { ...f, games: [ng, ...f.games] }));
+                                        showToast('📋 Duplicado');
+                                    }} style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(67,97,238,0.1)', border: '1px solid rgba(67,97,238,0.2)', color: 'var(--accent)', cursor: 'pointer', fontSize: 14 }}>📋</button>
+                                    <button onClick={e => { e.stopPropagation(); if (confirm('Eliminar jogo?')) { setFolders(prev => prev.map(f => f.id !== currentFolderId ? f : { ...f, games: f.games.filter(x => x.id !== g.id) })); showToast('🗑 Eliminado'); } }}
+                                        style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,35,60,0.1)', border: '1px solid rgba(239,35,60,0.2)', color: 'var(--red)', cursor: 'pointer', fontSize: 14 }}>🗑</button>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
-                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={() => setToast(null)} />}
             </div>
         );
     }
 
-    // ─── VIEW: REPORT ─────────────────────────────────────────────────────
+    /* ══════════════════════════════════════════════════════
+       VIEW: REPORT
+    ══════════════════════════════════════════════════════ */
     if (view === 'report' && currentGame) {
-        const g = currentGame;
-        const golos = g.stats.find(s=>s.name==='Golo')?.count||0;
-        const sofr = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-        const remates = g.stats.find(s=>s.name==='Remate')?.count||0;
-        const ef = remates>0 ? ((golos/remates)*100).toFixed(1) : 0;
-        const totalAtk = g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
-        const totalDef = g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
-        const maxStat = Math.max(...g.stats.map(s=>s.count), 1);
+        const g       = currentGame;
+        const golos   = g.stats.find(s => s.name === 'Golo')?.count || 0;
+        const sofr    = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
+        const remates = g.stats.find(s => s.name === 'Remate')?.count || 0;
+        const ef      = remates > 0 ? ((golos / remates) * 100).toFixed(1) : 0;
+        const totalAtk = g.stats.filter(s => s.type === 'ataque').reduce((a, s) => a + s.count, 0);
+        const totalDef = g.stats.filter(s => s.type === 'defesa').reduce((a, s) => a + s.count, 0);
 
-        const filteredEvents = eventFilter==='all' ? g.events
-            : eventFilter==='golos' ? g.events.filter(e=>e.isGoal)
-            : g.events.filter(e=>e.type===eventFilter);
+        const filteredEvents = eventFilter === 'all'   ? g.events
+            : eventFilter === 'golos' ? g.events.filter(e => e.isGoal)
+            : g.events.filter(e => e.type === eventFilter);
 
-        const atkGrad = (d,i) => {
-            const colors = ['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
-            return colors[i % colors.length];
-        };
-        const defGrad = (d,i) => {
-            const colors = ['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
-            return colors[i % colors.length];
-        };
+        const atkColors = ['#4361ee', '#3a0ca3', '#4cc9f0', '#560bad', '#7209b7', '#4895ef'];
+        const defColors = ['#ef233c', '#d90429', '#e63946', '#c1121f', '#ff595e', '#ff6b6b'];
 
         return (
-            <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)'}}>
-                {/* Toolbar */}
-                <div style={{padding:'12px 20px',background:'var(--surface)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexShrink:0}}>
-                    <button onClick={()=>setView('tracking')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',whiteSpace:'nowrap'}}>← Painel</button>
-                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
-                        <select value={eventFilter} onChange={e=>setEventFilter(e.target.value)} style={{padding:'8px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer'}}>
+            <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+                <div style={{ padding: '12px 20px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                    <button onClick={() => setView('tracking')} style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 3, background: 'none', border: 'none', cursor: 'pointer' }}>← Painel</button>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <select value={eventFilter} onChange={e => setEventFilter(e.target.value)} style={{ padding: '8px 12px', borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                             <option value="all">Todos</option>
                             <option value="golos">Golos</option>
                             <option value="ataque">Ataque</option>
                             <option value="defesa">Defesa</option>
                         </select>
-                        <button onClick={exportPDF} style={{padding:'8px 18px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.3)',whiteSpace:'nowrap'}}>⬇ PDF</button>
+                        <button onClick={exportPDF} style={{ padding: '8px 18px', borderRadius: 10, background: 'white', color: 'black', fontFamily: 'Bebas Neue', fontSize: 14, letterSpacing: 2, cursor: 'pointer', border: 'none' }}>⬇ PDF</button>
                     </div>
                 </div>
 
-                <div id="report-area" style={{flex:1,overflowY:'auto',padding:'32px 24px',background:'var(--bg)'}} className="no-scrollbar">
+                <div id="report-area" style={{ flex: 1, overflowY: 'auto', padding: '32px 24px', background: 'var(--bg)' }} className="no-scrollbar">
                     {/* Header */}
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32}}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
                         <div>
-                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:8}}>Relatório de Jogo</div>
-                            <h2 style={{fontFamily:'Bebas Neue',fontSize:42,letterSpacing:3,color:'var(--accent)',lineHeight:1,marginBottom:8}}>{g.opponent}</h2>
-                            <div style={{fontFamily:'Space Mono',fontSize:10,color:'var(--muted)'}}>{g.date} · {fmt(g.time)}</div>
+                            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: 3, marginBottom: 8 }}>Relatório de Jogo</div>
+                            <h2 style={{ fontFamily: 'Bebas Neue', fontSize: 42, letterSpacing: 3, color: 'var(--accent)', lineHeight: 1, marginBottom: 8 }}>{g.opponent}</h2>
+                            <div style={{ fontFamily: 'Space Mono', fontSize: 10, color: 'var(--muted)' }}>{g.date} · {fmt(g.time)}</div>
                         </div>
-                        {g.pic && <img src={g.pic} style={{width:80,height:80,borderRadius:12,objectFit:'cover',border:'1px solid var(--border)'}}/>}
+                        {g.pic && <img src={g.pic} style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', border: '1px solid var(--border)' }} />}
                     </div>
 
-                    {/* KPI Row */}
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:32}}>
+                    {/* KPIs */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 32 }}>
                         {[
-                            {val:golos,label:'Golos',color:'var(--green)',sub:'marcados'},
-                            {val:sofr,label:'Sofr.',color:'var(--red)',sub:'sofridos'},
-                            {val:remates,label:'Remates',color:'var(--accent)',sub:'total'},
-                            {val:`${ef}%`,label:'Eficácia',color:'var(--gold)',sub:'golo/remate'},
-                        ].map(k=>(
-                            <div key={k.label} style={{padding:'16px 12px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,textAlign:'center'}}>
-                                <div style={{fontFamily:'Bebas Neue',fontSize:32,color:k.color,lineHeight:1}}>{k.val}</div>
-                                <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginTop:4}}>{k.label}</div>
-                                <div style={{fontSize:8,color:'var(--border)',fontStyle:'italic',marginTop:2}}>{k.sub}</div>
+                            { val: golos,     label: 'Golos',    color: 'var(--green)', sub: 'marcados'    },
+                            { val: sofr,      label: 'Sofr.',    color: 'var(--red)',   sub: 'sofridos'    },
+                            { val: remates,   label: 'Remates',  color: 'var(--accent)',sub: 'total'       },
+                            { val: `${ef}%`,  label: 'Eficácia', color: 'var(--gold)',  sub: 'golo/remate' },
+                        ].map(k => (
+                            <div key={k.label} style={{ padding: '16px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, textAlign: 'center' }}>
+                                <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: k.color, lineHeight: 1 }}>{k.val}</div>
+                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: 1, marginTop: 4 }}>{k.label}</div>
+                                <div style={{ fontSize: 8, color: 'var(--muted)', fontStyle: 'italic', marginTop: 2 }}>{k.sub}</div>
                             </div>
                         ))}
                     </div>
 
-                    {/* Stacked Atk vs Def */}
-                    <div className="card" style={{marginBottom:24}}>
+                    {/* Stacked */}
+                    <div className="card" style={{ marginBottom: 24 }}>
                         <div className="report-section-title">Distribuição Ataque / Defesa</div>
-                        <StackedBar leftVal={totalAtk} rightVal={totalDef} leftColor="var(--accent)" rightColor="var(--red)" leftLabel={`Ataque (${totalAtk})`} rightLabel={`Defesa (${totalDef})`}/>
+                        <StackedBar leftVal={totalAtk} rightVal={totalDef} leftColor="var(--accent)" rightColor="var(--red)" leftLabel={`Ataque (${totalAtk})`} rightLabel={`Defesa (${totalDef})`} />
                     </div>
 
-                    {/* Donut row */}
-                    <div className="card" style={{marginBottom:24}}>
+                    {/* Donuts */}
+                    <div className="card" style={{ marginBottom: 24 }}>
                         <div className="report-section-title">Indicadores Chave</div>
-                        <div style={{display:'flex',justifyContent:'space-around',flexWrap:'wrap',gap:16,paddingTop:8}}>
-                            <DonutChart value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversão" sublabel="Golos" size={90}/>
-                            <DonutChart value={g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0} max={Math.max(remates,1)} color="var(--accent)" label="Enquadramento" sublabel="de Remates" size={90}/>
-                            <DonutChart value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuperação" sublabel="de Bola" size={90}/>
-                            <DonutChart value={sofr} max={Math.max(g.stats.find(s=>s.name==='Rem. Conc.')?.count||1,sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={90}/>
+                        <div style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 16, paddingTop: 8 }}>
+                            <DonutChart value={golos} max={Math.max(remates, 1)} color="var(--green)" label="Conversão" sublabel="Golos" size={90} />
+                            <DonutChart value={g.stats.find(s => s.name === 'Rem. Enquad.')?.count || 0} max={Math.max(remates, 1)} color="var(--accent)" label="Enquadramento" sublabel="de Remates" size={90} />
+                            <DonutChart value={g.stats.find(s => s.name === 'Recuper.')?.count || 0} max={Math.max(totalDef, 1)} color="var(--gold)" label="Recuperação" sublabel="de Bola" size={90} />
+                            <DonutChart value={sofr} max={Math.max(g.stats.find(s => s.name === 'Rem. Conc.')?.count || 1, sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={90} />
                         </div>
                     </div>
 
                     {/* Bar charts */}
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
                         <div className="card">
-                            <div className="report-section-title" style={{color:'var(--accent)'}}>Ataque</div>
-                            <BarChart
-                                data={g.stats.filter(s=>s.type==='ataque').map(s=>({label:s.name,value:s.count}))}
-                                colorFn={atkGrad}
-                            />
+                            <div className="report-section-title" style={{ color: 'var(--accent)' }}>Ataque</div>
+                            <BarChart data={g.stats.filter(s => s.type === 'ataque').map(s => ({ label: s.name, value: s.count }))} colorFn={(d, i) => atkColors[i % atkColors.length]} />
                         </div>
                         <div className="card">
-                            <div className="report-section-title" style={{color:'var(--red)'}}>Defesa</div>
-                            <BarChart
-                                data={g.stats.filter(s=>s.type==='defesa').map(s=>({label:s.name,value:s.count}))}
-                                colorFn={defGrad}
-                            />
+                            <div className="report-section-title" style={{ color: 'var(--red)' }}>Defesa</div>
+                            <BarChart data={g.stats.filter(s => s.type === 'defesa').map(s => ({ label: s.name, value: s.count }))} colorFn={(d, i) => defColors[i % defColors.length]} />
                         </div>
                     </div>
 
                     {/* Timeline */}
-                    <div className="card" style={{marginBottom:24}}>
+                    <div className="card" style={{ marginBottom: 24 }}>
                         <div className="report-section-title">Cronologia de Eventos</div>
-                        <Timeline events={filteredEvents} totalTime={g.time} filter={eventFilter}/>
-                        <div style={{marginTop:20,display:'flex',flexWrap:'wrap',gap:8}}>
-                            {filteredEvents.filter(e=>e.isGoal).map((e,i)=>(
-                                <div key={i} style={{padding:'6px 12px',background:'rgba(249,199,79,0.1)',border:'1px solid rgba(249,199,79,0.3)',borderRadius:8,fontFamily:'Space Mono',fontSize:10,color:'var(--gold)'}}>
+                        <Timeline events={filteredEvents} totalTime={g.time} />
+                        <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {filteredEvents.filter(e => e.isGoal).map((e, i) => (
+                                <div key={i} style={{ padding: '6px 12px', background: 'rgba(249,199,79,0.1)', border: '1px solid rgba(249,199,79,0.3)', borderRadius: 8, fontFamily: 'Space Mono', fontSize: 10, color: 'var(--gold)' }}>
                                     ⚽ {fmtMin(e.time)}
                                 </div>
                             ))}
@@ -1052,15 +903,15 @@ function App() {
 
                     {/* Event list */}
                     {filteredEvents.length > 0 && (
-                        <div className="card" style={{marginBottom:24}}>
+                        <div className="card" style={{ marginBottom: 24 }}>
                             <div className="report-section-title">Lista de Eventos ({filteredEvents.length})</div>
-                            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
-                                {filteredEvents.map((e,i)=>(
-                                    <div key={i} style={{padding:'6px 10px',background:'var(--bg)',borderRadius:8,border:`1px solid ${e.isGoal?'rgba(249,199,79,0.3)':e.type==='ataque'?'rgba(67,97,238,0.2)':'rgba(239,35,60,0.2)'}`,display:'flex',alignItems:'center',gap:8}}>
-                                        <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:e.isGoal?'var(--gold)':e.type==='ataque'?'var(--accent)':'var(--red)'}}/>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 6 }}>
+                                {filteredEvents.map((e, i) => (
+                                    <div key={i} style={{ padding: '6px 10px', background: 'var(--bg)', borderRadius: 8, border: `1px solid ${e.isGoal ? 'rgba(249,199,79,0.3)' : e.type === 'ataque' ? 'rgba(67,97,238,0.2)' : 'rgba(239,35,60,0.2)'}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: e.isGoal ? 'var(--gold)' : e.type === 'ataque' ? 'var(--accent)' : 'var(--red)' }} />
                                         <div>
-                                            <div style={{fontFamily:'Space Mono',fontSize:9,color:'var(--muted)'}}>{fmtMin(e.time)}</div>
-                                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{e.name}</div>
+                                            <div style={{ fontFamily: 'Space Mono', fontSize: 9, color: 'var(--muted)' }}>{fmtMin(e.time)}</div>
+                                            <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{e.name}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -1069,112 +920,112 @@ function App() {
                     )}
 
                     {/* Notes */}
-                    {(g.notes || (g.notesHistory||[]).length > 0) && (
-                        <div className="card" style={{marginBottom:24}}>
+                    {(g.notes || (g.notesHistory || []).length > 0) && (
+                        <div className="card" style={{ marginBottom: 24 }}>
                             <div className="report-section-title">Notas</div>
-                            {g.notes && <p style={{fontSize:12,color:'var(--text)',fontStyle:'italic',lineHeight:1.6,marginBottom:12}}>"{g.notes}"</p>}
-                            {(g.notesHistory||[]).map((n,i)=>(
-                                <div key={i} style={{marginBottom:10,paddingLeft:12,borderLeft:'2px solid var(--border)'}}>
-                                    <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginBottom:4}}>{n.label}</div>
-                                    <div style={{fontSize:11,color:'var(--text)',fontStyle:'italic'}}>"{n.text}"</div>
+                            {g.notes && <p style={{ fontSize: 12, color: 'var(--text)', fontStyle: 'italic', lineHeight: 1.6, marginBottom: 12 }}>"{g.notes}"</p>}
+                            {(g.notesHistory || []).map((n, i) => (
+                                <div key={i} style={{ marginBottom: 10, paddingLeft: 12, borderLeft: '2px solid var(--border)' }}>
+                                    <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: 1, marginBottom: 4 }}>{n.label}</div>
+                                    <div style={{ fontSize: 11, color: 'var(--text)', fontStyle: 'italic' }}>"{n.text}"</div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    <div style={{textAlign:'center',fontSize:9,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:3,padding:'20px 0'}}>
+                    <div style={{ textAlign: 'center', fontSize: 9, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 3, padding: '20px 0' }}>
                         SoccerAnalyst Pro · {new Date().toLocaleDateString('pt-PT')}
                     </div>
                 </div>
-                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={() => setToast(null)} />}
             </div>
         );
     }
 
-    // ─── VIEW: TRACKING ───────────────────────────────────────────────────
+    /* ══════════════════════════════════════════════════════
+       VIEW: TRACKING
+    ══════════════════════════════════════════════════════ */
     if (!currentGame) { setView('games'); return null; }
     const period = getPeriodInfo(currentGame.time);
 
     return (
-        <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)',overflow:'hidden'}}>
-            {/* Header */}
-            <header style={{padding:'10px 16px',background:'var(--surface)',borderBottom:'1px solid var(--border)',flexShrink:0,display:'flex',flexDirection:'column',gap:10}}>
-                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                        <div style={{padding:'8px 16px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}}>
-                            <span style={{fontFamily:'Space Mono',fontSize:22,fontWeight:700,color:'var(--accent)'}}>{fmt(currentGame.time)}</span>
-                            <span style={{fontSize:9,fontWeight:800,textTransform:'uppercase',letterSpacing:1,color:period.color,background:`${period.color}22`,padding:'3px 8px',borderRadius:6}}>{period.label}</span>
-                        </div>
-                        <button onClick={undoLast} style={{width:40,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>↩</button>
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)', overflow: 'hidden' }}>
+            {/* ── Header ── */}
+            <header style={{ padding: '10px 16px', background: 'var(--surface)', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ padding: '8px 16px', background: 'var(--bg)', borderRadius: 10, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontFamily: 'Space Mono', fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{fmt(currentGame.time)}</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: period.color, background: `${period.color}22`, padding: '3px 8px', borderRadius: 6 }}>{period.label}</span>
                     </div>
-                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
-                        {/* Photo */}
-                        <div style={{width:40,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',overflow:'hidden',position:'relative',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                            {currentGame.pic ? <img src={currentGame.pic} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <span style={{fontSize:18}}>📷</span>}
-                            <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f);updateGame({pic:c});showToast('✓ Foto');}}} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}/>
-                        </div>
-                        <button onClick={()=>setShowNotes(p=>!p)} style={{width:40,height:40,borderRadius:10,background:currentGame.notes?'rgba(67,97,238,0.3)':'var(--bg)',border:`1px solid ${currentGame.notes?'var(--accent)':'var(--border)'}`,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>📝</button>
-                        <button onClick={()=>adjustTime(-10)} style={{width:38,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:9,fontWeight:700}}>-10s</button>
-                        <button onClick={()=>adjustTime(60)} style={{width:38,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:9,fontWeight:700}}>+1m</button>
-                        <button
-                            onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('⏸ Pausado');return n;})}
-                            style={{padding:'0 16px',height:40,borderRadius:10,border:'none',background:isActive?'var(--red)':'var(--green)',color:'white',fontFamily:'Bebas Neue',fontSize:16,letterSpacing:2,cursor:'pointer',animation:isActive?'pulse-gold 2s infinite':'none'}}
-                        >{isActive?'STOP':'START'}</button>
-                        <button onClick={()=>setView('report')} style={{padding:'0 14px',height:40,borderRadius:10,border:'none',background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer'}}>PDF</button>
+                    <button onClick={undoLast} title="Desfazer último evento"
+                        style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↩</button>
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Photo upload */}
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {currentGame.pic ? <img src={currentGame.pic} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18 }}>📷</span>}
+                        <input type="file" accept="image/*" onChange={async e => { const f = e.target.files[0]; if (f) { const c = await compressImage(f); updateGame({ pic: c }); showToast('✓ Foto'); } }}
+                            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
                     </div>
+                    <button onClick={() => setShowNotes(p => !p)}
+                        style={{ width: 40, height: 40, borderRadius: 10, background: currentGame.notes ? 'rgba(67,97,238,0.3)' : 'var(--bg)', border: `1px solid ${currentGame.notes ? 'var(--accent)' : 'var(--border)'}`, cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📝</button>
+                    <button onClick={() => adjustTime(-10)}
+                        style={{ width: 38, height: 40, borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'Space Mono', fontSize: 9, fontWeight: 700 }}>-10s</button>
+                    <button onClick={() => adjustTime(60)}
+                        style={{ width: 38, height: 40, borderRadius: 10, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer', fontFamily: 'Space Mono', fontSize: 9, fontWeight: 700 }}>+1m</button>
+                    <button onClick={() => setIsActive(p => { const n = !p; if (!n) showToast('⏸ Pausado'); return n; })}
+                        style={{ padding: '0 16px', height: 40, borderRadius: 10, border: 'none', background: isActive ? 'var(--red)' : 'var(--green)', color: 'white', fontFamily: 'Bebas Neue', fontSize: 16, letterSpacing: 2, cursor: 'pointer' }}>
+                        {isActive ? 'STOP' : 'START'}
+                    </button>
+                    <button onClick={() => setView('report')}
+                        style={{ padding: '0 14px', height: 40, borderRadius: 10, border: 'none', background: 'white', color: 'black', fontFamily: 'Bebas Neue', fontSize: 14, letterSpacing: 2, cursor: 'pointer' }}>PDF</button>
                 </div>
             </header>
 
-            {/* Notes panel */}
+            {/* ── Notes panel ── */}
             {showNotes && (
-                <div style={{padding:'12px 16px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}} className="slide-enter">
-                    <textarea
-                        value={currentGame.notes}
-                        onChange={e=>updateGame({notes:e.target.value})}
-                        placeholder="✍ Observações..."
-                        style={{width:'100%',height:72,borderRadius:10,padding:'10px 14px',fontSize:12,resize:'none',lineHeight:1.5}}
-                    />
-                    <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
-                        <button
-                            onClick={()=>{
-                                if(!currentGame.notes?.trim()){showToast('⚠️ Nota vazia');return;}
-                                const label=`${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
-                                updateGame(g=>({...g,notesHistory:[...(g.notesHistory||[]),{label,text:g.notes.trim()}]}));
-                                showToast('✓ Nota guardada');
-                            }}
-                            style={{padding:'8px 18px',borderRadius:10,background:'var(--accent)',border:'none',color:'white',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:1,cursor:'pointer'}}
-                        >Guardar</button>
+                <div style={{ padding: '12px 16px', background: 'var(--surface2)', borderBottom: '1px solid var(--border)', flexShrink: 0 }} className="slide-enter">
+                    <textarea value={currentGame.notes} onChange={e => updateGame({ notes: e.target.value })} placeholder="✍ Observações..."
+                        style={{ width: '100%', height: 72, borderRadius: 10, padding: '10px 14px', fontSize: 12, resize: 'none', lineHeight: 1.5 }} />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                        <button onClick={() => {
+                            if (!currentGame.notes?.trim()) { showToast('⚠️ Nota vazia'); return; }
+                            const label = `${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
+                            updateGame(g => ({ ...g, notesHistory: [...(g.notesHistory || []), { label, text: g.notes.trim() }] }));
+                            showToast('✓ Nota guardada');
+                        }} style={{ padding: '8px 18px', borderRadius: 10, background: 'var(--accent)', border: 'none', color: 'white', fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer' }}>
+                            Guardar
+                        </button>
                     </div>
                 </div>
             )}
 
-            {/* Stats area */}
-            <div style={{flex:1,display:'flex',overflow:'hidden'}}>
-                {['ataque','defesa'].map(type => (
-                    <div key={type} style={{flex:1,display:'flex',flexDirection:'column',borderRight:type==='ataque'?'1px solid var(--border)':'none'}}>
-                        {/* Column header */}
-                        <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-                            <span style={{fontFamily:'Bebas Neue',fontSize:16,letterSpacing:3,color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type}</span>
-                            <button
-                                onClick={()=>{const n=promptText("Nova ação:");if(n){updateGame(g=>({...g,stats:[...g.stats,{id:Date.now(),name:n,count:0,type}]}));showToast('✓ Criado');}}}
-                                style={{width:28,height:28,borderRadius:8,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}
-                            >+</button>
+            {/* ── Stat columns ── */}
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                {['ataque', 'defesa'].map(type => (
+                    <div key={type} style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRight: type === 'ataque' ? '1px solid var(--border)' : 'none' }}>
+                        {/* column header */}
+                        <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface2)', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'Bebas Neue', fontSize: 16, letterSpacing: 3, color: type === 'ataque' ? 'var(--accent)' : 'var(--red)' }}>{type}</span>
+                            <button onClick={() => addCustomStat(type)}
+                                title={`Nova ação de ${type} — propagada a todos os jogos desta pasta`}
+                                style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                         </div>
-                        {/* Stat list */}
-                        <div style={{flex:1,overflowY:'auto',padding:'8px'}} className="no-scrollbar">
-                            {currentGame.stats.filter(s=>s.type===type).map(s => (
-                                <div key={s.id} style={{display:'flex',gap:4,marginBottom:6}}>
-                                    <button
-                                        className="stat-btn active-btn"
-                                        onClick={()=>addStat(s.id)}
-                                        style={{borderLeft:`3px solid ${s.count>0?(type==='ataque'?'var(--accent)':'var(--red)'):'var(--border)'}`}}
-                                    >
-                                        <span className="stat-count" style={{color:s.count>0?'var(--text)':'var(--border)'}}>{s.count}</span>
+                        {/* stat list */}
+                        <div style={{ flex: 1, overflowY: 'auto', padding: 8 }} className="no-scrollbar">
+                            {currentGame.stats.filter(s => s.type === type).map(s => (
+                                <div key={s.id} style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                                    <button className="stat-btn active-btn" onClick={() => addStat(s.id)}
+                                        style={{ borderLeft: `3px solid ${s.count > 0 ? (type === 'ataque' ? 'var(--accent)' : 'var(--red)') : 'var(--border)'}` }}>
+                                        <span className="stat-count" style={{ color: s.count > 0 ? 'var(--text)' : 'var(--border)' }}>{s.count}</span>
                                         <span className="stat-name">{s.name}</span>
                                     </button>
-                                    <div style={{display:'flex',flexDirection:'column',gap:4,width:28,flexShrink:0}}>
-                                        <button onClick={()=>removeStat(s.id)} style={{flex:1,background:'rgba(239,35,60,0.08)',border:'1px solid rgba(239,35,60,0.2)',borderRadius:8,color:'var(--red)',cursor:'pointer',fontSize:14,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                                        <button onClick={()=>{const n=promptText("Editar:",s.name);if(n){updateGame(g=>({...g,stats:g.stats.map(st=>st.id===s.id?{...st,name:n}:st)}));showToast('✓ Editado');}}} style={{flex:1,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,color:'var(--muted)',cursor:'pointer',fontSize:11,display:'flex',alignItems:'center',justifyContent:'center'}}>✎</button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 28, flexShrink: 0 }}>
+                                        <button onClick={() => removeStat(s.id)}
+                                            style={{ flex: 1, background: 'rgba(239,35,60,0.08)', border: '1px solid rgba(239,35,60,0.2)', borderRadius: 8, color: 'var(--red)', cursor: 'pointer', fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                                        <button onClick={() => renameStat(s.id, s.name)}
+                                            title="Renomear em todos os jogos"
+                                            style={{ flex: 1, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--muted)', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✎</button>
                                     </div>
                                 </div>
                             ))}
@@ -1184,12 +1035,10 @@ function App() {
             </div>
 
             {/* Home button */}
-            <button
-                onClick={()=>setView('folders')}
-                style={{position:'absolute',bottom:24,left:24,width:52,height:52,borderRadius:'50%',background:'var(--surface)',border:'1px solid var(--border)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}
-            >🏠</button>
+            <button onClick={() => setView('folders')}
+                style={{ position: 'absolute', bottom: 24, left: 24, width: 52, height: 52, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>🏠</button>
 
-            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={() => setToast(null)} />}
         </div>
     );
 }
