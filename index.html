@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SoccerAnalyst Pro - Ultra Elite</title>
+    <title>SoccerAnalyst Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,977 +11,1191 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        body { 
-            background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
-            touch-action: manipulation; 
-            color: white; 
-            overflow: hidden; 
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;800&display=swap');
+
+        :root {
+            --bg: #050810;
+            --surface: #0d1117;
+            --surface2: #161b22;
+            --border: #1e2530;
+            --accent: #4361ee;
+            --accent2: #7209b7;
+            --green: #2dc653;
+            --red: #ef233c;
+            --gold: #f9c74f;
+            --text: #e6edf3;
+            --muted: #6e7681;
         }
+
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        h1, h2, h3, .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+        .mono { font-family: 'Space Mono', monospace; }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .active-btn:active { transform: scale(0.96); opacity: 0.8; }
-        .timeline-bar { 
-            height: 50px; 
-            background: linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-            border-radius: 12px; 
-            position: relative; 
-            border: 1px solid #1e293b; 
-            margin-top: 25px;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        .active-btn:active { transform: scale(0.95); opacity: 0.85; }
+
+        /* ─── TIMELINE ─── */
+        .timeline-wrap {
+            position: relative;
+            padding: 36px 0 16px;
         }
-        .event-marker { 
-            position: absolute; 
-            width: 3px; 
-            height: 100%; 
-            top: 0; 
+        .timeline-track {
+            height: 56px;
+            background: var(--surface);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: visible;
+        }
+        .timeline-half {
+            position: absolute;
+            top: 0; bottom: 0;
+            background: rgba(255,255,255,0.015);
+            border-right: 1px dashed var(--border);
+            width: 50%;
+            left: 0;
+            border-radius: 14px 0 0 14px;
+        }
+        .tl-minute-mark {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.04);
+        }
+        .tl-label-top {
+            position: absolute;
+            top: -24px;
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: var(--muted);
             transform: translateX(-50%);
-            cursor: pointer;
-            transition: all 0.2s;
+            white-space: nowrap;
         }
-        .event-marker:hover {
-            width: 5px;
-            filter: brightness(1.3);
-        }
-        .goal-marker { 
-            position: absolute; 
-            width: 5px; 
-            height: 100%; 
-            top: 0; 
-            background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
-            z-index: 10; 
-            box-shadow: 0 0 15px #fbbf24, 0 0 30px rgba(251, 191, 36, 0.5);
-            transform: translateX(-50%);
+        .tl-event-dot {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             cursor: pointer;
+            transition: all 0.15s;
+            z-index: 5;
+        }
+        .tl-event-dot:hover { transform: translate(-50%, -50%) scale(1.8); z-index: 10; }
+        .tl-event-dot.goal {
+            width: 12px; height: 12px;
+            background: var(--gold);
+            box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4);
             animation: pulse-gold 2s infinite;
         }
-        @keyframes pulse-gold {
-            0%, 100% { box-shadow: 0 0 15px #fbbf24, 0 0 30px rgba(251, 191, 36, 0.5); }
-            50% { box-shadow: 0 0 25px #fbbf24, 0 0 50px rgba(251, 191, 36, 0.8); }
-        }
-        .time-label { 
-            position: absolute; 
-            top: -20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            font-size: 9px; 
-            font-weight: 900; 
-            color: #475569;
-            background: #020617;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .toast {
-            position: fixed;
-            pointer-events: none;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(79, 70, 229, 0.4);
-            z-index: 9999;
-            animation: slideIn 0.3s ease-out;
-            font-weight: 800;
-            font-size: 12px;
-            text-transform: uppercase;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
-        }
-        .stat-flash {
-            animation: flash 0.3s ease-out;
-        }
-        @keyframes flash {
-            0% { background: #4f46e5; transform: scale(1.05); }
-            100% { background: inherit; transform: scale(1); }
-        }
-        .swipe-delete {
+        .tl-event-dot.ataque { background: var(--accent); box-shadow: 0 0 6px rgba(67,97,238,0.5); }
+        .tl-event-dot.defesa { background: var(--red); box-shadow: 0 0 6px rgba(239,35,60,0.4); }
+        .tl-tooltip {
             position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent 0%, #dc2626 100%);
-            width: 100px;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 9px;
+            font-family: 'Space Mono', monospace;
+            color: var(--text);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 20;
+        }
+        .tl-event-dot:hover .tl-tooltip { opacity: 1; }
+        .tl-period-label {
+            position: absolute;
+            bottom: -20px;
+            font-size: 8px;
+            font-family: 'Space Mono', monospace;
+            color: var(--muted);
+            transform: translateX(-50%);
+        }
+        .tl-cluster {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        @keyframes pulse-gold {
+            0%,100% { box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4); }
+            50% { box-shadow: 0 0 20px var(--gold), 0 0 40px rgba(249,199,79,0.7); }
+        }
+
+        /* ─── CHARTS ─── */
+        .bar-row {
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            padding-right: 20px;
-            border-radius: 0 24px 24px 0;
-            opacity: 0;
-            transition: opacity 0.3s;
+            gap: 10px;
+            margin-bottom: 10px;
         }
-        .game-card {
-            position: relative;
+        .bar-label { font-size: 10px; color: var(--muted); min-width: 90px; font-weight: 600; text-transform: uppercase; }
+        .bar-track {
+            flex: 1;
+            height: 22px;
+            background: var(--surface);
+            border-radius: 6px;
             overflow: hidden;
-            transition: transform 0.2s;
+            position: relative;
         }
-        .game-card:active .swipe-delete {
-            opacity: 1;
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
         }
-        .period-indicator {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 8px;
+        .bar-value {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: 'Space Mono', monospace;
             font-size: 10px;
-            font-weight: 900;
-            margin-left: 8px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.9);
         }
-        .card-gradient {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        .bar-value-outside {
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            min-width: 24px;
+            text-align: right;
         }
-        .glow-border {
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+
+        /* ─── DONUT ─── */
+        .donut-svg { transform: rotate(-90deg); }
+        .donut-label {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            fill: white;
         }
-        .slide-enter {
-            animation: slideEnter 0.3s ease-out;
+        .donut-sublabel {
+            font-size: 9px;
+            fill: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
+
+        /* ─── CARDS ─── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .card-sm {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+        .stat-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+        }
+        .stat-btn:active { border-color: var(--accent); background: rgba(67,97,238,0.1); }
+        .stat-count { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 0.02em; line-height: 1; min-width: 36px; }
+        .stat-name { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); line-height: 1.2; }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(67,97,238,0.3);
+            z-index: 9999;
+            animation: slideIn 0.25s ease-out;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            pointer-events: none;
+        }
+        .toast.goal-toast {
+            border-color: var(--gold);
+            box-shadow: 0 8px 30px rgba(249,199,79,0.4);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(120%) scale(0.9); opacity: 0; }
+            to { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .slide-enter { animation: slideEnter 0.3s ease-out; }
         @keyframes slideEnter {
-            from { transform: translateX(-100%); opacity: 0; }
+            from { transform: translateX(-20px); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-    </style>
-</head>
-<body class="font-sans select-none">
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-
-        const INITIAL_STATS = [
-            { id: 1, name: 'Golo', count: 0, type: 'ataque' },
-            { id: 2, name: 'Remate', count: 0, type: 'ataque' },
-            { id: 3, name: 'Rem. Enquad.', count: 0, type: 'ataque' },
-            { id: 4, name: 'Cantos', count: 0, type: 'ataque' },
-            { id: 5, name: 'Rem. Área', count: 0, type: 'ataque' },
-            { id: 6, name: 'Cruzam.', count: 0, type: 'ataque' },
-            { id: 7, name: 'Golo Sofr.', count: 0, type: 'defesa' },
-            { id: 8, name: 'Recuper.', count: 0, type: 'defesa' },
-            { id: 9, name: 'Rem. Conc.', count: 0, type: 'defesa' },
-            { id: 10, name: 'Rem. Área C.', count: 0, type: 'defesa' },
-            { id: 11, name: 'Perdas Bola', count: 0, type: 'defesa' },
-            { id: 12, name: 'Faltas', count: 0, type: 'defesa' }
-        ];
-        const createInitialStats = () => INITIAL_STATS.map((stat) => ({ ...stat }));
-        const promptText = (message, defaultValue = '') => {
-            const response = prompt(message, defaultValue);
-            if (response === null) return null;
-            const trimmed = response.trim();
-            return trimmed.length ? trimmed : null;
-        };
-        const parsePtDate = (value) => {
-            if (!value) return null;
-            const parts = value.split('/');
-            if (parts.length !== 3) return null;
-            const [day, month, year] = parts.map(Number);
-            if (!day || !month || !year) return null;
-            return new Date(year, month - 1, day);
-        };
-        const formatInputDate = (date) => date ? date.toISOString().slice(0, 10) : '';
-
-        // Toast Component
-        function Toast({ message, onClose }) {
-            useEffect(() => {
-                const timer = setTimeout(() => {
-                    onClose();
-                }, 2500);
-                return () => clearTimeout(timer);
-            }, [onClose]);
-
-            return (
-                <div className="toast">
-                    {message}
-                </div>
-            );
+        /* ─── PDF REPORT STYLES ─── */
+        #report-area {
+            font-family: 'DM Sans', sans-serif;
+            background: #050810;
+            color: white;
+        }
+        .report-section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .report-section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
         }
 
-        function App() {
-            const [view, setView] = useState('folders'); 
-            const [folders, setFolders] = useState(() => {
-                try {
-                    return JSON.parse(localStorage.getItem('soccer_final_db')) || [];
-                } catch (error) {
-                    return [];
-                }
-            });
-            const [currentFolderId, setCurrentFolderId] = useState(null);
-            const [currentGame, setCurrentGame] = useState(null);
-            const [isActive, setIsActive] = useState(false);
-            const [showNotes, setShowNotes] = useState(false);
-            const [toast, setToast] = useState(null);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [sortBy, setSortBy] = useState('date'); // 'date' or 'name'
-            const [eventFilter, setEventFilter] = useState('all'); // 'all', 'golos', 'ataque', 'defesa'
-            const [lastSaved, setLastSaved] = useState(null);
-            const [dateFrom, setDateFrom] = useState('');
-            const [dateTo, setDateTo] = useState('');
-            const [minGoalsFor, setMinGoalsFor] = useState('');
-            const [minGoalsAgainst, setMinGoalsAgainst] = useState('');
-            const importInputRef = useRef(null);
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-            useEffect(() => { 
-                localStorage.setItem('soccer_final_db', JSON.stringify(folders)); 
-                setLastSaved(new Date());
-            }, [folders]);
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+        input, textarea, select { background: var(--surface); color: var(--text); border: 1px solid var(--border); outline: none; transition: border-color 0.2s; }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
 
-            useEffect(() => {
-                let interval = null;
-                if (isActive && currentGame) {
-                    interval = setInterval(() => { 
-                        updateCurrentGameData((game) => ({ ...game, time: game.time + 1 }));
-                    }, 1000);
-                }
-                return () => clearInterval(interval);
-            }, [isActive, currentGame]);
+// ─── STORAGE (robust, with backup) ───────────────────────────────────────────
+const DB_KEY = 'socceranalyst_v3';
+const DB_BACKUP_KEY = 'socceranalyst_v3_backup';
 
-            // Keyboard shortcuts
-            useEffect(() => {
-                const handleKey = (e) => {
-                    if (view === 'tracking' && currentGame) {
-                        if (e.code === 'Space' && !e.target.matches('textarea, input')) {
-                            e.preventDefault();
-                            toggleTimer();
-                        }
-                    }
-                };
-                window.addEventListener('keydown', handleKey);
-                return () => window.removeEventListener('keydown', handleKey);
-            }, [view, currentGame]);
+function loadDB() {
+    try {
+        const raw = localStorage.getItem(DB_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch(e) {}
+    // try backup
+    try {
+        const raw = localStorage.getItem(DB_BACKUP_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch(e) {}
+    return [];
+}
 
-            const showToast = (message) => {
-                setToast(message);
-            };
+function saveDB(folders) {
+    try {
+        const str = JSON.stringify(folders);
+        // save backup first, then primary
+        localStorage.setItem(DB_BACKUP_KEY, localStorage.getItem(DB_KEY) || '[]');
+        localStorage.setItem(DB_KEY, str);
+    } catch(e) {
+        // quota exceeded? try smaller save
+        console.warn('Save failed:', e);
+    }
+}
 
-            const handleExportData = () => {
-                const payload = {
-                    version: 1,
-                    exportedAt: new Date().toISOString(),
-                    folders
-                };
-                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `soccer_analyst_backup_${new Date().toISOString().slice(0,10)}.json`;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                URL.revokeObjectURL(url);
-                showToast('✓ Backup exportado');
-            };
+// ─── INITIAL STATS ─────────────────────────────────────────────────────────
+const INITIAL_STATS = [
+    { id: 1,  name: 'Golo',         count: 0, type: 'ataque' },
+    { id: 2,  name: 'Remate',       count: 0, type: 'ataque' },
+    { id: 3,  name: 'Rem. Enquad.', count: 0, type: 'ataque' },
+    { id: 4,  name: 'Cantos',       count: 0, type: 'ataque' },
+    { id: 5,  name: 'Rem. Área',    count: 0, type: 'ataque' },
+    { id: 6,  name: 'Cruzam.',      count: 0, type: 'ataque' },
+    { id: 7,  name: 'Golo Sofr.',   count: 0, type: 'defesa' },
+    { id: 8,  name: 'Recuper.',     count: 0, type: 'defesa' },
+    { id: 9,  name: 'Rem. Conc.',   count: 0, type: 'defesa' },
+    { id: 10, name: 'Rem. Área C.', count: 0, type: 'defesa' },
+    { id: 11, name: 'Perdas Bola',  count: 0, type: 'defesa' },
+    { id: 12, name: 'Faltas',       count: 0, type: 'defesa' },
+];
+const createInitialStats = () => INITIAL_STATS.map(s => ({ ...s }));
 
-            const handleImportData = (file) => {
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                    try {
-                        const parsed = JSON.parse(reader.result);
-                        const importedFolders = Array.isArray(parsed) ? parsed : parsed?.folders;
-                        if (!Array.isArray(importedFolders)) {
-                            showToast('⚠️ Ficheiro inválido');
-                            return;
-                        }
-                        setFolders(importedFolders);
-                        showToast('✓ Backup importado');
-                    } catch (error) {
-                        showToast('⚠️ Erro ao importar');
-                    }
-                };
-                reader.readAsText(file);
-            };
+const promptText = (msg, def='') => {
+    const r = prompt(msg, def);
+    if (r === null) return null;
+    const t = r.trim();
+    return t.length ? t : null;
+};
+const parsePtDate = (v) => {
+    if (!v) return null;
+    const p = v.split('/');
+    if (p.length !== 3) return null;
+    const [d, m, y] = p.map(Number);
+    if (!d||!m||!y) return null;
+    return new Date(y, m-1, d);
+};
+const fmt = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+const fmtMin = (s) => `${Math.floor(s/60)}'`;
 
-            const updateCurrentGameData = (updater, options = {}) => {
-                const targetFolderId = options.folderId ?? currentFolderId;
-                const targetGameId = options.gameId ?? currentGame?.id;
-                if (!targetFolderId || !targetGameId) return;
+// ─── TOAST ────────────────────────────────────────────────────────────────
+function Toast({ message, isGoal, onClose }) {
+    useEffect(() => {
+        const t = setTimeout(onClose, isGoal ? 3000 : 2000);
+        return () => clearTimeout(t);
+    }, [onClose]);
+    return <div className={`toast${isGoal?' goal-toast':''}`}>{message}</div>;
+}
 
-                setFolders((prevFolders) => prevFolders.map((folder) => {
-                    if (folder.id !== targetFolderId) return folder;
-                    return {
-                        ...folder,
-                        games: folder.games.map((game) => {
-                            if (game.id !== targetGameId) return game;
-                            return typeof updater === 'function' ? updater(game) : { ...game, ...updater };
-                        })
-                    };
-                }));
-                setCurrentGame((prevGame) => {
-                    if (!prevGame || prevGame.id !== targetGameId) return prevGame;
-                    return typeof updater === 'function' ? updater(prevGame) : { ...prevGame, ...updater };
-                });
-            };
-
-            const toggleTimer = () => {
-                setIsActive((prev) => {
-                    const next = !prev;
-                    if (!next) showToast('⏸ Cronómetro Pausado');
-                    return next;
-                });
-            };
-
-            const adjustTime = (deltaSeconds) => {
-                updateCurrentGameData((game) => {
-                    const nextTime = Math.max(0, game.time + deltaSeconds);
-                    return { ...game, time: nextTime };
-                });
-            };
-
-            const compressImage = (file, maxSize = 512, quality = 0.82) => new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-                        const canvas = document.createElement('canvas');
-                        canvas.width = Math.round(img.width * scale);
-                        canvas.height = Math.round(img.height * scale);
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    };
-                    img.src = reader.result;
-                };
-                reader.readAsDataURL(file);
-            });
-
-            const formatFullTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-
-            const getPeriodLabel = (time) => {
-                const minutes = Math.floor(time / 60);
-                if (minutes < 45) return { label: '1º TEMPO', color: 'bg-green-600' };
-                if (minutes < 90) return { label: '2º TEMPO', color: 'bg-blue-600' };
-                return { label: 'PRORROG.', color: 'bg-orange-600' };
-            };
-
-            const handleDeleteGame = (e, gameId) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if(window.confirm("ELIMINAR JOGO?\nEsta ação não pode ser desfeita.")) {
-                    const newFolders = folders.map(f => {
-                        if (f.id === currentFolderId) {
-                            return { ...f, games: f.games.filter(g => g.id !== gameId) };
-                        }
-                        return f;
-                    });
-                    setFolders(newFolders);
-                    showToast('🗑️ Jogo Eliminado');
-                }
-            };
-
-            const duplicateGame = (e, game) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const newGame = {
-                    ...game,
-                    id: Date.now(),
-                    opponent: `${game.opponent} (Cópia)`,
-                    time: 0,
-                    stats: game.stats.map((stat) => ({ ...stat })),
-                    events: [],
-                    notes: '',
-                    notesHistory: [],
-                    date: new Date().toLocaleDateString('pt-PT')
-                };
-                const newFolders = folders.map(f => {
-                    if (f.id === currentFolderId) {
-                        return { ...f, games: [newGame, ...f.games] };
-                    }
-                    return f;
-                });
-                setFolders(newFolders);
-                showToast('📋 Jogo Duplicado');
-            };
-
-            const addStat = (id) => {
-                if(!isActive) {
-                    showToast('⚠️ Inicia o Cronómetro!');
-                    return;
-                }
-                let statName = '';
-                let isGoal = false;
-                updateCurrentGameData((game) => {
-                    const stat = game.stats.find((item) => item.id === id);
-                    if (!stat) return game;
-                    statName = stat.name;
-                    isGoal = stat.name.toLowerCase().includes('golo');
-                    const newStats = game.stats.map((item) => item.id === id ? { ...item, count: item.count + 1 } : item);
-                    const newEvent = { time: game.time, type: stat.type, name: stat.name, isGoal, statId: id };
-                    return { ...game, stats: newStats, events: [...game.events, newEvent] };
-                });
-                
-                // Haptic feedback (mobile)
-                if (navigator.vibrate) {
-                    navigator.vibrate(isGoal ? [50, 50, 50] : 30);
-                }
-                
-                if (statName) {
-                    showToast(isGoal ? '⚽ GOLOOO!' : `✓ ${statName}`);
-                }
-            };
-
-            const removeStat = (id) => {
-                let statName = '';
-                let removed = false;
-                updateCurrentGameData((game) => {
-                    const stat = game.stats.find((item) => item.id === id);
-                    if (!stat || stat.count <= 0) return game;
-                    statName = stat.name;
-                    removed = true;
-                    const newStats = game.stats.map((item) => item.id === id ? { ...item, count: item.count - 1 } : item);
-                    const lastEventIndex = [...game.events].reverse().findIndex((event) => event.statId === id);
-                    const newEvents = [...game.events];
-                    if (lastEventIndex !== -1) {
-                        newEvents.splice(game.events.length - 1 - lastEventIndex, 1);
-                    }
-                    return { ...game, stats: newStats, events: newEvents };
-                });
-                if (removed && statName) {
-                    showToast(`↩️ ${statName} removido`);
-                }
-            };
-
-            const getFolderStats = (folder) => {
-                if (!folder.games.length) return null;
-                const totalGames = folder.games.length;
-                const totalGoals = folder.games.reduce((sum, g) => {
-                    const golos = g.stats.find(s => s.name === 'Golo')?.count || 0;
-                    return sum + golos;
-                }, 0);
-                const totalGoalsSuffered = folder.games.reduce((sum, g) => {
-                    const golosSofr = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
-                    return sum + golosSofr;
-                }, 0);
-                const totalRemates = folder.games.reduce((sum, g) => {
-                    const remates = g.stats.find(s => s.name === 'Remate')?.count || 0;
-                    return sum + remates;
-                }, 0);
-                const eficacia = totalRemates > 0 ? ((totalGoals / totalRemates) * 100).toFixed(1) : 0;
-                
-                return { totalGames, totalGoals, totalGoalsSuffered, eficacia };
-            };
-
-            const exportPDF = async () => {
-                showToast('📄 Gerando PDF...');
-                try {
-                    const element = document.getElementById('report-area');
-                    const scale = Math.min(3, window.devicePixelRatio ? window.devicePixelRatio * 2 : 2.5);
-                    const canvas = await html2canvas(element, {
-                        backgroundColor: '#020617',
-                        scale,
-                        useCORS: true,
-                        logging: false,
-                        scrollX: 0,
-                        scrollY: -window.scrollY,
-                        windowWidth: element.scrollWidth,
-                        windowHeight: element.scrollHeight
-                    });
-
-                    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-                    const pageWidth = pdf.internal.pageSize.getWidth();
-                    const pageHeight = pdf.internal.pageSize.getHeight();
-                    const margin = 6;
-                    const contentWidth = pageWidth - margin * 2;
-                    const contentHeight = pageHeight - margin * 2;
-
-                    const pxPerMm = canvas.width / contentWidth;
-                    const pageHeightPx = Math.floor(contentHeight * pxPerMm);
-                    const pageCanvas = document.createElement('canvas');
-                    const pageCtx = pageCanvas.getContext('2d');
-
-                    let renderedHeight = 0;
-                    let pageIndex = 0;
-
-                    while (renderedHeight < canvas.height) {
-                        const sliceHeight = Math.min(pageHeightPx, canvas.height - renderedHeight);
-                        pageCanvas.width = canvas.width;
-                        pageCanvas.height = sliceHeight;
-
-                        pageCtx.clearRect(0, 0, pageCanvas.width, pageCanvas.height);
-                        pageCtx.drawImage(
-                            canvas,
-                            0,
-                            renderedHeight,
-                            canvas.width,
-                            sliceHeight,
-                            0,
-                            0,
-                            pageCanvas.width,
-                            pageCanvas.height
-                        );
-
-                        const sliceHeightMm = sliceHeight / pxPerMm;
-                        const imgData = pageCanvas.toDataURL('image/jpeg', 0.98);
-                        if (pageIndex > 0) pdf.addPage();
-                        pdf.addImage(imgData, 'JPEG', margin, margin, contentWidth, sliceHeightMm, undefined, 'FAST');
-
-                        renderedHeight += sliceHeight;
-                        pageIndex += 1;
-                    }
-
-                    pdf.save(`Relatorio_${currentGame.opponent}.pdf`);
-                    showToast('✓ PDF Descarregado');
-                } catch (error) {
-                    showToast('⚠️ Erro ao gerar PDF');
-                }
-            };
-
-            const getFilteredEvents = () => {
-                if (eventFilter === 'all') return currentGame.events;
-                if (eventFilter === 'golos') return currentGame.events.filter(e => e.isGoal);
-                return currentGame.events.filter(e => e.type === eventFilter);
-            };
-
-            if (view === 'folders') return (
-                <div className="p-6 h-screen bg-slate-950 overflow-y-auto slide-enter">
-                    <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-black text-indigo-500 italic uppercase tracking-tighter">SoccerAnalyst Pro</h1>
-                        <div className="flex items-center gap-2">
-                            <button onClick={handleExportData} className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white hover:border-indigo-500 transition-all">Exportar</button>
-                            <button onClick={() => importInputRef.current?.click()} className="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-[10px] font-black uppercase text-slate-400 hover:text-white hover:border-indigo-500 transition-all">Importar</button>
-                            {lastSaved && <span className="text-[9px] text-slate-600 font-bold">✓ Auto-saved</span>}
+// ─── BAR CHART ───────────────────────────────────────────────────────────
+function BarChart({ data, colorFn }) {
+    const max = Math.max(...data.map(d => d.value), 1);
+    return (
+        <div>
+            {data.map((d, i) => (
+                <div key={i} className="bar-row">
+                    <div className="bar-label">{d.label}</div>
+                    <div className="bar-track">
+                        <div
+                            className="bar-fill"
+                            style={{
+                                width: `${(d.value / max) * 100}%`,
+                                background: colorFn ? colorFn(d, i) : 'var(--accent)',
+                            }}
+                        >
+                            {d.value > 0 && <span className="bar-value">{d.value}</span>}
                         </div>
-                        <input
-                            ref={importInputRef}
-                            type="file"
-                            accept="application/json"
-                            className="hidden"
-                            onChange={(e) => handleImportData(e.target.files[0])}
-                        />
+                        {d.value === 0 && <span style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'var(--muted)',fontFamily:'Space Mono'}}>0</span>}
                     </div>
-                    <button onClick={() => {const n = promptText("Nome da Pasta:"); if(n) { setFolders([{id: Date.now(), name: n, games: []}, ...folders]); showToast('✓ Pasta Criada'); }}} className="w-full p-5 mb-6 border-2 border-dashed border-slate-800 rounded-3xl text-slate-500 font-bold active-btn hover:border-indigo-500 transition-all">+ Nova Pasta</button>
-                    <div className="space-y-4">
-                        {folders.map(f => {
-                            const stats = getFolderStats(f);
-                            return (
-                                <div key={f.id} onClick={() => {setCurrentFolderId(f.id); setView('games')}} className="card-gradient p-6 rounded-3xl active-btn border border-slate-800 hover:glow-border transition-all cursor-pointer">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <h3 className="font-black text-white uppercase italic text-lg mb-1">{f.name}</h3>
-                                            <p className="text-[10px] text-indigo-500 font-bold uppercase">{f.games.length} Jogos</p>
-                                        </div>
-                                        <button onClick={(e) => { e.stopPropagation(); if(confirm("Apagar pasta inteira?")) { setFolders(folders.filter(fold => fold.id !== f.id)); showToast('🗑️ Pasta Eliminada'); }}} className="text-slate-700 text-xs font-bold bg-slate-800 px-3 py-1 rounded-lg hover:bg-red-900 transition-all">Eliminar</button>
-                                    </div>
-                                    {stats && (
-                                        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-800/50">
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-green-500">{stats.totalGoals}</div>
-                                                <div className="text-[8px] text-slate-600 font-bold uppercase">Golos</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-red-500">{stats.totalGoalsSuffered}</div>
-                                                <div className="text-[8px] text-slate-600 font-bold uppercase">Sofridos</div>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="text-2xl font-black text-indigo-400">{stats.eficacia}%</div>
-                                                <div className="text-[8px] text-slate-600 font-bold uppercase">Eficácia</div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                    {toast && <Toast message={toast} onClose={() => setToast(null)} />}
                 </div>
-            );
+            ))}
+        </div>
+    );
+}
 
-            if (view === 'games') {
-                const folder = folders.find(f => f.id === currentFolderId);
-                const fromDate = dateFrom ? new Date(dateFrom) : null;
-                const toDate = dateTo ? new Date(dateTo) : null;
-                if (toDate) {
-                    toDate.setHours(23, 59, 59, 999);
-                }
-                const filteredGames = folder.games.filter(g => 
-                    g.opponent.toLowerCase().includes(searchTerm.toLowerCase())
-                ).filter((g) => {
-                    const gameDate = parsePtDate(g.date);
-                    if (fromDate && (!gameDate || gameDate < fromDate)) return false;
-                    if (toDate && (!gameDate || gameDate > toDate)) return false;
-                    const goalsFor = g.stats.find(s => s.name === 'Golo')?.count || 0;
-                    const goalsAgainst = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
-                    if (minGoalsFor && goalsFor < Number(minGoalsFor)) return false;
-                    if (minGoalsAgainst && goalsAgainst < Number(minGoalsAgainst)) return false;
-                    return true;
-                });
-                const sortedGames = [...filteredGames].sort((a, b) => {
-                    if (sortBy === 'date') {
-                        return parsePtDate(b.date) - parsePtDate(a.date);
+// ─── DONUT CHART ─────────────────────────────────────────────────────────
+function DonutChart({ value, max, color, label, sublabel, size=80 }) {
+    const r = 30;
+    const circ = 2 * Math.PI * r;
+    const pct = max > 0 ? Math.min(value/max, 1) : 0;
+    const dash = pct * circ;
+    return (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+            <svg width={size} height={size} viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="8"/>
+                <circle
+                    cx="40" cy="40" r={r} fill="none"
+                    stroke={color}
+                    strokeWidth="8"
+                    strokeDasharray={`${dash} ${circ - dash}`}
+                    strokeLinecap="round"
+                    style={{transform:'rotate(-90deg)',transformOrigin:'50% 50%',transition:'stroke-dasharray 0.8s cubic-bezier(0.23,1,0.32,1)'}}
+                />
+                <text x="40" y="38" textAnchor="middle" dominantBaseline="middle" style={{fill:'white',fontFamily:'Bebas Neue',fontSize:20,letterSpacing:1}}>{value}</text>
+                <text x="40" y="52" textAnchor="middle" dominantBaseline="middle" style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:7,fontWeight:600,textTransform:'uppercase'}}>{sublabel}</text>
+            </svg>
+            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:'0.06em'}}>{label}</div>
+        </div>
+    );
+}
+
+// ─── STACKED BAR ─────────────────────────────────────────────────────────
+function StackedBar({ leftVal, rightVal, leftColor, rightColor, leftLabel, rightLabel }) {
+    const total = leftVal + rightVal;
+    const lp = total > 0 ? (leftVal/total)*100 : 50;
+    const rp = 100 - lp;
+    return (
+        <div>
+            <div style={{display:'flex',height:28,borderRadius:8,overflow:'hidden',gap:2}}>
+                <div style={{width:`${lp}%`,background:leftColor,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:lp>0?'30px':0}}>{leftVal>0?leftVal:''}</div>
+                <div style={{width:`${rp}%`,background:rightColor,display:'flex',alignItems:'center',justifyContent:'flex-start',paddingLeft:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:rp>0?'30px':0}}>{rightVal>0?rightVal:''}</div>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
+                <span style={{fontSize:9,color:leftColor,fontWeight:700,textTransform:'uppercase'}}>{leftLabel}</span>
+                <span style={{fontSize:9,color:rightColor,fontWeight:700,textTransform:'uppercase'}}>{rightLabel}</span>
+            </div>
+        </div>
+    );
+}
+
+// ─── IMPROVED TIMELINE ────────────────────────────────────────────────────
+function Timeline({ events, totalTime, filter }) {
+    const [hovered, setHovered] = useState(null);
+    const displayTime = Math.max(totalTime, 90 * 60);
+
+    // cluster events that are close together
+    const CLUSTER_THRESHOLD = 0.025; // 2.5% of timeline
+    const clusters = [];
+    const sorted = [...events].sort((a,b) => a.time - b.time);
+    sorted.forEach(ev => {
+        const pct = ev.time / displayTime;
+        const last = clusters[clusters.length-1];
+        if (last && Math.abs(last.pct - pct) < CLUSTER_THRESHOLD) {
+            last.events.push(ev);
+            last.pct = (last.pct * last.events.length + pct) / (last.events.length);
+        } else {
+            clusters.push({ pct, events: [ev] });
+        }
+    });
+
+    const minutes = [15, 30, 45, 60, 75, 90];
+
+    return (
+        <div className="timeline-wrap">
+            {/* minute marks */}
+            <div className="timeline-track">
+                <div className="timeline-half" />
+                {minutes.map(m => (
+                    <div key={m} className="tl-minute-mark" style={{left:`${(m*60/displayTime)*100}%`}}>
+                        <span className="tl-label-top">{m}'</span>
+                    </div>
+                ))}
+                {/* clusters */}
+                {clusters.map((cluster, ci) => {
+                    const hasGoal = cluster.events.some(e => e.isGoal);
+                    const isHovered = hovered === ci;
+                    if (cluster.events.length === 1) {
+                        const e = cluster.events[0];
+                        const cls = e.isGoal ? 'goal' : e.type;
+                        return (
+                            <div
+                                key={ci}
+                                className={`tl-event-dot ${cls}`}
+                                style={{ left: `${cluster.pct*100}%` }}
+                                onMouseEnter={() => setHovered(ci)}
+                                onMouseLeave={() => setHovered(null)}
+                            >
+                                <div className="tl-tooltip">{fmtMin(e.time)} {e.name}</div>
+                            </div>
+                        );
                     }
-                    return a.opponent.localeCompare(b.opponent);
-                });
-                const summary = sortedGames.reduce((acc, g) => {
-                    const goalsFor = g.stats.find(s => s.name === 'Golo')?.count || 0;
-                    const goalsAgainst = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
-                    acc.goalsFor += goalsFor;
-                    acc.goalsAgainst += goalsAgainst;
-                    return acc;
-                }, { goalsFor: 0, goalsAgainst: 0 });
-                const avgGoalsFor = sortedGames.length ? (summary.goalsFor / sortedGames.length).toFixed(2) : 0;
-                const avgGoalsAgainst = sortedGames.length ? (summary.goalsAgainst / sortedGames.length).toFixed(2) : 0;
-
-                return (
-                    <div className="p-6 h-screen bg-slate-950 overflow-y-auto slide-enter">
-                        <button onClick={() => setView('folders')} className="text-[10px] font-black text-slate-500 mb-6 uppercase tracking-widest hover:text-indigo-500 transition-all">← Voltar</button>
-                        <h2 className="text-2xl font-black mb-6 uppercase italic text-indigo-400 border-l-4 border-indigo-500 pl-4">{folder.name}</h2>
-                        
-                        <div className="mb-6 space-y-3">
-                            <input 
-                                type="text" 
-                                placeholder="🔍 Pesquisar jogo..." 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl text-sm text-white outline-none focus:border-indigo-500 transition-all"
-                            />
-                            <div className="grid grid-cols-2 gap-2">
-                                <input
-                                    type="date"
-                                    value={dateFrom}
-                                    onChange={(e) => setDateFrom(e.target.value)}
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 transition-all"
-                                />
-                                <input
-                                    type="date"
-                                    value={dateTo}
-                                    onChange={(e) => setDateTo(e.target.value)}
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 transition-all"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    placeholder="Min. Golos"
-                                    value={minGoalsFor}
-                                    onChange={(e) => setMinGoalsFor(e.target.value)}
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 transition-all"
-                                />
-                                <input
-                                    type="number"
-                                    min="0"
-                                    placeholder="Min. Sofridos"
-                                    value={minGoalsAgainst}
-                                    onChange={(e) => setMinGoalsAgainst(e.target.value)}
-                                    className="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white outline-none focus:border-indigo-500 transition-all"
-                                />
-                            </div>
-                            <div className="flex gap-2">
-                                <button onClick={() => setSortBy('date')} className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase ${sortBy === 'date' ? 'bg-indigo-600' : 'bg-slate-800'} transition-all`}>Data</button>
-                                <button onClick={() => setSortBy('name')} className={`flex-1 py-2 rounded-xl text-xs font-bold uppercase ${sortBy === 'name' ? 'bg-indigo-600' : 'bg-slate-800'} transition-all`}>Nome</button>
-                            </div>
-                        </div>
-
-                        <button onClick={() => {const o = promptText("Adversário:"); if(o) { setFolders(folders.map(f => f.id === currentFolderId ? {...f, games: [{id: Date.now(), opponent: o, time: 0, stats: createInitialStats(), events: [], notes: "", notesHistory: [], pic: null, date: new Date().toLocaleDateString('pt-PT')}, ...f.games]} : f)); showToast('✓ Jogo Adicionado'); }}} className="w-full p-5 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl font-black uppercase italic mb-8 shadow-xl active-btn hover:shadow-2xl transition-all">+ Adicionar Jogo</button>
-
-                        <div className="mb-8 p-4 bg-slate-900/40 border border-slate-800 rounded-2xl">
-                            <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-2">Resumo</div>
-                            <div className="grid grid-cols-3 gap-3 text-center">
-                                <div>
-                                    <div className="text-xl font-black text-indigo-400">{sortedGames.length}</div>
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase">Jogos</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl font-black text-green-500">{avgGoalsFor}</div>
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase">Média Golos</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl font-black text-red-500">{avgGoalsAgainst}</div>
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase">Média Sofr.</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            {sortedGames.map(g => {
-                                const golos = g.stats.find(s => s.name === 'Golo')?.count || 0;
-                                const golosSofr = g.stats.find(s => s.name === 'Golo Sofr.')?.count || 0;
+                    // multiple events clustered
+                    return (
+                        <div
+                            key={ci}
+                            className="tl-cluster"
+                            style={{ left: `${cluster.pct*100}%` }}
+                            onMouseEnter={() => setHovered(ci)}
+                            onMouseLeave={() => setHovered(null)}
+                        >
+                            {cluster.events.slice(0,3).map((e, ei) => {
+                                const cls = e.isGoal ? 'goal' : e.type;
                                 return (
-                                    <div key={g.id} onClick={() => {setCurrentGame(g); setView('tracking')}} className="game-card card-gradient p-5 rounded-3xl flex justify-between items-center active-btn border border-slate-800 hover:glow-border transition-all cursor-pointer">
-                                        <div className="flex flex-col flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-black uppercase italic tracking-tight">{g.opponent}</span>
-                                                <span className="text-lg font-black text-green-500">{golos}</span>
-                                                <span className="text-slate-700">-</span>
-                                                <span className="text-lg font-black text-red-500">{golosSofr}</span>
-                                            </div>
-                                            <span className="text-[10px] text-slate-600 font-bold">{g.date}</span>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button 
-                                                onClick={(e) => duplicateGame(e, g)} 
-                                                className="w-10 h-10 flex items-center justify-center bg-blue-600/10 rounded-xl text-blue-400 border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all text-lg"
-                                            >📋</button>
-                                            <button 
-                                                onClick={(e) => handleDeleteGame(e, g.id)} 
-                                                className="w-10 h-10 flex items-center justify-center bg-red-600/10 rounded-xl text-red-500 border border-red-500/20 hover:bg-red-600 hover:text-white transition-all text-lg"
-                                            >🗑️</button>
-                                        </div>
-                                    </div>
+                                    <div key={ei} className={`tl-event-dot ${cls}`}
+                                        style={{position:'relative',transform:'none',top:'auto',left:'auto',marginBottom:1}}
+                                    />
                                 );
                             })}
-                        </div>
-                        {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-                    </div>
-                );
-            }
-
-            // REPORT VIEW
-            if (view === 'report') {
-                const golos = currentGame.stats.find(s => s.name === 'Golo')?.count || 0;
-                const remates = currentGame.stats.find(s => s.name === 'Remate')?.count || 0;
-                const eficacia = remates > 0 ? ((golos / remates) * 100).toFixed(1) : 0;
-                const totalAtaque = currentGame.stats.filter(s => s.type === 'ataque').reduce((sum, s) => sum + s.count, 0);
-                const totalDefesa = currentGame.stats.filter(s => s.type === 'defesa').reduce((sum, s) => sum + s.count, 0);
-                const filteredEvents = getFilteredEvents();
-
-                return (
-                    <div className="h-screen flex flex-col bg-slate-950 text-white">
-                        <div className="p-3 md:p-4 flex flex-col gap-2 md:flex-row md:justify-between md:items-center border-b border-slate-800 shrink-0 bg-slate-900">
-                            <button onClick={() => setView('tracking')} className="text-[10px] md:text-xs font-bold text-slate-400 uppercase hover:text-indigo-400 transition-all self-start">← Painel</button>
-                            <div className="flex gap-2 w-full md:w-auto">
-                                <select 
-                                    value={eventFilter} 
-                                    onChange={(e) => setEventFilter(e.target.value)}
-                                    className="bg-slate-800 text-white px-3 py-2 rounded-xl text-[10px] md:text-xs font-bold outline-none border border-slate-700 flex-1 md:flex-none"
-                                >
-                                    <option value="all">Todos Eventos</option>
-                                    <option value="golos">Só Golos</option>
-                                    <option value="ataque">Ataque</option>
-                                    <option value="defesa">Defesa</option>
-                                </select>
-                                <button onClick={exportPDF} className="bg-white text-black px-4 md:px-6 py-2 rounded-xl font-black text-[10px] uppercase italic active-btn shadow-lg hover:shadow-xl transition-all whitespace-nowrap">Baixar PDF</button>
-                            </div>
-                        </div>
-                        <div id="report-area" className="flex-1 overflow-y-auto p-4 md:p-10 bg-slate-950">
-                            <div className="flex justify-between items-start mb-8">
-                                <div>
-                                    <h2 className="text-3xl md:text-5xl font-black italic uppercase text-indigo-500 mb-2 break-words">{currentGame.opponent}</h2>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">{currentGame.date} | FINAL: {formatFullTime(currentGame.time)}</p>
-                                    <div className="mt-4 flex gap-4">
-                                        <div className="text-center">
-                                            <div className="text-4xl font-black text-green-500">{golos}</div>
-                                            <div className="text-[10px] text-slate-600 font-bold uppercase">Golos</div>
-                                        </div>
-                                        <div className="text-center">
-                                            <div className="text-4xl font-black text-indigo-400">{eficacia}%</div>
-                                            <div className="text-[10px] text-slate-600 font-bold uppercase">Eficácia</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {currentGame.pic && <img src={currentGame.pic} className="w-32 h-32 rounded-2xl object-cover border-2 border-slate-800 shadow-2xl" />}
-                            </div>
-
-                            {/* Gráfico de comparação */}
-                            <div className="mb-12 p-6 bg-slate-900/50 rounded-3xl border border-slate-800">
-                                <h3 className="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest text-center">Distribuição de Ações</h3>
-                                <div className="flex gap-4 items-center">
-                                    <div className="flex-1">
-                                        <div className="h-8 bg-indigo-600 rounded-lg flex items-center justify-end px-3" style={{width: `${(totalAtaque + totalDefesa) ? (totalAtaque / (totalAtaque + totalDefesa)) * 100 : 0}%`}}>
-                                            <span className="text-xs font-black">{totalAtaque}</span>
-                                        </div>
-                                        <div className="text-[10px] text-indigo-400 font-bold uppercase mt-2">Ataque</div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="h-8 bg-red-600 rounded-lg flex items-center justify-start px-3" style={{width: `${(totalAtaque + totalDefesa) ? (totalDefesa / (totalAtaque + totalDefesa)) * 100 : 0}%`}}>
-                                            <span className="text-xs font-black">{totalDefesa}</span>
-                                        </div>
-                                        <div className="text-[10px] text-red-500 font-bold uppercase mt-2">Defesa</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mb-16">
-                                <h3 className="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest text-center">
-                                    Cronologia {eventFilter !== 'all' && `(${eventFilter === 'golos' ? 'Golos' : eventFilter})`}
-                                </h3>
-                                <div className="timeline-bar">
-                                    {filteredEvents.map((e, i) => (
-                                        <div 
-                                            key={i} 
-                                            className={e.isGoal ? 'goal-marker' : 'event-marker ' + (e.type === 'ataque' ? 'bg-indigo-500' : 'bg-red-600')} 
-                                            style={{ left: `${(e.time / (currentGame.time || 1)) * 100}%` }}
-                                            title={`${Math.floor(e.time/60)}' - ${e.name}`}
-                                        >
-                                            {(e.isGoal || i % 5 === 0) && <span className="time-label">{Math.floor(e.time/60)}'</span>}
+                            {isHovered && (
+                                <div style={{
+                                    position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',
+                                    background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,
+                                    padding:'6px 10px',zIndex:20,whiteSpace:'nowrap',minWidth:120
+                                }}>
+                                    {cluster.events.map((e,ei) => (
+                                        <div key={ei} style={{fontSize:9,fontFamily:'Space Mono',color:'var(--text)',marginBottom:2}}>
+                                            {fmtMin(e.time)} {e.name}
                                         </div>
                                     ))}
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-12 text-white mb-12">
-                                {['ataque', 'defesa'].map(type => (
-                                    <div key={type}>
-                                        <h4 className={`text-xl font-black uppercase italic mb-6 border-l-4 pl-3 ${type === 'ataque' ? 'border-indigo-500 text-indigo-400' : 'border-red-600 text-red-500'}`}>{type}</h4>
-                                        {currentGame.stats.filter(s => s.type === type).map(s => (
-                                            <div key={s.id} className="flex justify-between items-center border-b border-slate-900 py-3 text-white">
-                                                <span className="text-[10px] font-bold text-slate-500 uppercase">{s.name}</span>
-                                                <span className="text-xl font-black text-white">{s.count}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {(currentGame.notes || (currentGame.notesHistory || []).length > 0) && (
-                                <div className="p-8 bg-slate-900 rounded-3xl text-slate-300 text-sm border border-slate-800 shadow-2xl">
-                                    <div className="text-[10px] font-black uppercase text-slate-600 mb-3">Notas</div>
-                                    {currentGame.notes && <p className="italic">"{currentGame.notes}"</p>}
-                                    {(currentGame.notesHistory || []).length > 0 && (
-                                        <div className="mt-4 space-y-2">
-                                            {currentGame.notesHistory.map((note, index) => (
-                                                <div key={index} className="text-xs text-slate-400">
-                                                    <span className="text-slate-600 font-bold uppercase text-[9px]">{note.label}</span>
-                                                    <div className="italic">"{note.text}"</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
                                 </div>
                             )}
-
-                            <div className="mt-12 text-center text-[10px] text-slate-700 font-bold uppercase tracking-widest">
-                                SoccerAnalyst Pro - Relatório Gerado em {new Date().toLocaleDateString('pt-PT')}
-                            </div>
                         </div>
-                        {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+                    );
+                })}
+                {/* period labels */}
+                <span className="tl-period-label" style={{left:'25%'}}>1º Tempo</span>
+                <span className="tl-period-label" style={{left:'75%'}}>2º Tempo</span>
+            </div>
+            {/* legend */}
+            <div style={{display:'flex',gap:16,marginTop:28,justifyContent:'center'}}>
+                {[
+                    {color:'var(--gold)',label:'Golo'},
+                    {color:'var(--accent)',label:'Ataque'},
+                    {color:'var(--red)',label:'Defesa'},
+                ].map(l => (
+                    <div key={l.label} style={{display:'flex',alignItems:'center',gap:6}}>
+                        <div style={{width:8,height:8,borderRadius:'50%',background:l.color}}/>
+                        <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)'}}>{l.label}</span>
                     </div>
-                );
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────
+function App() {
+    const [view, setView] = useState('folders');
+    const [folders, setFolders] = useState(loadDB);
+    const [currentFolderId, setCurrentFolderId] = useState(null);
+    const [currentGameId, setCurrentGameId] = useState(null);
+    const [isActive, setIsActive] = useState(false);
+    const [showNotes, setShowNotes] = useState(false);
+    const [toast, setToast] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('date');
+    const [eventFilter, setEventFilter] = useState('all');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+    const [minGoalsFor, setMinGoalsFor] = useState('');
+    const [minGoalsAgainst, setMinGoalsAgainst] = useState('');
+    const importRef = useRef(null);
+
+    // current game derived from folders (always fresh)
+    const currentGame = currentGameId && currentFolderId
+        ? (folders.find(f=>f.id===currentFolderId)?.games||[]).find(g=>g.id===currentGameId) || null
+        : null;
+
+    // ─── SAVE on every folders change ───
+    useEffect(() => {
+        saveDB(folders);
+    }, [folders]);
+
+    // ─── TIMER ───
+    useEffect(() => {
+        if (!isActive || !currentGameId) return;
+        const iv = setInterval(() => {
+            setFolders(prev => prev.map(f => {
+                if (f.id !== currentFolderId) return f;
+                return {
+                    ...f,
+                    games: f.games.map(g => {
+                        if (g.id !== currentGameId) return g;
+                        return { ...g, time: g.time + 1 };
+                    })
+                };
+            }));
+        }, 1000);
+        return () => clearInterval(iv);
+    }, [isActive, currentGameId, currentFolderId]);
+
+    // ─── KEYBOARD ───
+    useEffect(() => {
+        const h = (e) => {
+            if (view === 'tracking' && e.code === 'Space' && !e.target.matches('textarea,input')) {
+                e.preventDefault();
+                setIsActive(p => !p);
             }
+        };
+        window.addEventListener('keydown', h);
+        return () => window.removeEventListener('keydown', h);
+    }, [view]);
 
-            // TRACKING (MAIN)
-            const period = getPeriodLabel(currentGame.time);
-            return (
-                <div className="h-screen flex flex-col bg-slate-950 overflow-hidden">
-                    <header className="p-3 bg-slate-900 border-b border-slate-800 flex flex-col md:flex-row md:justify-between gap-3 shrink-0 shadow-xl">
-                        <div className="flex items-center gap-2 md:gap-3">
-                            <div className="bg-slate-950 px-4 py-2 rounded-xl border border-slate-800 text-2xl font-mono font-black text-indigo-400 tracking-tighter shadow-inner">
-                                {formatFullTime(currentGame.time)}
-                                <span className={`period-indicator ${period.color} text-white ml-2`}>
-                                    {period.label}
-                                </span>
-                            </div>
-                            <button 
-                                onClick={() => {
-                                    if (currentGame.events.length > 0) {
-                                        removeStat(currentGame.events[currentGame.events.length - 1].statId);
-                                    }
-                                }} 
-                                className="bg-slate-800 w-12 h-12 rounded-xl flex items-center justify-center active-btn border border-slate-700 shadow-lg text-xl hover:bg-slate-700 transition-all"
-                            >↩</button>
-                        </div>
-                        <div className="w-full md:w-auto overflow-x-auto no-scrollbar">
-                            <div className="flex items-center gap-2 w-max md:w-auto">
-                            <div className="relative w-10 h-10 md:w-12 md:h-12 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700 active-btn overflow-hidden shadow-lg hover:border-indigo-500 transition-all shrink-0">
-                                {currentGame.pic ? <img src={currentGame.pic} className="w-full h-full object-cover" /> : <span className="text-2xl">📷</span>}
-                                <input type="file" accept="image/*" onChange={async (e) => {const f=e.target.files[0]; if(f){const compressed = await compressImage(f); updateCurrentGameData({ pic: compressed }); showToast('✓ Foto Adicionada');}}} className="absolute inset-0 opacity-0 cursor-pointer" />
-                            </div>
-                            <button onClick={() => {setShowNotes(!showNotes); if(!showNotes) showToast('📝 Editor de Notas');}} className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center border border-slate-700 text-lg md:text-xl transition-all shrink-0 ${currentGame.notes ? 'bg-indigo-600 shadow-lg shadow-indigo-500/50' : 'bg-slate-800'}`}>📝</button>
-                            <div className="flex items-center gap-1">
-                                <button onClick={() => adjustTime(-10)} className="w-10 h-10 bg-slate-800 rounded-xl text-[10px] font-black border border-slate-700 hover:border-indigo-500 transition-all shrink-0">-10</button>
-                                <button onClick={() => adjustTime(10)} className="w-10 h-10 bg-slate-800 rounded-xl text-[10px] font-black border border-slate-700 hover:border-indigo-500 transition-all shrink-0">+10</button>
-                            </div>
-                            <button onClick={toggleTimer} className={`px-4 md:px-5 h-10 md:h-auto rounded-xl font-black text-[10px] md:text-xs uppercase transition-all shadow-lg shrink-0 ${isActive ? 'bg-red-600 animate-pulse' : 'bg-green-600'}`}>{isActive ? 'STOP' : 'START'}</button>
-                            <button onClick={() => setView('report')} className="bg-white text-black px-4 md:px-5 h-10 md:h-auto rounded-xl text-[10px] md:text-xs font-black uppercase italic active-btn shadow-lg hover:shadow-xl transition-all shrink-0">PDF</button>
-                            </div>
-                        </div>
-                    </header>
+    const showToast = useCallback((msg, goal=false) => {
+        setToast({ msg, goal });
+    }, []);
 
-                    {showNotes && (
-                        <div className="p-4 bg-slate-900 border-b border-slate-800 shrink-0 slide-enter">
-                            <textarea 
-                                value={currentGame.notes} 
-                                onChange={(e) => updateCurrentGameData({ notes: e.target.value })} 
-                                placeholder="✍️ Escreve as tuas observações aqui..." 
-                                className="w-full h-24 bg-slate-950 border border-slate-800 rounded-2xl p-4 text-xs text-white outline-none focus:border-indigo-500 transition-all resize-none"
-                            />
-                            <div className="flex justify-end mt-3">
+    // ─── UPDATE GAME ───
+    const updateGame = useCallback((updater) => {
+        setFolders(prev => prev.map(f => {
+            if (f.id !== currentFolderId) return f;
+            return {
+                ...f,
+                games: f.games.map(g => {
+                    if (g.id !== currentGameId) return g;
+                    return typeof updater === 'function' ? updater(g) : { ...g, ...updater };
+                })
+            };
+        }));
+    }, [currentFolderId, currentGameId]);
+
+    const adjustTime = (delta) => updateGame(g => ({ ...g, time: Math.max(0, g.time + delta) }));
+
+    const addStat = (id) => {
+        if (!isActive) { showToast('⚠️ Inicia o Cronómetro!'); return; }
+        let statName = '', isGoal = false;
+        updateGame(g => {
+            const stat = g.stats.find(s => s.id === id);
+            if (!stat) return g;
+            statName = stat.name;
+            isGoal = stat.name.toLowerCase().includes('golo') && stat.type === 'ataque';
+            return {
+                ...g,
+                stats: g.stats.map(s => s.id===id ? {...s, count: s.count+1} : s),
+                events: [...g.events, { time: g.time, type: stat.type, name: stat.name, isGoal, statId: id }]
+            };
+        });
+        if (navigator.vibrate) navigator.vibrate(isGoal ? [50,50,50] : 25);
+        if (statName) showToast(isGoal ? '⚽ GOLOOO!' : `✓ ${statName}`, isGoal);
+    };
+
+    const removeStat = (id) => {
+        updateGame(g => {
+            const stat = g.stats.find(s => s.id===id);
+            if (!stat || stat.count <= 0) return g;
+            const events = [...g.events];
+            const li = [...events].reverse().findIndex(e => e.statId===id);
+            if (li !== -1) events.splice(events.length-1-li, 1);
+            return {
+                ...g,
+                stats: g.stats.map(s => s.id===id ? {...s, count: s.count-1} : s),
+                events
+            };
+        });
+        showToast('↩ Removido');
+    };
+
+    const undoLast = () => {
+        if (!currentGame || !currentGame.events.length) return;
+        const last = currentGame.events[currentGame.events.length-1];
+        removeStat(last.statId);
+    };
+
+    const compressImage = (file) => new Promise(res => {
+        const r = new FileReader();
+        r.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, 512/Math.max(img.width, img.height));
+                const c = document.createElement('canvas');
+                c.width = Math.round(img.width*scale);
+                c.height = Math.round(img.height*scale);
+                c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+                res(c.toDataURL('image/jpeg', 0.8));
+            };
+            img.src = r.result;
+        };
+        r.readAsDataURL(file);
+    });
+
+    const getPeriodInfo = (t) => {
+        const m = Math.floor(t/60);
+        if (m < 45) return { label:'1º TEMPO', color:'#2dc653' };
+        if (m < 90) return { label:'2º TEMPO', color:'#4361ee' };
+        return { label:'PRORROG.', color:'#f9c74f' };
+    };
+
+    const getFolderSummary = (folder) => {
+        if (!folder.games.length) return null;
+        const golos = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Golo')?.count||0), 0);
+        const sofr = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Golo Sofr.')?.count||0), 0);
+        const rem = folder.games.reduce((s,g) => s + (g.stats.find(x=>x.name==='Remate')?.count||0), 0);
+        const ef = rem > 0 ? ((golos/rem)*100).toFixed(1) : 0;
+        return { games: folder.games.length, golos, sofr, ef };
+    };
+
+    const exportPDF = async () => {
+        showToast('📄 Gerando PDF...');
+        try {
+            const el = document.getElementById('report-area');
+            const canvas = await html2canvas(el, {
+                backgroundColor: '#050810',
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: -window.scrollY,
+                windowWidth: el.scrollWidth,
+                windowHeight: el.scrollHeight
+            });
+            const pdf = new jspdf.jsPDF('p','mm','a4');
+            const pw = pdf.internal.pageSize.getWidth();
+            const ph = pdf.internal.pageSize.getHeight();
+            const margin = 8;
+            const cw = pw - margin*2;
+            const ch = ph - margin*2;
+            const pxPerMm = canvas.width / cw;
+            const pageHPx = Math.floor(ch * pxPerMm);
+            const pageC = document.createElement('canvas');
+            const pCtx = pageC.getContext('2d');
+            let rendered = 0, page = 0;
+            while (rendered < canvas.height) {
+                const slice = Math.min(pageHPx, canvas.height - rendered);
+                pageC.width = canvas.width;
+                pageC.height = slice;
+                pCtx.clearRect(0,0,pageC.width,pageC.height);
+                pCtx.drawImage(canvas,0,rendered,canvas.width,slice,0,0,pageC.width,pageC.height);
+                if (page>0) pdf.addPage();
+                pdf.addImage(pageC.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,cw,slice/pxPerMm,undefined,'FAST');
+                rendered += slice; page++;
+            }
+            pdf.save(`SoccerAnalyst_${currentGame.opponent}_${currentGame.date.replace(/\//g,'-')}.pdf`);
+            showToast('✓ PDF Guardado');
+        } catch(e) {
+            showToast('⚠️ Erro ao gerar PDF');
+        }
+    };
+
+    const handleExport = () => {
+        const blob = new Blob([JSON.stringify({version:3, exportedAt: new Date().toISOString(), folders})], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        showToast('✓ Backup Exportado');
+    };
+    const handleImport = (file) => {
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = () => {
+            try {
+                const p = JSON.parse(r.result);
+                const imported = Array.isArray(p) ? p : p?.folders;
+                if (!Array.isArray(imported)) { showToast('⚠️ Ficheiro inválido'); return; }
+                setFolders(imported);
+                showToast('✓ Dados Importados');
+            } catch(e) { showToast('⚠️ Erro ao importar'); }
+        };
+        r.readAsText(file);
+    };
+
+    // ─── VIEW: FOLDERS ───────────────────────────────────────────────────
+    if (view === 'folders') return (
+        <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:32}}>
+                <h1 style={{fontFamily:'Bebas Neue',fontSize:32,color:'var(--accent)',letterSpacing:3,lineHeight:1}}>SoccerAnalyst<br/><span style={{color:'var(--text)',fontSize:18,letterSpacing:6}}>PRO</span></h1>
+                <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                    <button onClick={handleExport} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Exportar</button>
+                    <button onClick={() => importRef.current?.click()} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Importar</button>
+                    <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
+                </div>
+            </div>
+
+            <button
+                onClick={() => { const n=promptText("Nome da Pasta:"); if(n){ setFolders(prev=>[{id:Date.now(),name:n,games:[]},...prev]); showToast('✓ Pasta Criada'); }}}
+                style={{width:'100%',padding:'18px',marginBottom:24,border:'2px dashed var(--border)',borderRadius:16,background:'transparent',color:'var(--muted)',fontWeight:700,fontSize:13,textTransform:'uppercase',letterSpacing:2,cursor:'pointer',transition:'all 0.2s'}}
+                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
+                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
+            >+ Nova Pasta</button>
+
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {folders.map(f => {
+                    const s = getFolderSummary(f);
+                    return (
+                        <div key={f.id} onClick={()=>{setCurrentFolderId(f.id);setView('games');}} className="card active-btn" style={{cursor:'pointer',transition:'all 0.2s'}}
+                            onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
+                            onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
+                        >
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:s?16:0}}>
+                                <div>
+                                    <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2,color:'var(--text)'}}>{f.name}</div>
+                                    <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogos</div>
+                                </div>
                                 <button
-                                    onClick={() => {
-                                        if (!currentGame.notes?.trim()) {
-                                            showToast('⚠️ Nota vazia');
-                                            return;
-                                        }
-                                        const now = new Date();
-                                        const label = `${formatFullTime(currentGame.time)} · ${now.toLocaleDateString('pt-PT')}`;
-                                        updateCurrentGameData((game) => ({
-                                            ...game,
-                                            notesHistory: [...(game.notesHistory || []), { label, text: game.notes.trim() }]
-                                        }));
-                                        showToast('✓ Nota guardada');
-                                    }}
-                                    className="px-4 py-2 bg-indigo-600 rounded-xl text-[10px] font-black uppercase shadow-lg hover:shadow-xl transition-all"
-                                >
-                                    Guardar Nota
-                                </button>
+                                    onClick={e=>{e.stopPropagation();if(confirm("Apagar pasta?"))setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('🗑 Eliminada');}}
+                                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:8,fontSize:10,color:'var(--muted)',cursor:'pointer',fontWeight:700}}
+                                >✕</button>
                             </div>
-                        </div>
-                    )}
-
-                    <div className="flex-1 flex overflow-hidden">
-                        {['ataque', 'defesa'].map(type => (
-                            <div key={type} className="flex-1 flex flex-col border-r border-slate-900 last:border-r-0">
-                                <div className="flex justify-between items-center px-4 py-3 bg-slate-900/50 border-b border-slate-800">
-                                    <span className={`${type === 'ataque' ? 'text-indigo-400' : 'text-red-500'} text-[10px] font-black uppercase italic tracking-widest`}>{type}</span>
-                                    <button 
-                                        onClick={() => {
-                                            const n = promptText("Nova ação:"); 
-                                            if(n) {
-                                                updateCurrentGameData((game) => ({ ...game, stats: [...game.stats, {id: Date.now(), name: n, count: 0, type}] }));
-                                                showToast('✓ Nova Ação Criada');
-                                            }
-                                        }} 
-                                        className="text-lg bg-slate-800 w-8 h-8 rounded-lg flex items-center justify-center border border-slate-700 hover:bg-indigo-600 transition-all active-btn"
-                                    >+</button>
-                                </div>
-                                <div className="px-4 pt-3 pb-1">
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase mb-2">Atalhos</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {currentGame.stats.filter(s => s.type === type).slice(0, 3).map((s) => (
-                                            <button
-                                                key={s.id}
-                                                onClick={() => addStat(s.id)}
-                                                className="px-3 py-2 bg-slate-900/70 border border-slate-800 rounded-xl text-[10px] font-black uppercase text-slate-300 hover:border-indigo-500 transition-all"
-                                            >
-                                                + {s.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-3 no-scrollbar pb-32">
-                                    {currentGame.stats.filter(s => s.type === type).map(s => (
-                                        <div key={s.id} className="flex items-stretch gap-1">
-                                            <button 
-                                                onClick={() => addStat(s.id)} 
-                                                className="stat-btn flex-1 h-20 card-gradient rounded-2xl flex items-center px-4 border-l-4 border-slate-800 active:border-indigo-500 shadow-xl active-btn transition-all hover:glow-border"
-                                            >
-                                                <span className={`text-3xl font-black mr-3 italic transition-all ${s.count > 0 ? 'text-white' : 'text-slate-800'}`}>{s.count}</span>
-                                                <span className="text-[11px] font-black uppercase text-slate-400 text-left leading-tight tracking-tighter">{s.name}</span>
-                                            </button>
-                                            <div className="flex flex-col gap-1 w-10">
-                                                <button onClick={() => removeStat(s.id)} className="flex-1 bg-red-950/20 border border-red-900/30 rounded-xl text-red-500 text-sm font-black active-btn flex items-center justify-center hover:bg-red-600 transition-all">-</button>
-                                                <button onClick={() => {const n = promptText("Editar:", s.name); if(n) {updateCurrentGameData((game) => ({ ...game, stats: game.stats.map(st=>st.id===s.id?{...st, name:n}:st) })); showToast('✓ Editado');}}} className="flex-1 bg-slate-900/50 border border-slate-800 rounded-xl text-xs opacity-40 flex items-center justify-center hover:opacity-100 transition-all">✎</button>
-                                            </div>
+                            {s && (
+                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                                    {[
+                                        {val:s.golos,label:'Golos',color:'var(--green)'},
+                                        {val:s.sofr,label:'Sofridos',color:'var(--red)'},
+                                        {val:`${s.ef}%`,label:'Eficácia',color:'var(--accent)'},
+                                    ].map(x=>(
+                                        <div key={x.label} style={{textAlign:'center',padding:'10px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)'}}>
+                                            <div style={{fontFamily:'Bebas Neue',fontSize:26,color:x.color,lineHeight:1}}>{x.val}</div>
+                                            <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',marginTop:2,letterSpacing:1}}>{x.label}</div>
                                         </div>
                                     ))}
                                 </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+        </div>
+    );
+
+    // ─── VIEW: GAMES ─────────────────────────────────────────────────────
+    if (view === 'games') {
+        const folder = folders.find(f=>f.id===currentFolderId);
+        if (!folder) { setView('folders'); return null; }
+        const fromD = dateFrom ? new Date(dateFrom) : null;
+        const toD = dateTo ? (() => { const d=new Date(dateTo); d.setHours(23,59,59,999); return d; })() : null;
+        const filtered = folder.games.filter(g => {
+            if (!g.opponent.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+            const gd = parsePtDate(g.date);
+            if (fromD && (!gd||gd<fromD)) return false;
+            if (toD && (!gd||gd>toD)) return false;
+            const gf = g.stats.find(s=>s.name==='Golo')?.count||0;
+            const ga = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+            if (minGoalsFor && gf < Number(minGoalsFor)) return false;
+            if (minGoalsAgainst && ga < Number(minGoalsAgainst)) return false;
+            return true;
+        }).sort((a,b) => sortBy==='date' ? (parsePtDate(b.date)-parsePtDate(a.date)) : a.opponent.localeCompare(b.opponent));
+
+        const sumGF = filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
+        const sumGA = filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
+
+        return (
+            <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
+                <button onClick={()=>setView('folders')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',marginBottom:20}}>← Voltar</button>
+                <h2 style={{fontFamily:'Bebas Neue',fontSize:28,letterSpacing:3,color:'var(--accent)',marginBottom:24,borderLeft:'4px solid var(--accent)',paddingLeft:12}}>{folder.name}</h2>
+
+                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:24}}>
+                    <input type="text" placeholder="🔍 Pesquisar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{padding:'12px 16px',borderRadius:12,fontSize:13,width:'100%'}}/>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
+                        <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
+                        <input type="number" min="0" placeholder="Min. Golos" value={minGoalsFor} onChange={e=>setMinGoalsFor(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
+                        <input type="number" min="0" placeholder="Min. Sofr." value={minGoalsAgainst} onChange={e=>setMinGoalsAgainst(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
+                    </div>
+                    <div style={{display:'flex',gap:8}}>
+                        {['date','name'].map(s=>(
+                            <button key={s} onClick={()=>setSortBy(s)} style={{flex:1,padding:'8px',borderRadius:10,border:'1px solid var(--border)',background:sortBy===s?'var(--accent)':'var(--surface)',color:'white',fontSize:10,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:1}}>
+                                {s==='date'?'Data':'Nome'}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                <button
+                    onClick={()=>{const o=promptText("Adversário:"); if(o){const now=new Date().toLocaleDateString('pt-PT'); setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[{id:Date.now(),opponent:o,time:0,stats:createInitialStats(),events:[],notes:'',notesHistory:[],pic:null,date:now},...f.games]})); showToast('✓ Jogo Adicionado');}}}
+                    style={{width:'100%',padding:'16px',marginBottom:20,borderRadius:14,border:'none',background:'linear-gradient(135deg, var(--accent), var(--accent2))',color:'white',fontFamily:'Bebas Neue',fontSize:18,letterSpacing:3,cursor:'pointer',boxShadow:'0 8px 24px rgba(67,97,238,0.3)'}}
+                >+ Adicionar Jogo</button>
+
+                {filtered.length > 0 && (
+                    <div className="card" style={{marginBottom:24}}>
+                        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:2,marginBottom:12}}>Resumo Filtrado</div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,textAlign:'center'}}>
+                            {[
+                                {val:filtered.length,label:'Jogos',color:'var(--accent)'},
+                                {val:(sumGF/filtered.length).toFixed(2),label:'Média Golos',color:'var(--green)'},
+                                {val:(sumGA/filtered.length).toFixed(2),label:'Média Sofr.',color:'var(--red)'},
+                            ].map(x=>(
+                                <div key={x.label}>
+                                    <div style={{fontFamily:'Bebas Neue',fontSize:24,color:x.color}}>{x.val}</div>
+                                    <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1}}>{x.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                    {filtered.map(g => {
+                        const gf = g.stats.find(s=>s.name==='Golo')?.count||0;
+                        const ga = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+                        const result = gf>ga?'W':gf<ga?'L':'D';
+                        const rc = {W:'var(--green)',L:'var(--red)',D:'var(--gold)'}[result];
+                        return (
+                            <div key={g.id}
+                                onClick={()=>{setCurrentGameId(g.id);setView('tracking');}}
+                                className="card active-btn"
+                                style={{cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',transition:'all 0.2s'}}
+                                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
+                                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
+                            >
+                                <div style={{flex:1}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                                        <div style={{width:6,height:6,borderRadius:'50%',background:rc,flexShrink:0}}/>
+                                        <span style={{fontFamily:'Bebas Neue',fontSize:18,letterSpacing:1}}>{g.opponent}</span>
+                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--green)'}}>{gf}</span>
+                                        <span style={{color:'var(--muted)',fontSize:11}}>–</span>
+                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--red)'}}>{ga}</span>
+                                    </div>
+                                    <div style={{fontSize:10,color:'var(--muted)',fontWeight:600}}>{g.date} · {fmt(g.time)}</div>
+                                </div>
+                                <div style={{display:'flex',gap:6}}>
+                                    <button onClick={e=>{e.stopPropagation(); const ng={...g,id:Date.now(),opponent:`${g.opponent} (Cópia)`,time:0,stats:createInitialStats(),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')}; setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]})); showToast('📋 Duplicado');}}
+                                        style={{width:36,height:36,borderRadius:10,background:'rgba(67,97,238,0.1)',border:'1px solid rgba(67,97,238,0.2)',color:'var(--accent)',cursor:'pointer',fontSize:14}}>📋</button>
+                                    <button onClick={e=>{e.stopPropagation();if(confirm("Eliminar jogo?")){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('🗑 Eliminado');}}}
+                                        style={{width:36,height:36,borderRadius:10,background:'rgba(239,35,60,0.1)',border:'1px solid rgba(239,35,60,0.2)',color:'var(--red)',cursor:'pointer',fontSize:14}}>🗑</button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+            </div>
+        );
+    }
+
+    // ─── VIEW: REPORT ─────────────────────────────────────────────────────
+    if (view === 'report' && currentGame) {
+        const g = currentGame;
+        const golos = g.stats.find(s=>s.name==='Golo')?.count||0;
+        const sofr = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+        const remates = g.stats.find(s=>s.name==='Remate')?.count||0;
+        const ef = remates>0 ? ((golos/remates)*100).toFixed(1) : 0;
+        const totalAtk = g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
+        const totalDef = g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
+        const maxStat = Math.max(...g.stats.map(s=>s.count), 1);
+
+        const filteredEvents = eventFilter==='all' ? g.events
+            : eventFilter==='golos' ? g.events.filter(e=>e.isGoal)
+            : g.events.filter(e=>e.type===eventFilter);
+
+        const atkGrad = (d,i) => {
+            const colors = ['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
+            return colors[i % colors.length];
+        };
+        const defGrad = (d,i) => {
+            const colors = ['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
+            return colors[i % colors.length];
+        };
+
+        return (
+            <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)'}}>
+                {/* Toolbar */}
+                <div style={{padding:'12px 20px',background:'var(--surface)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexShrink:0}}>
+                    <button onClick={()=>setView('tracking')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',whiteSpace:'nowrap'}}>← Painel</button>
+                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                        <select value={eventFilter} onChange={e=>setEventFilter(e.target.value)} style={{padding:'8px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer'}}>
+                            <option value="all">Todos</option>
+                            <option value="golos">Golos</option>
+                            <option value="ataque">Ataque</option>
+                            <option value="defesa">Defesa</option>
+                        </select>
+                        <button onClick={exportPDF} style={{padding:'8px 18px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer',border:'none',boxShadow:'0 4px 12px rgba(0,0,0,0.3)',whiteSpace:'nowrap'}}>⬇ PDF</button>
+                    </div>
+                </div>
+
+                <div id="report-area" style={{flex:1,overflowY:'auto',padding:'32px 24px',background:'var(--bg)'}} className="no-scrollbar">
+                    {/* Header */}
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32}}>
+                        <div>
+                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:8}}>Relatório de Jogo</div>
+                            <h2 style={{fontFamily:'Bebas Neue',fontSize:42,letterSpacing:3,color:'var(--accent)',lineHeight:1,marginBottom:8}}>{g.opponent}</h2>
+                            <div style={{fontFamily:'Space Mono',fontSize:10,color:'var(--muted)'}}>{g.date} · {fmt(g.time)}</div>
+                        </div>
+                        {g.pic && <img src={g.pic} style={{width:80,height:80,borderRadius:12,objectFit:'cover',border:'1px solid var(--border)'}}/>}
+                    </div>
+
+                    {/* KPI Row */}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:32}}>
+                        {[
+                            {val:golos,label:'Golos',color:'var(--green)',sub:'marcados'},
+                            {val:sofr,label:'Sofr.',color:'var(--red)',sub:'sofridos'},
+                            {val:remates,label:'Remates',color:'var(--accent)',sub:'total'},
+                            {val:`${ef}%`,label:'Eficácia',color:'var(--gold)',sub:'golo/remate'},
+                        ].map(k=>(
+                            <div key={k.label} style={{padding:'16px 12px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,textAlign:'center'}}>
+                                <div style={{fontFamily:'Bebas Neue',fontSize:32,color:k.color,lineHeight:1}}>{k.val}</div>
+                                <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginTop:4}}>{k.label}</div>
+                                <div style={{fontSize:8,color:'var(--border)',fontStyle:'italic',marginTop:2}}>{k.sub}</div>
                             </div>
                         ))}
                     </div>
 
-                    <button onClick={() => setView('folders')} className="absolute bottom-8 left-8 w-16 h-16 bg-gradient-to-br from-slate-800 to-slate-900 rounded-full flex items-center justify-center shadow-2xl border-2 border-slate-700 active-btn text-3xl hover:scale-110 transition-all">🏠</button>
-                    
-                    {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-                </div>
-            );
-        }
+                    {/* Stacked Atk vs Def */}
+                    <div className="card" style={{marginBottom:24}}>
+                        <div className="report-section-title">Distribuição Ataque / Defesa</div>
+                        <StackedBar leftVal={totalAtk} rightVal={totalDef} leftColor="var(--accent)" rightColor="var(--red)" leftLabel={`Ataque (${totalAtk})`} rightLabel={`Defesa (${totalDef})`}/>
+                    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+                    {/* Donut row */}
+                    <div className="card" style={{marginBottom:24}}>
+                        <div className="report-section-title">Indicadores Chave</div>
+                        <div style={{display:'flex',justifyContent:'space-around',flexWrap:'wrap',gap:16,paddingTop:8}}>
+                            <DonutChart value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversão" sublabel="Golos" size={90}/>
+                            <DonutChart value={g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0} max={Math.max(remates,1)} color="var(--accent)" label="Enquadramento" sublabel="de Remates" size={90}/>
+                            <DonutChart value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuperação" sublabel="de Bola" size={90}/>
+                            <DonutChart value={sofr} max={Math.max(g.stats.find(s=>s.name==='Rem. Conc.')?.count||1,sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={90}/>
+                        </div>
+                    </div>
+
+                    {/* Bar charts */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+                        <div className="card">
+                            <div className="report-section-title" style={{color:'var(--accent)'}}>Ataque</div>
+                            <BarChart
+                                data={g.stats.filter(s=>s.type==='ataque').map(s=>({label:s.name,value:s.count}))}
+                                colorFn={atkGrad}
+                            />
+                        </div>
+                        <div className="card">
+                            <div className="report-section-title" style={{color:'var(--red)'}}>Defesa</div>
+                            <BarChart
+                                data={g.stats.filter(s=>s.type==='defesa').map(s=>({label:s.name,value:s.count}))}
+                                colorFn={defGrad}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="card" style={{marginBottom:24}}>
+                        <div className="report-section-title">Cronologia de Eventos</div>
+                        <Timeline events={filteredEvents} totalTime={g.time} filter={eventFilter}/>
+                        <div style={{marginTop:20,display:'flex',flexWrap:'wrap',gap:8}}>
+                            {filteredEvents.filter(e=>e.isGoal).map((e,i)=>(
+                                <div key={i} style={{padding:'6px 12px',background:'rgba(249,199,79,0.1)',border:'1px solid rgba(249,199,79,0.3)',borderRadius:8,fontFamily:'Space Mono',fontSize:10,color:'var(--gold)'}}>
+                                    ⚽ {fmtMin(e.time)}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Event list */}
+                    {filteredEvents.length > 0 && (
+                        <div className="card" style={{marginBottom:24}}>
+                            <div className="report-section-title">Lista de Eventos ({filteredEvents.length})</div>
+                            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
+                                {filteredEvents.map((e,i)=>(
+                                    <div key={i} style={{padding:'6px 10px',background:'var(--bg)',borderRadius:8,border:`1px solid ${e.isGoal?'rgba(249,199,79,0.3)':e.type==='ataque'?'rgba(67,97,238,0.2)':'rgba(239,35,60,0.2)'}`,display:'flex',alignItems:'center',gap:8}}>
+                                        <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:e.isGoal?'var(--gold)':e.type==='ataque'?'var(--accent)':'var(--red)'}}/>
+                                        <div>
+                                            <div style={{fontFamily:'Space Mono',fontSize:9,color:'var(--muted)'}}>{fmtMin(e.time)}</div>
+                                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.04em'}}>{e.name}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notes */}
+                    {(g.notes || (g.notesHistory||[]).length > 0) && (
+                        <div className="card" style={{marginBottom:24}}>
+                            <div className="report-section-title">Notas</div>
+                            {g.notes && <p style={{fontSize:12,color:'var(--text)',fontStyle:'italic',lineHeight:1.6,marginBottom:12}}>"{g.notes}"</p>}
+                            {(g.notesHistory||[]).map((n,i)=>(
+                                <div key={i} style={{marginBottom:10,paddingLeft:12,borderLeft:'2px solid var(--border)'}}>
+                                    <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginBottom:4}}>{n.label}</div>
+                                    <div style={{fontSize:11,color:'var(--text)',fontStyle:'italic'}}>"{n.text}"</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{textAlign:'center',fontSize:9,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:3,padding:'20px 0'}}>
+                        SoccerAnalyst Pro · {new Date().toLocaleDateString('pt-PT')}
+                    </div>
+                </div>
+                {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+            </div>
+        );
+    }
+
+    // ─── VIEW: TRACKING ───────────────────────────────────────────────────
+    if (!currentGame) { setView('games'); return null; }
+    const period = getPeriodInfo(currentGame.time);
+
+    return (
+        <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)',overflow:'hidden'}}>
+            {/* Header */}
+            <header style={{padding:'10px 16px',background:'var(--surface)',borderBottom:'1px solid var(--border)',flexShrink:0,display:'flex',flexDirection:'column',gap:10}}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <div style={{padding:'8px 16px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}}>
+                            <span style={{fontFamily:'Space Mono',fontSize:22,fontWeight:700,color:'var(--accent)'}}>{fmt(currentGame.time)}</span>
+                            <span style={{fontSize:9,fontWeight:800,textTransform:'uppercase',letterSpacing:1,color:period.color,background:`${period.color}22`,padding:'3px 8px',borderRadius:6}}>{period.label}</span>
+                        </div>
+                        <button onClick={undoLast} style={{width:40,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>↩</button>
+                    </div>
+                    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+                        {/* Photo */}
+                        <div style={{width:40,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',overflow:'hidden',position:'relative',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                            {currentGame.pic ? <img src={currentGame.pic} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <span style={{fontSize:18}}>📷</span>}
+                            <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f);updateGame({pic:c});showToast('✓ Foto');}}} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}/>
+                        </div>
+                        <button onClick={()=>setShowNotes(p=>!p)} style={{width:40,height:40,borderRadius:10,background:currentGame.notes?'rgba(67,97,238,0.3)':'var(--bg)',border:`1px solid ${currentGame.notes?'var(--accent)':'var(--border)'}`,cursor:'pointer',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>📝</button>
+                        <button onClick={()=>adjustTime(-10)} style={{width:38,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:9,fontWeight:700}}>-10s</button>
+                        <button onClick={()=>adjustTime(60)} style={{width:38,height:40,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:9,fontWeight:700}}>+1m</button>
+                        <button
+                            onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('⏸ Pausado');return n;})}
+                            style={{padding:'0 16px',height:40,borderRadius:10,border:'none',background:isActive?'var(--red)':'var(--green)',color:'white',fontFamily:'Bebas Neue',fontSize:16,letterSpacing:2,cursor:'pointer',animation:isActive?'pulse-gold 2s infinite':'none'}}
+                        >{isActive?'STOP':'START'}</button>
+                        <button onClick={()=>setView('report')} style={{padding:'0 14px',height:40,borderRadius:10,border:'none',background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer'}}>PDF</button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Notes panel */}
+            {showNotes && (
+                <div style={{padding:'12px 16px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}} className="slide-enter">
+                    <textarea
+                        value={currentGame.notes}
+                        onChange={e=>updateGame({notes:e.target.value})}
+                        placeholder="✍ Observações..."
+                        style={{width:'100%',height:72,borderRadius:10,padding:'10px 14px',fontSize:12,resize:'none',lineHeight:1.5}}
+                    />
+                    <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
+                        <button
+                            onClick={()=>{
+                                if(!currentGame.notes?.trim()){showToast('⚠️ Nota vazia');return;}
+                                const label=`${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
+                                updateGame(g=>({...g,notesHistory:[...(g.notesHistory||[]),{label,text:g.notes.trim()}]}));
+                                showToast('✓ Nota guardada');
+                            }}
+                            style={{padding:'8px 18px',borderRadius:10,background:'var(--accent)',border:'none',color:'white',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:1,cursor:'pointer'}}
+                        >Guardar</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Stats area */}
+            <div style={{flex:1,display:'flex',overflow:'hidden'}}>
+                {['ataque','defesa'].map(type => (
+                    <div key={type} style={{flex:1,display:'flex',flexDirection:'column',borderRight:type==='ataque'?'1px solid var(--border)':'none'}}>
+                        {/* Column header */}
+                        <div style={{padding:'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+                            <span style={{fontFamily:'Bebas Neue',fontSize:16,letterSpacing:3,color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type}</span>
+                            <button
+                                onClick={()=>{const n=promptText("Nova ação:");if(n){updateGame(g=>({...g,stats:[...g.stats,{id:Date.now(),name:n,count:0,type}]}));showToast('✓ Criado');}}}
+                                style={{width:28,height:28,borderRadius:8,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}
+                            >+</button>
+                        </div>
+                        {/* Stat list */}
+                        <div style={{flex:1,overflowY:'auto',padding:'8px'}} className="no-scrollbar">
+                            {currentGame.stats.filter(s=>s.type===type).map(s => (
+                                <div key={s.id} style={{display:'flex',gap:4,marginBottom:6}}>
+                                    <button
+                                        className="stat-btn active-btn"
+                                        onClick={()=>addStat(s.id)}
+                                        style={{borderLeft:`3px solid ${s.count>0?(type==='ataque'?'var(--accent)':'var(--red)'):'var(--border)'}`}}
+                                    >
+                                        <span className="stat-count" style={{color:s.count>0?'var(--text)':'var(--border)'}}>{s.count}</span>
+                                        <span className="stat-name">{s.name}</span>
+                                    </button>
+                                    <div style={{display:'flex',flexDirection:'column',gap:4,width:28,flexShrink:0}}>
+                                        <button onClick={()=>removeStat(s.id)} style={{flex:1,background:'rgba(239,35,60,0.08)',border:'1px solid rgba(239,35,60,0.2)',borderRadius:8,color:'var(--red)',cursor:'pointer',fontSize:14,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
+                                        <button onClick={()=>{const n=promptText("Editar:",s.name);if(n){updateGame(g=>({...g,stats:g.stats.map(st=>st.id===s.id?{...st,name:n}:st)}));showToast('✓ Editado');}}} style={{flex:1,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,color:'var(--muted)',cursor:'pointer',fontSize:11,display:'flex',alignItems:'center',justifyContent:'center'}}>✎</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Home button */}
+            <button
+                onClick={()=>setView('folders')}
+                style={{position:'absolute',bottom:24,left:24,width:52,height:52,borderRadius:'50%',background:'var(--surface)',border:'1px solid var(--border)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}
+            >🏠</button>
+
+            {toast && <Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+        </div>
+    );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
 </body>
 </html>
