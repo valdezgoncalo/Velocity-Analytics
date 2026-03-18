@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;800&display=swap');
 
@@ -156,7 +155,6 @@
 
         /* ── LANDSCAPE MODE ─────────────────────────── */
         @media (orientation: landscape) and (max-height: 500px) {
-            /* tracking header goes single-row compact */
             .ls-header {
                 padding: 6px 12px !important;
                 flex-direction: row !important;
@@ -167,14 +165,10 @@
             .ls-btn-sm { width: 32px !important; height: 32px !important; font-size: 12px !important; }
             .ls-start-btn { padding: 0 10px !important; height: 32px !important; font-size: 13px !important; }
             .ls-pdf-btn  { padding: 0 10px !important; height: 32px !important; font-size: 12px !important; }
-            /* stat buttons shorter */
             .stat-btn { padding: 6px 10px !important; }
             .stat-count { font-size: 24px !important; }
-            /* notes panel shorter */
             .ls-notes textarea { height: 48px !important; }
-            /* column headers compact */
             .ls-col-header { padding: 4px 8px !important; }
-            /* hide home btn in landscape to save space */
             .ls-home-btn { display: none !important; }
         }
 
@@ -228,12 +222,12 @@ const DEFAULT_TEMPLATE = [
     { id: 2,  name: 'Remate',       type: 'ataque' },
     { id: 3,  name: 'Rem. Enquad.', type: 'ataque' },
     { id: 4,  name: 'Cantos',       type: 'ataque' },
-    { id: 5,  name: 'Rem. Área',    type: 'ataque' },
+    { id: 5,  name: 'Rem. Area',    type: 'ataque' },
     { id: 6,  name: 'Cruzam.',      type: 'ataque' },
     { id: 7,  name: 'Golo Sofr.',   type: 'defesa' },
     { id: 8,  name: 'Recuper.',     type: 'defesa' },
     { id: 9,  name: 'Rem. Conc.',   type: 'defesa' },
-    { id: 10, name: 'Rem. Área C.', type: 'defesa' },
+    { id: 10, name: 'Rem. Area C.', type: 'defesa' },
     { id: 11, name: 'Perdas Bola',  type: 'defesa' },
     { id: 12, name: 'Faltas',       type: 'defesa' },
 ];
@@ -337,8 +331,7 @@ function StackedBar({ leftVal, rightVal, leftColor, rightColor, leftLabel, right
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RADAR CHART  (spider / web chart)
-   axes: Golos, Remates, Rem.Enq., Cantos, Recuper., Faltas(inv)
+   RADAR CHART
 ═══════════════════════════════════════════════════════════════ */
 function RadarChart({ stats, size = 220 }) {
     const axes = [
@@ -362,7 +355,6 @@ function RadarChart({ stats, size = 220 }) {
         return { x: cx + R * ratio * Math.cos(a), y: cy + R * ratio * Math.sin(a) };
     };
 
-    // data polygon
     const dataPoints = axes.map((ax, i) => {
         const stat = stats.find(s => s.name === ax.key);
         const v    = stat ? stat.count : 0;
@@ -371,7 +363,6 @@ function RadarChart({ stats, size = 220 }) {
     });
     const dataPath = dataPoints.map((p, i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
 
-    // axis label offset
     const labelPt = (i) => {
         const a = angleOf(i);
         const off = 18;
@@ -381,27 +372,21 @@ function RadarChart({ stats, size = 220 }) {
     return (
         <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{overflow:'visible'}}>
-                {/* rings */}
                 {rings.map((r, ri) => {
                     const ringPts = axes.map((_,i) => ptOf(i, r));
                     const rPath = ringPts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
                     return <path key={ri} d={rPath} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray={r<1?"3,3":""}/>;
                 })}
-                {/* spokes */}
                 {axes.map((_,i) => {
                     const outer = ptOf(i,1);
                     return <line key={i} x1={cx} y1={cy} x2={outer.x.toFixed(1)} y2={outer.y.toFixed(1)} stroke="var(--border)" strokeWidth="1"/>;
                 })}
-                {/* data fill */}
                 <path d={dataPath} fill="rgba(67,97,238,0.18)" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"/>
-                {/* data dots */}
                 {dataPoints.map((p,i) => (
                     <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill={axes[i].color} stroke="var(--bg)" strokeWidth="1.5"/>
                 ))}
-                {/* axis labels */}
                 {axes.map((ax,i) => {
                     const lp = labelPt(i);
-                    const a = angleOf(i) * 180 / Math.PI;
                     const anchor = Math.abs(Math.cos(angleOf(i))) < 0.1 ? 'middle' : Math.cos(angleOf(i)) > 0 ? 'start' : 'end';
                     const stat = stats.find(s => s.name === ax.key);
                     const val  = stat ? stat.count : 0;
@@ -414,27 +399,22 @@ function RadarChart({ stats, size = 220 }) {
                         </g>
                     );
                 })}
-                {/* center dot */}
                 <circle cx={cx} cy={cy} r="3" fill="var(--accent)" opacity="0.5"/>
             </svg>
         </div>
     );
 }
-// CSS variable helper (SVG can't read var() in JSX attribute directly)
 const var_gold = '#f9c74f';
 
 /* ═══════════════════════════════════════════════════════════════
    INTENSITY CHART
-   Shows event density per 5-minute bucket across 90 minutes,
-   rendered as a smooth filled area line chart.
 ═══════════════════════════════════════════════════════════════ */
 function IntensityChart({ events, totalTime }) {
     const W = 560, H = 90;
-    const BUCKET = 5 * 60; // 5 min buckets
+    const BUCKET = 5 * 60;
     const gameMin = Math.max(totalTime, 90 * 60);
     const numBuckets = Math.ceil(gameMin / BUCKET);
 
-    // count events per bucket, split by type
     const atkBuckets = new Array(numBuckets).fill(0);
     const defBuckets = new Array(numBuckets).fill(0);
     const totBuckets = new Array(numBuckets).fill(0);
@@ -448,7 +428,6 @@ function IntensityChart({ events, totalTime }) {
 
     const maxVal = Math.max(...totBuckets, 1);
 
-    // smooth via simple moving avg (window=3)
     const smooth = arr => arr.map((v, i) => {
         const win = arr.slice(Math.max(0, i-1), i+2);
         return win.reduce((a,b)=>a+b,0) / win.length;
@@ -464,7 +443,6 @@ function IntensityChart({ events, totalTime }) {
     const buildPath = (arr, closed = false) => {
         if (arr.length === 0) return '';
         const pts = arr.map((v, i) => [xOf(i), yOf(v)]);
-        // Catmull-Rom to cubic bezier
         let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
         for (let i = 0; i < pts.length - 1; i++) {
             const p0 = pts[Math.max(0, i-1)];
@@ -503,20 +481,11 @@ function IntensityChart({ events, totalTime }) {
                         <stop offset="100%" stopColor="#ef233c" stopOpacity="0"/>
                     </linearGradient>
                 </defs>
-
-                {/* HT line */}
                 <line x1={W/2} y1="0" x2={W/2} y2={H} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,4"/>
-
-                {/* filled area - total */}
                 {totS.length > 1 && <path d={buildPath(totS, true)} fill={`url(#${gradId3})`}/>}
-                {/* line - total */}
                 {totS.length > 1 && <path d={buildPath(totS)} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"/>}
-                {/* line - ataque */}
                 {atkS.length > 1 && <path d={buildPath(atkS)} fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="5,3"/>}
-                {/* line - defesa */}
                 {defS.length > 1 && <path d={buildPath(defS)} fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,4"/>}
-
-                {/* goal markers on total line */}
                 {events.filter(e=>e.isGoal).map((e,i) => {
                     const b = Math.min(Math.floor(e.time / BUCKET), numBuckets-1);
                     const x = xOf(b);
@@ -527,8 +496,6 @@ function IntensityChart({ events, totalTime }) {
                         </g>
                     );
                 })}
-
-                {/* minute labels */}
                 {minLabels.map(m => {
                     const x = (m / 90) * W;
                     return (
@@ -539,12 +506,8 @@ function IntensityChart({ events, totalTime }) {
                         </g>
                     );
                 })}
-
-                {/* baseline */}
                 <line x1="0" y1={H} x2={W} y2={H} stroke="var(--border)" strokeWidth="1"/>
             </svg>
-
-            {/* legend */}
             <div style={{display:'flex',gap:16,justifyContent:'center',marginTop:10}}>
                 {[
                     {color:'var(--accent)', label:'Total', dash:false},
@@ -618,8 +581,8 @@ function Timeline({ events, totalTime }) {
                         </div>
                     );
                 })}
-                <span className="tl-period-label" style={{left:'25%'}}>1º Tempo</span>
-                <span className="tl-period-label" style={{left:'75%'}}>2º Tempo</span>
+                <span className="tl-period-label" style={{left:'25%'}}>1 Tempo</span>
+                <span className="tl-period-label" style={{left:'75%'}}>2 Tempo</span>
             </div>
             <div style={{display:'flex',gap:16,marginTop:28,justifyContent:'center'}}>
                 {[{color:'var(--gold)',label:'Golo'},{color:'var(--accent)',label:'Ataque'},{color:'var(--red)',label:'Defesa'}].map(l=>(
@@ -631,6 +594,556 @@ function Timeline({ events, totalTime }) {
             </div>
         </div>
     );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NATIVE PDF EXPORT  ← COMPLETAMENTE REESCRITO
+   Usa jsPDF puro: texto vectorial, barras, arcos, timeline.
+   Sem html2canvas → resultado nítido, seleccionável, leve.
+═══════════════════════════════════════════════════════════════ */
+function buildNativePDF(game) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    // ── Paleta (RGB arrays para jsPDF)
+    const C = {
+        bg:      [5,   8,  16],
+        surface: [13,  17,  23],
+        surface2:[22,  27,  34],
+        border:  [30,  37,  48],
+        accent:  [67,  97, 238],
+        green:   [45, 198,  83],
+        red:     [239, 35,  60],
+        gold:    [249,199,  79],
+        text:    [230,237, 243],
+        muted:   [110,118, 129],
+        white:   [255,255, 255],
+    };
+
+    const PW = 210, PH = 297;
+    const ML = 14, MR = 14, MT = 14;
+    const CW = PW - ML - MR;  // 182 mm content width
+    let y = MT;
+
+    // ── Helpers ─────────────────────────────────────
+    const setFill   = (c) => doc.setFillColor(...c);
+    const setStroke = (c) => doc.setDrawColor(...c);
+    const setTxt    = (c) => doc.setTextColor(...c);
+    const rect      = (x,yy,w,h,r=0) => { if(r>0) doc.roundedRect(x,yy,w,h,r,r,'F'); else doc.rect(x,yy,w,h,'F'); };
+    const strokeRect= (x,yy,w,h,r=0,lw=0.3) => { doc.setLineWidth(lw); if(r>0) doc.roundedRect(x,yy,w,h,r,r,'S'); else doc.rect(x,yy,w,h,'S'); };
+    const line      = (x1,y1,x2,y2,lw=0.3) => { doc.setLineWidth(lw); doc.line(x1,y1,x2,y2); };
+    const txt       = (s,x,yy,opts={}) => { doc.text(String(s),x,yy,opts); };
+    const newPage   = () => { doc.addPage(); y = MT; };
+    const checkPage = (needed=20) => { if(y+needed > PH-10) newPage(); };
+
+    // Helpers de cor "hex → rgb array"  (não precisamos, usando C directamente)
+
+    // ── Helper: desenhar barra horizontal de progresso ─
+    // x, yy: canto sup-esq  w: largura total  h: altura  val 0-1  color
+    const progressBar = (x, yy, w, h, ratio, colorFill, rounding=1) => {
+        setFill(C.surface2);  rect(x, yy, w, h, rounding);
+        if(ratio>0) { setFill(colorFill); rect(x, yy, Math.max(w*ratio, 1), h, rounding); }
+    };
+
+    // ── Helper: arco (donut) ─
+    // jsPDF não tem arco nativo nítido, simulamos com linhas densas (polyline circular)
+    const drawArc = (cx, cy, r, startDeg, endDeg, color, lw=2) => {
+        if(endDeg <= startDeg) return;
+        doc.setDrawColor(...color);
+        doc.setLineWidth(lw);
+        const steps = Math.max(2, Math.round((endDeg-startDeg)/2));
+        const pts = [];
+        for(let i=0; i<=steps; i++) {
+            const ang = (startDeg + (endDeg-startDeg)*(i/steps)) * Math.PI/180;
+            pts.push([cx + r*Math.cos(ang), cy + r*Math.sin(ang)]);
+        }
+        for(let i=0;i<pts.length-1;i++) doc.line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);
+    };
+
+    const drawDonut = (cx, cy, r, ratio, color, valStr, labelStr) => {
+        // fundo cinza
+        drawArc(cx, cy, r, -90, 270, C.border, 2.5);
+        // arco colorido
+        if(ratio>0) drawArc(cx, cy, r, -90, -90 + 360*Math.min(ratio,1), color, 2.5);
+        // valor central
+        setTxt(C.text); doc.setFontSize(9); doc.setFont('helvetica','bold');
+        txt(valStr, cx, cy+1.5, {align:'center'});
+        // label abaixo
+        setTxt(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+        txt(labelStr.toUpperCase(), cx, cy+r+5, {align:'center'});
+    };
+
+    // ── Helper: spider/radar simplificado (hexágono)
+    const drawRadar = (cx, cy, R, stats) => {
+        const axes = [
+            { key:'Golo',         label:'GOLOS',    max:5  },
+            { key:'Remate',       label:'REMATES',  max:20 },
+            { key:'Rem. Enquad.', label:'ENQUAD.',  max:12 },
+            { key:'Cantos',       label:'CANTOS',   max:10 },
+            { key:'Recuper.',     label:'RECUPER.', max:15 },
+            { key:'Faltas',       label:'FALTAS',   max:15 },
+        ];
+        const N = axes.length;
+        const ang = i => (2*Math.PI*i/N) - Math.PI/2;
+
+        // rings
+        [0.25,0.5,0.75,1].forEach(rv => {
+            const pts = axes.map((_,i)=>({x: cx+R*rv*Math.cos(ang(i)), y: cy+R*rv*Math.sin(ang(i))}));
+            setStroke(C.border); doc.setLineWidth(0.2);
+            for(let i=0;i<N;i++) doc.line(pts[i].x,pts[i].y,pts[(i+1)%N].x,pts[(i+1)%N].y);
+        });
+        // spokes
+        axes.forEach((_,i)=>{
+            setStroke(C.border); doc.setLineWidth(0.2);
+            doc.line(cx,cy,cx+R*Math.cos(ang(i)),cy+R*Math.sin(ang(i)));
+        });
+        // data polygon
+        const vals = axes.map((ax,i)=>{
+            const s=stats.find(s=>s.name===ax.key);
+            return s?Math.min(s.count/ax.max,1):0;
+        });
+        const dataPts = vals.map((v,i)=>({x:cx+R*v*Math.cos(ang(i)),y:cy+R*v*Math.sin(ang(i))}));
+        // fill (semi-transparent via alpha trick: draw multiple times with low opacity → just use light stroke+fill)
+        doc.setFillColor(67,97,238); doc.setGState(doc.GState({opacity:0.18}));
+        doc.setDrawColor(67,97,238); doc.setLineWidth(0.5);
+        // polygon fill
+        const xPts = dataPts.map(p=>p.x);
+        const yPts = dataPts.map(p=>p.y);
+        // jsPDF polygon
+        if(typeof doc.polygon === 'function') {
+            const ptsArr = dataPts.map(p=>[p.x,p.y]);
+            doc.setGState(doc.GState({opacity:0.18}));
+            doc.polygon(ptsArr,'FD');
+        } else {
+            // fallback: draw outline only
+            doc.setGState(new doc.GState({opacity:1}));
+            for(let i=0;i<N;i++) doc.line(dataPts[i].x,dataPts[i].y,dataPts[(i+1)%N].x,dataPts[(i+1)%N].y);
+        }
+        doc.setGState(new doc.GState({opacity:1}));
+        // dots + labels
+        axes.forEach((ax,i)=>{
+            const s=stats.find(s=>s.name===ax.key);
+            const v=s?s.count:0;
+            // dot
+            setFill(C.accent); doc.circle(dataPts[i].x,dataPts[i].y,0.8,'F');
+            // label
+            const lx = cx+(R+6)*Math.cos(ang(i));
+            const ly = cy+(R+6)*Math.sin(ang(i));
+            const align = Math.abs(Math.cos(ang(i)))<0.15?'center':Math.cos(ang(i))>0?'left':'right';
+            setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
+            txt(ax.label, lx, ly-1, {align});
+            setTxt(C.accent); doc.setFontSize(6);
+            txt(String(v), lx, ly+3, {align});
+        });
+    };
+
+    // ── Helper: intensity sparkline (polyline) ─
+    const drawIntensityLine = (x0, yBase, w, h, events, totalSecs) => {
+        const BUCKET = 5*60;
+        const gameMin = Math.max(totalSecs, 90*60);
+        const numB = Math.ceil(gameMin/BUCKET);
+        const atkB = new Array(numB).fill(0);
+        const defB = new Array(numB).fill(0);
+        const totB = new Array(numB).fill(0);
+        events.forEach(e=>{
+            const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
+            if(e.type==='ataque') atkB[b]++; else defB[b]++;
+            totB[b]++;
+        });
+        const maxV = Math.max(...totB,1);
+        const smooth = arr=>arr.map((v,i)=>{
+            const win=arr.slice(Math.max(0,i-1),i+2);
+            return win.reduce((a,b)=>a+b,0)/win.length;
+        });
+        const totS=smooth(totB), atkS=smooth(atkB), defS=smooth(defB);
+        const xOf=i=>x0+(i/(numB-1))*w;
+        const yOf=v=>yBase-(v/maxV)*h;
+
+        // HT line
+        setStroke(C.border); doc.setLineWidth(0.2); doc.setLineDashPattern([1,1],0);
+        doc.line(x0+w/2, yBase-h, x0+w/2, yBase);
+        doc.setLineDashPattern([],0);
+
+        // baseline
+        setStroke(C.border); doc.setLineWidth(0.3);
+        doc.line(x0,yBase,x0+w,yBase);
+
+        // total line (accent)
+        doc.setDrawColor(...C.accent); doc.setLineWidth(0.6);
+        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(totS[i]),xOf(i+1),yOf(totS[i+1]));
+
+        // ataque dashed (green)
+        doc.setDrawColor(...C.green); doc.setLineWidth(0.4);
+        doc.setLineDashPattern([1.5,1],0);
+        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(atkS[i]),xOf(i+1),yOf(atkS[i+1]));
+
+        // defesa dashed (red)
+        doc.setDrawColor(...C.red); doc.setLineWidth(0.4);
+        doc.setLineDashPattern([1,1.5],0);
+        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(defS[i]),xOf(i+1),yOf(defS[i+1]));
+
+        doc.setLineDashPattern([],0);
+
+        // goal dots
+        events.filter(e=>e.isGoal).forEach(e=>{
+            const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
+            const gx=xOf(b), gy=yOf(totS[b]);
+            setFill(C.gold); doc.circle(gx,gy,1.2,'F');
+        });
+
+        // minute labels
+        [0,15,30,45,60,75,90].forEach(m=>{
+            const mx=x0+(m/90)*w;
+            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+            txt(`${m}'`,mx,yBase+3.5,{align:'center'});
+        });
+
+        // legend
+        const lx=x0, ly=yBase+7;
+        const legends=[
+            {color:C.accent,label:'Total',dash:false},
+            {color:C.green,label:'Ataque',dash:true},
+            {color:C.red,label:'Defesa',dash:true},
+            {color:C.gold,label:'Golos',dot:true},
+        ];
+        legends.forEach((l,i)=>{
+            const lxi=lx+i*22;
+            if(l.dot){
+                setFill(l.color); doc.circle(lxi+1.5,ly-0.5,1,'F');
+            } else {
+                doc.setDrawColor(...l.color); doc.setLineWidth(0.5);
+                if(l.dash) doc.setLineDashPattern([1,0.8],0);
+                doc.line(lxi,ly-0.5,lxi+4,ly-0.5);
+                doc.setLineDashPattern([],0);
+            }
+            setTxt(C.muted); doc.setFontSize(4); doc.setFont('helvetica','bold');
+            txt(l.label.toUpperCase(),lxi+5.5,ly,{align:'left'});
+        });
+    };
+
+    // ── Helper: timeline bar ─
+    const drawTimeline = (x0, yLine, w, events, totalSecs) => {
+        const displayTime = Math.max(totalSecs, 90*60);
+        const h=5;
+        // track
+        setFill(C.surface2); rect(x0,yLine,w,h,1);
+        // HT divider
+        setStroke(C.border); doc.setLineWidth(0.2);
+        doc.setLineDashPattern([1,1],0);
+        doc.line(x0+w/2,yLine,x0+w/2,yLine+h);
+        doc.setLineDashPattern([],0);
+        // events
+        events.forEach(e=>{
+            const pct=e.time/displayTime;
+            const ex=x0+pct*w;
+            const color=e.isGoal?C.gold:e.type==='ataque'?C.accent:C.red;
+            setFill(color);
+            const r=e.isGoal?1.8:1.3;
+            doc.circle(ex,yLine+h/2,r,'F');
+        });
+        // minute ticks
+        [15,30,45,60,75].forEach(m=>{
+            const mx=x0+(m*60/displayTime)*w;
+            setStroke(C.muted); doc.setLineWidth(0.2);
+            doc.line(mx,yLine+h-0.5,mx,yLine+h);
+        });
+        // period labels
+        setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+        txt('1 Tempo',x0+w*0.25,yLine+h+3.5,{align:'center'});
+        txt('2 Tempo',x0+w*0.75,yLine+h+3.5,{align:'center'});
+        // legend dots
+        const lx=x0, ly=yLine+h+8;
+        [{color:C.gold,label:'Golo'},{color:C.accent,label:'Ataque'},{color:C.red,label:'Defesa'}].forEach((l,i)=>{
+            const lxi=lx+i*25;
+            setFill(l.color); doc.circle(lxi+1.5,ly-0.8,1,'F');
+            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
+            txt(l.label.toUpperCase(),lxi+4,ly,{align:'left'});
+        });
+    };
+
+    // ════════════════════════════════════════════════
+    // PÁGINA 1 – HEADER + KPIs + DISTRIBUIÇÃO + RADAR + DONUTS
+    // ════════════════════════════════════════════════
+
+    const g = game;
+    const golos   = g.stats.find(s=>s.name==='Golo')?.count||0;
+    const sofr    = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+    const remates = g.stats.find(s=>s.name==='Remate')?.count||0;
+    const ef      = remates>0?((golos/remates)*100).toFixed(1):'0.0';
+    const totalAtk= g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
+    const totalDef= g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
+    const remEnq  = g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0;
+    const recuper = g.stats.find(s=>s.name==='Recuper.')?.count||0;
+    const remConc = g.stats.find(s=>s.name==='Rem. Conc.')?.count||0;
+
+    // ── Fundo página ──────────────────────────────
+    setFill(C.bg); rect(0,0,PW,PH);
+
+    // ── Barra topo accent ─────────────────────────
+    setFill(C.accent); rect(0,0,PW,1.5);
+
+    // ── "RELATÓRIO DE JOGO" label ─────────────────
+    y = MT + 2;
+    setTxt(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    txt('RELATORIO DE JOGO', ML, y);
+    y += 6;
+
+    // ── Nome adversário ───────────────────────────
+    setTxt(C.accent); doc.setFontSize(24); doc.setFont('helvetica','bold');
+    txt(g.opponent.toUpperCase(), ML, y);
+    y += 5;
+
+    // ── Data + tempo ──────────────────────────────
+    setTxt(C.muted); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    txt(`${g.date}   |   ${fmt(g.time)}   |   SoccerAnalyst Pro`, ML, y);
+    y += 3;
+
+    // ── Linha separadora ──────────────────────────
+    setStroke(C.border); line(ML, y, ML+CW, y, 0.3);
+    y += 5;
+
+    // ── KPI BOXES (4 em linha) ────────────────────
+    const kpis = [
+        {val:golos,    label:'GOLOS',   sub:'marcados', color:C.green},
+        {val:sofr,     label:'SOFR.',   sub:'sofridos',  color:C.red},
+        {val:remates,  label:'REMATES', sub:'total',     color:C.accent},
+        {val:`${ef}%`, label:'EFICACIA',sub:'golo/rem',  color:C.gold},
+    ];
+    const kW=(CW-9)/4, kH=20;
+    kpis.forEach((k,i)=>{
+        const kx=ML+i*(kW+3);
+        setFill(C.surface); rect(kx,y,kW,kH,2);
+        setStroke(k.color); doc.setLineWidth(0.4); doc.setDrawColor(...k.color);
+        doc.roundedRect(kx,y,kW,kH,2,2,'S');
+        // valor grande
+        setTxt(k.color); doc.setFontSize(18); doc.setFont('helvetica','bold');
+        txt(String(k.val), kx+kW/2, y+11, {align:'center'});
+        // label
+        setTxt(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+        txt(k.label, kx+kW/2, y+16, {align:'center'});
+        // sub
+        doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+        txt(k.sub, kx+kW/2, y+19, {align:'center'});
+    });
+    y += kH + 6;
+
+    // ── DISTRIBUIÇÃO ATAQUE/DEFESA ────────────────
+    const secLabel = (label) => {
+        setTxt(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
+        txt(label, ML, y);
+        setStroke(C.border); line(ML+doc.getTextWidth(label)+2, y-0.5, ML+CW, y-0.5, 0.2);
+        y += 4;
+    };
+    secLabel('DISTRIBUICAO ATAQUE / DEFESA');
+
+    const total=totalAtk+totalDef;
+    const pAtk=total>0?(totalAtk/total):0.5;
+    const stackH=5, stackY=y;
+    // ataque (left)
+    setFill(C.accent); rect(ML, stackY, CW*pAtk, stackH, 1);
+    // defesa (right)
+    setFill(C.red); rect(ML+CW*pAtk, stackY, CW*(1-pAtk), stackH, 1);
+    // values inside
+    setTxt(C.white); doc.setFontSize(5); doc.setFont('helvetica','bold');
+    if(pAtk>0.05) txt(String(totalAtk), ML+CW*pAtk-4, stackY+3.5, {align:'right'});
+    if((1-pAtk)>0.05) txt(String(totalDef), ML+CW*pAtk+4, stackY+3.5, {align:'left'});
+    y += stackH+3;
+    // labels
+    setTxt(C.accent); doc.setFontSize(5); doc.setFont('helvetica','bold');
+    txt(`ATAQUE (${totalAtk})`, ML, y);
+    setTxt(C.red);
+    txt(`DEFESA (${totalDef})`, ML+CW, y, {align:'right'});
+    y += 6;
+
+    // ── RADAR + DONUTS (lado a lado) ──────────────
+    secLabel('RADAR DE PERFORMANCE   /   INDICADORES');
+
+    const radarH=48;
+    const colL=ML, colR=ML+CW/2+2, colHalfW=CW/2-2;
+
+    // Radar (esquerda)
+    {
+        const rcx=colL+colHalfW/2, rcy=y+radarH/2, rR=colHalfW*0.28;
+        setFill(C.surface); rect(colL, y, colHalfW, radarH, 2);
+        drawRadar(rcx, rcy, rR, g.stats);
+    }
+
+    // Donuts 2×2 (direita)
+    {
+        setFill(C.surface); rect(colR, y, colHalfW, radarH, 2);
+        const dW=colHalfW/2, dH=radarH/2;
+        const donuts=[
+            {val:golos,  max:Math.max(remates,1), color:C.green, label:'Conversao',     sub:'Golos'},
+            {val:remEnq, max:Math.max(remates,1), color:C.accent,label:'Enquadramento', sub:'Remates'},
+            {val:recuper,max:Math.max(totalDef,1),color:C.gold,  label:'Recuperacao',   sub:'de Bola'},
+            {val:sofr,   max:Math.max(remConc,1), color:C.red,   label:'Sofr./Conc.',   sub:'Golos'},
+        ];
+        donuts.forEach((d,i)=>{
+            const col=i%2, row=Math.floor(i/2);
+            const dcx=colR+col*dW+dW/2;
+            const dcy=y+row*dH+dH/2+1;
+            const ratio=d.max>0?Math.min(d.val/d.max,1):0;
+            drawDonut(dcx, dcy, 6, ratio, d.color, String(d.val), d.label);
+        });
+    }
+    y += radarH+7;
+
+    // ── INTENSIDADE POR MINUTO ────────────────────
+    checkPage(38);
+    secLabel('INTENSIDADE POR MINUTO');
+    const intH=20;
+    setFill(C.surface); rect(ML, y, CW, intH+14, 2);
+    drawIntensityLine(ML+4, y+intH, CW-8, intH-2, g.events, g.time);
+    y += intH+18;
+
+    // ════════════════════════════════════════════════
+    // SECÇÃO: BARRAS ATAQUE + DEFESA
+    // ════════════════════════════════════════════════
+    checkPage(50);
+    secLabel('ESTATISTICAS DETALHADAS');
+
+    const atkStats=g.stats.filter(s=>s.type==='ataque');
+    const defStats=g.stats.filter(s=>s.type==='defesa');
+    const maxRows=Math.max(atkStats.length,defStats.length);
+    const bH=5.5, bGap=1.5;
+    const bColW=(CW-6)/2;
+    const bSectionH=maxRows*(bH+bGap)+10;
+
+    // col headers
+    setFill(C.surface); rect(ML,y,bColW,bSectionH,2); rect(ML+bColW+6,y,bColW,bSectionH,2);
+    setTxt(C.accent); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    txt('ATAQUE', ML+bColW/2, y+4, {align:'center'});
+    setTxt(C.red);
+    txt('DEFESA', ML+bColW+6+bColW/2, y+4, {align:'center'});
+    y += 7;
+
+    const atkC=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
+    const defC=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
+
+    const hexToRgb = hex => {
+        const r=parseInt(hex.slice(1,3),16);
+        const g=parseInt(hex.slice(3,5),16);
+        const b=parseInt(hex.slice(5,7),16);
+        return [r,g,b];
+    };
+
+    const drawBarList = (stats, cx, colors) => {
+        const maxV=Math.max(...stats.map(s=>s.count),1);
+        const labelW=22, barAreaW=bColW-labelW-10, vW=8;
+        stats.forEach((s,i)=>{
+            const by=y+i*(bH+bGap);
+            const ratio=s.count/maxV;
+            const rgb=hexToRgb(colors[i%colors.length]);
+            // label
+            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+            txt(s.name.toUpperCase().substring(0,12), cx+labelW-1, by+bH-1.2, {align:'right'});
+            // bar bg
+            setFill(C.bg); rect(cx+labelW, by, barAreaW, bH, 0.8);
+            // bar fill
+            if(ratio>0){ doc.setFillColor(...rgb); rect(cx+labelW, by, Math.max(barAreaW*ratio,1), bH, 0.8); }
+            // value
+            setTxt(C.text); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
+            txt(String(s.count), cx+labelW+barAreaW+2, by+bH-1.2);
+        });
+    };
+
+    drawBarList(atkStats, ML+2, atkC);
+    drawBarList(defStats, ML+bColW+8, defC);
+    y += maxRows*(bH+bGap)+6;
+
+    // ════════════════════════════════════════════════
+    // SECÇÃO: TIMELINE DE EVENTOS
+    // ════════════════════════════════════════════════
+    checkPage(30);
+    secLabel('CRONOLOGIA DE EVENTOS');
+    setFill(C.surface); rect(ML, y, CW, 22, 2);
+    drawTimeline(ML+4, y+5, CW-8, g.events, g.time);
+    y += 28;
+
+    // goal stamps
+    const goals=g.events.filter(e=>e.isGoal);
+    if(goals.length){
+        goals.forEach((e,i)=>{
+            const gx=ML+i*18;
+            setFill([249,199,79,0.1]);
+            doc.setFillColor(249,199,79,0.1);
+            setStroke(C.gold); doc.setLineWidth(0.3); doc.roundedRect(gx,y,15,5,1,1,'S');
+            setTxt(C.gold); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+            txt(`GOLO ${fmtMin(e.time)}`, gx+7.5, y+3.5, {align:'center'});
+        });
+        y += 8;
+    }
+
+    // ════════════════════════════════════════════════
+    // SECÇÃO: LISTA DE EVENTOS
+    // ════════════════════════════════════════════════
+    if(g.events.length){
+        checkPage(20);
+        secLabel(`LISTA DE EVENTOS (${g.events.length})`);
+        const evCols=4, evW=(CW-evCols*2)/evCols, evH=6;
+        g.events.forEach((e,i)=>{
+            checkPage(evH+2);
+            const col=i%evCols, row=Math.floor(i/evCols);
+            if(col===0&&row>0&&i<g.events.length) {}
+            const ex=ML+col*(evW+2);
+            const ey=y+Math.floor(i/evCols)*(evH+1.5);
+            const evColor=e.isGoal?C.gold:e.type==='ataque'?C.accent:C.red;
+            setFill(C.surface); rect(ex,ey,evW,evH,1);
+            // dot
+            setFill(evColor); doc.circle(ex+2.5,ey+evH/2,0.9,'F');
+            // time
+            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+            txt(fmtMin(e.time), ex+5, ey+2.8);
+            // name
+            setTxt(C.text); doc.setFontSize(5); doc.setFont('helvetica','bold');
+            txt(e.name.toUpperCase().substring(0,14), ex+5, ey+5.2);
+        });
+        const evRows=Math.ceil(g.events.length/evCols);
+        y += evRows*(evH+1.5)+6;
+    }
+
+    // ════════════════════════════════════════════════
+    // SECÇÃO: NOTAS
+    // ════════════════════════════════════════════════
+    const hasNotes=g.notes||(g.notesHistory||[]).length>0;
+    if(hasNotes){
+        checkPage(25);
+        secLabel('NOTAS');
+        if(g.notes){
+            setFill(C.surface); rect(ML,y,CW,10,2);
+            setTxt(C.text); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
+            const lines=doc.splitTextToSize(`"${g.notes}"`, CW-8);
+            lines.slice(0,3).forEach((l,i)=>txt(l,ML+4,y+4+i*4));
+            y += 14;
+        }
+        (g.notesHistory||[]).forEach(n=>{
+            checkPage(16);
+            setFill(C.surface2); rect(ML,y,CW,12,2);
+            setFill(C.accent); rect(ML,y,1.5,12,0.5);
+            setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
+            txt(n.label.toUpperCase(), ML+4, y+4);
+            setTxt(C.text); doc.setFontSize(6); doc.setFont('helvetica','italic');
+            const nLines=doc.splitTextToSize(`"${n.text}"`, CW-8);
+            nLines.slice(0,2).forEach((l,i)=>txt(l,ML+4,y+8+i*3.5));
+            y += 16;
+        });
+    }
+
+    // ════════════════════════════════════════════════
+    // RODAPÉ em todas as páginas
+    // ════════════════════════════════════════════════
+    const totalPages=doc.getNumberOfPages();
+    for(let p=1;p<=totalPages;p++){
+        doc.setPage(p);
+        setFill(C.surface); rect(0,PH-8,PW,8);
+        setStroke(C.border); line(0,PH-8,PW,PH-8,0.3);
+        setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
+        txt('SoccerAnalyst Pro', ML, PH-3);
+        txt(new Date().toLocaleDateString('pt-PT'), PW/2, PH-3, {align:'center'});
+        txt(`${p} / ${totalPages}`, PW-MR, PH-3, {align:'right'});
+    }
+
+    return doc;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -721,7 +1234,7 @@ function App() {
     },[]);
 
     const addStat = id=>{
-        if(!isActive){showToast('⚠️ Inicia o Cronómetro!');return;}
+        if(!isActive){showToast('Inicia o Cronometro!');return;}
         let statName='',isGoal=false;
         updateGame(g=>{
             const stat=g.stats.find(s=>s.id===id);
@@ -735,7 +1248,7 @@ function App() {
             };
         });
         if(navigator.vibrate) navigator.vibrate(isGoal?[50,50,50]:25);
-        if(statName) showToast(isGoal?'⚽ GOLOOO!':`✓ ${statName}`,isGoal);
+        if(statName) showToast(isGoal?'GOLOOO!':`${statName}`,isGoal);
     };
 
     const removeStat = id=>{
@@ -749,31 +1262,13 @@ function App() {
             if(li!==-1) events.splice(events.length-1-li,1);
             return{...g,stats:g.stats.map(s=>s.id===id?{...s,count:s.count-1}:s),events};
         });
-        if(removed) showToast('↩ Removido');
+        if(removed) showToast('Removido');
     };
 
     const undoLast=()=>{
         if(!currentGame?.events.length) return;
         removeStat(currentGame.events[currentGame.events.length-1].statId);
     };
-
-    const addCustomStat=type=>{
-        const n=promptText(`Nova ação de ${type}:\n(propagada a todos os jogos desta pasta)`);
-        if(!n) return;
-        const newStat={id:Date.now(),name:n,type,count:0};
-        updateGame(g=>({...g,stats:[...g.stats,newStat]}));
-        syncStatToFolder(currentFolderId,newStat);
-        showToast(`✓ "${n}" em todos os jogos`);
-    };
-
-    const renameStat=(statId,currentName)=>{
-        const n=promptText('Novo nome:',currentName);
-        if(!n||n===currentName) return;
-        renameStatAcrossFolder(currentFolderId,statId,n);
-        showToast('✓ Renomeado em todos os jogos');
-    };
-
-    const adjustTime=delta=>updateGame(g=>({...g,time:Math.max(0,g.time+delta)}));
 
     const compressImage=file=>new Promise(res=>{
         const r=new FileReader();
@@ -793,8 +1288,8 @@ function App() {
 
     const getPeriodInfo=t=>{
         const m=Math.floor(t/60);
-        if(m<45) return{label:'1º TEMPO',color:'#2dc653'};
-        if(m<90) return{label:'2º TEMPO',color:'#4361ee'};
+        if(m<45) return{label:'1 TEMPO',color:'#2dc653'};
+        if(m<90) return{label:'2 TEMPO',color:'#4361ee'};
         return{label:'PRORROG.',color:'#f9c74f'};
     };
 
@@ -814,7 +1309,7 @@ function App() {
         a.href=url; a.download=`socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
-        showToast('✓ Backup Exportado');
+        showToast('Backup Exportado');
     };
 
     const handleImport=file=>{
@@ -824,36 +1319,26 @@ function App() {
             try{
                 const p=JSON.parse(r.result);
                 const imported=Array.isArray(p)?p:p?.folders;
-                if(!Array.isArray(imported)){showToast('⚠️ Ficheiro inválido');return;}
-                setFolders(imported); showToast('✓ Dados Importados');
-            } catch(_){showToast('⚠️ Erro ao importar');}
+                if(!Array.isArray(imported)){showToast('Ficheiro invalido');return;}
+                setFolders(imported); showToast('Dados Importados');
+            } catch(_){showToast('Erro ao importar');}
         };
         r.readAsText(file);
     };
 
-    const exportPDF=async()=>{
-        showToast('📄 Gerando PDF...');
-        try{
-            const el=document.getElementById('report-area');
-            const canvas=await html2canvas(el,{backgroundColor:'#050810',scale:2,useCORS:true,logging:false,scrollX:0,scrollY:-window.scrollY,windowWidth:el.scrollWidth,windowHeight:el.scrollHeight});
-            const pdf=new jspdf.jsPDF('p','mm','a4');
-            const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
-            const margin=8,cw=pw-margin*2,ch=ph-margin*2;
-            const pxPerMm=canvas.width/cw,pageHPx=Math.floor(ch*pxPerMm);
-            const pageC=document.createElement('canvas'),pCtx=pageC.getContext('2d');
-            let rendered=0,page=0;
-            while(rendered<canvas.height){
-                const slice=Math.min(pageHPx,canvas.height-rendered);
-                pageC.width=canvas.width; pageC.height=slice;
-                pCtx.clearRect(0,0,pageC.width,pageC.height);
-                pCtx.drawImage(canvas,0,rendered,canvas.width,slice,0,0,pageC.width,pageC.height);
-                if(page>0) pdf.addPage();
-                pdf.addImage(pageC.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,cw,slice/pxPerMm,undefined,'FAST');
-                rendered+=slice; page++;
-            }
-            pdf.save(`SoccerAnalyst_${currentGame.opponent}_${currentGame.date.replace(/\//g,'-')}.pdf`);
-            showToast('✓ PDF Guardado');
-        } catch(e){showToast('⚠️ Erro ao gerar PDF');}
+    // ── NOVA EXPORTAÇÃO PDF NATIVA ─────────────────
+    const exportPDF = () => {
+        if(!currentGame){ showToast('Nenhum jogo carregado'); return; }
+        showToast('A gerar PDF...');
+        try {
+            const doc = buildNativePDF(currentGame);
+            const filename = `SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`;
+            doc.save(filename);
+            showToast('PDF Guardado');
+        } catch(e) {
+            console.error('PDF error:', e);
+            showToast('Erro ao gerar PDF');
+        }
     };
 
     /* ════════════════════════════════════════════════════
@@ -871,7 +1356,7 @@ function App() {
                     <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
                 </div>
             </div>
-            <button onClick={()=>{const n=promptText('Nome da Pasta:');if(n){setFolders(prev=>[{id:Date.now(),name:n,games:[],statTemplate:DEFAULT_TEMPLATE.map(s=>({...s}))},...prev]);showToast('✓ Pasta Criada');}}}
+            <button onClick={()=>{const n=promptText('Nome da Pasta:');if(n){setFolders(prev=>[{id:Date.now(),name:n,games:[],statTemplate:DEFAULT_TEMPLATE.map(s=>({...s}))},...prev]);showToast('Pasta Criada');}}}
                 style={{width:'100%',padding:18,marginBottom:24,border:'2px dashed var(--border)',borderRadius:16,background:'transparent',color:'var(--muted)',fontWeight:700,fontSize:13,textTransform:'uppercase',letterSpacing:2,cursor:'pointer'}}
                 onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
                 onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
@@ -889,12 +1374,12 @@ function App() {
                                     <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2}}>{f.name}</div>
                                     <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogos</div>
                                 </div>
-                                <button onClick={e=>{e.stopPropagation();if(confirm('Apagar pasta e todos os jogos?')){setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('🗑 Eliminada');}}}
-                                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:8,fontSize:10,color:'var(--muted)',cursor:'pointer',fontWeight:700}}>✕</button>
+                                <button onClick={e=>{e.stopPropagation();if(confirm('Apagar pasta e todos os jogos?')){setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('Eliminada');}}}
+                                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:8,fontSize:10,color:'var(--muted)',cursor:'pointer',fontWeight:700}}>x</button>
                             </div>
                             {s&&(
                                 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-                                    {[{val:s.golos,label:'Golos',color:'var(--green)'},{val:s.sofr,label:'Sofridos',color:'var(--red)'},{val:`${s.ef}%`,label:'Eficácia',color:'var(--accent)'}].map(x=>(
+                                    {[{val:s.golos,label:'Golos',color:'var(--green)'},{val:s.sofr,label:'Sofridos',color:'var(--red)'},{val:`${s.ef}%`,label:'Eficacia',color:'var(--accent)'}].map(x=>(
                                         <div key={x.label} style={{textAlign:'center',padding:10,background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)'}}>
                                             <div style={{fontFamily:'Bebas Neue',fontSize:26,color:x.color,lineHeight:1}}>{x.val}</div>
                                             <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',marginTop:2,letterSpacing:1}}>{x.label}</div>
@@ -932,19 +1417,19 @@ function App() {
         const sumGF=filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
         const sumGA=filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
         const addGame=()=>{
-            const o=promptText('Adversário:');
+            const o=promptText('Adversario:');
             if(!o) return;
             const template=getFolderTemplate(currentFolderId);
             const newGame={id:Date.now(),opponent:o,time:0,stats:statsFromTemplate(template),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT')};
             setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[newGame,...f.games]}));
-            showToast('✓ Jogo Adicionado');
+            showToast('Jogo Adicionado');
         };
         return(
             <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
                 <button onClick={()=>setView('folders')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',marginBottom:20}}>← Voltar</button>
                 <h2 style={{fontFamily:'Bebas Neue',fontSize:28,letterSpacing:3,color:'var(--accent)',marginBottom:24,borderLeft:'4px solid var(--accent)',paddingLeft:12}}>{folder.name}</h2>
                 <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:24}}>
-                    <input type="text" placeholder="🔍 Pesquisar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{padding:'12px 16px',borderRadius:12,fontSize:13,width:'100%'}}/>
+                    <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{padding:'12px 16px',borderRadius:12,fontSize:13,width:'100%'}}/>
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
                         <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
                         <input type="date" value={dateTo}   onChange={e=>setDateTo(e.target.value)}   style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
@@ -966,7 +1451,7 @@ function App() {
                     <div className="card" style={{marginBottom:24}}>
                         <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:2,marginBottom:12}}>Resumo</div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,textAlign:'center'}}>
-                            {[{val:filtered.length,label:'Jogos',color:'var(--accent)'},{val:(sumGF/filtered.length).toFixed(2),label:'Média Golos',color:'var(--green)'},{val:(sumGA/filtered.length).toFixed(2),label:'Média Sofr.',color:'var(--red)'}].map(x=>(
+                            {[{val:filtered.length,label:'Jogos',color:'var(--accent)'},{val:(sumGF/filtered.length).toFixed(2),label:'Media Golos',color:'var(--green)'},{val:(sumGA/filtered.length).toFixed(2),label:'Media Sofr.',color:'var(--red)'}].map(x=>(
                                 <div key={x.label}>
                                     <div style={{fontFamily:'Bebas Neue',fontSize:24,color:x.color}}>{x.val}</div>
                                     <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1}}>{x.label}</div>
@@ -996,10 +1481,10 @@ function App() {
                                     <div style={{fontSize:10,color:'var(--muted)',fontWeight:600}}>{g.date} · {fmt(g.time)}</div>
                                 </div>
                                 <div style={{display:'flex',gap:6}}>
-                                    <button onClick={e=>{e.stopPropagation();const template=getFolderTemplate(currentFolderId);const ng={...g,id:Date.now(),opponent:`${g.opponent} (Cópia)`,time:0,stats:statsFromTemplate(template),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')};setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));showToast('📋 Duplicado');}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(67,97,238,0.1)',border:'1px solid rgba(67,97,238,0.2)',color:'var(--accent)',cursor:'pointer',fontSize:14}}>📋</button>
-                                    <button onClick={e=>{e.stopPropagation();if(confirm('Eliminar jogo?')){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('🗑 Eliminado');}}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(239,35,60,0.1)',border:'1px solid rgba(239,35,60,0.2)',color:'var(--red)',cursor:'pointer',fontSize:14}}>🗑</button>
+                                    <button onClick={e=>{e.stopPropagation();const template=getFolderTemplate(currentFolderId);const ng={...g,id:Date.now(),opponent:`${g.opponent} (Copia)`,time:0,stats:statsFromTemplate(template),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')};setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));showToast('Duplicado');}}
+                                        style={{width:36,height:36,borderRadius:10,background:'rgba(67,97,238,0.1)',border:'1px solid rgba(67,97,238,0.2)',color:'var(--accent)',cursor:'pointer',fontSize:14}}>C</button>
+                                    <button onClick={e=>{e.stopPropagation();if(confirm('Eliminar jogo?')){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('Eliminado');}}}
+                                        style={{width:36,height:36,borderRadius:10,background:'rgba(239,35,60,0.1)',border:'1px solid rgba(239,35,60,0.2)',color:'var(--red)',cursor:'pointer',fontSize:14}}>X</button>
                                 </div>
                             </div>
                         );
@@ -1011,7 +1496,7 @@ function App() {
     }
 
     /* ════════════════════════════════════════════════════
-       VIEW: REPORT
+       VIEW: REPORT  (ecrã web – inalterado)
     ════════════════════════════════════════════════════ */
     if(view==='report'&&currentGame){
         const g=currentGame;
@@ -1035,22 +1520,20 @@ function App() {
                             <option value="ataque">Ataque</option>
                             <option value="defesa">Defesa</option>
                         </select>
-                        <button onClick={exportPDF} style={{padding:'8px 18px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer',border:'none'}}>⬇ PDF</button>
+                        <button onClick={exportPDF} style={{padding:'8px 18px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer',border:'none'}}>PDF</button>
                     </div>
                 </div>
                 <div id="report-area" style={{flex:1,overflowY:'auto',padding:'32px 24px',background:'var(--bg)'}} className="no-scrollbar">
-                    {/* Header */}
                     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32}}>
                         <div>
-                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:8}}>Relatório de Jogo</div>
+                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:8}}>Relatorio de Jogo</div>
                             <h2 style={{fontFamily:'Bebas Neue',fontSize:42,letterSpacing:3,color:'var(--accent)',lineHeight:1,marginBottom:8}}>{g.opponent}</h2>
                             <div style={{fontFamily:'Space Mono',fontSize:10,color:'var(--muted)'}}>{g.date} · {fmt(g.time)}</div>
                         </div>
                         {g.pic&&<img src={g.pic} style={{width:80,height:80,borderRadius:12,objectFit:'cover',border:'1px solid var(--border)'}}/>}
                     </div>
-                    {/* KPIs */}
                     <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:32}}>
-                        {[{val:golos,label:'Golos',color:'var(--green)',sub:'marcados'},{val:sofr,label:'Sofr.',color:'var(--red)',sub:'sofridos'},{val:remates,label:'Remates',color:'var(--accent)',sub:'total'},{val:`${ef}%`,label:'Eficácia',color:'var(--gold)',sub:'golo/remate'}].map(k=>(
+                        {[{val:golos,label:'Golos',color:'var(--green)',sub:'marcados'},{val:sofr,label:'Sofr.',color:'var(--red)',sub:'sofridos'},{val:remates,label:'Remates',color:'var(--accent)',sub:'total'},{val:`${ef}%`,label:'Eficacia',color:'var(--gold)',sub:'golo/remate'}].map(k=>(
                             <div key={k.label} style={{padding:'16px 12px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,textAlign:'center'}}>
                                 <div style={{fontFamily:'Bebas Neue',fontSize:32,color:k.color,lineHeight:1}}>{k.val}</div>
                                 <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginTop:4}}>{k.label}</div>
@@ -1058,13 +1541,10 @@ function App() {
                             </div>
                         ))}
                     </div>
-                    {/* Stacked */}
                     <div className="card" style={{marginBottom:24}}>
-                        <div className="report-section-title">Distribuição Ataque / Defesa</div>
+                        <div className="report-section-title">Distribuicao Ataque / Defesa</div>
                         <StackedBar leftVal={totalAtk} rightVal={totalDef} leftColor="var(--accent)" rightColor="var(--red)" leftLabel={`Ataque (${totalAtk})`} rightLabel={`Defesa (${totalDef})`}/>
                     </div>
-
-                    {/* ── RADAR + DONUTS side by side ── */}
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
                         <div className="card">
                             <div className="report-section-title">Radar de Performance</div>
@@ -1073,21 +1553,17 @@ function App() {
                         <div className="card">
                             <div className="report-section-title">Indicadores</div>
                             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,paddingTop:4}}>
-                                <DonutChart value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversão" sublabel="Golos" size={80}/>
+                                <DonutChart value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversao" sublabel="Golos" size={80}/>
                                 <DonutChart value={g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0} max={Math.max(remates,1)} color="var(--accent)" label="Enquadram." sublabel="Remates" size={80}/>
-                                <DonutChart value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuperação" sublabel="de Bola" size={80}/>
+                                <DonutChart value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuperacao" sublabel="de Bola" size={80}/>
                                 <DonutChart value={sofr} max={Math.max(g.stats.find(s=>s.name==='Rem. Conc.')?.count||1,sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={80}/>
                             </div>
                         </div>
                     </div>
-
-                    {/* ── INTENSITY CHART ── */}
                     <div className="card" style={{marginBottom:24}}>
                         <div className="report-section-title">Intensidade por Minuto</div>
                         <IntensityChart events={filteredEvents} totalTime={g.time}/>
                     </div>
-
-                    {/* Bar charts */}
                     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
                         <div className="card">
                             <div className="report-section-title" style={{color:'var(--accent)'}}>Ataque</div>
@@ -1098,21 +1574,17 @@ function App() {
                             <BarChart data={g.stats.filter(s=>s.type==='defesa').map(s=>({label:s.name,value:s.count}))} colorFn={(_,i)=>defColors[i%defColors.length]}/>
                         </div>
                     </div>
-
-                    {/* Timeline */}
                     <div className="card" style={{marginBottom:24}}>
                         <div className="report-section-title">Cronologia de Eventos</div>
                         <Timeline events={filteredEvents} totalTime={g.time}/>
                         <div style={{marginTop:20,display:'flex',flexWrap:'wrap',gap:8}}>
                             {filteredEvents.filter(e=>e.isGoal).map((e,i)=>(
                                 <div key={i} style={{padding:'6px 12px',background:'rgba(249,199,79,0.1)',border:'1px solid rgba(249,199,79,0.3)',borderRadius:8,fontFamily:'Space Mono',fontSize:10,color:'var(--gold)'}}>
-                                    ⚽ {fmtMin(e.time)}
+                                    {fmtMin(e.time)}
                                 </div>
                             ))}
                         </div>
                     </div>
-
-                    {/* Event list */}
                     {filteredEvents.length>0&&(
                         <div className="card" style={{marginBottom:24}}>
                             <div className="report-section-title">Lista de Eventos ({filteredEvents.length})</div>
@@ -1129,8 +1601,6 @@ function App() {
                             </div>
                         </div>
                     )}
-
-                    {/* Notes */}
                     {(g.notes||(g.notesHistory||[]).length>0)&&(
                         <div className="card" style={{marginBottom:24}}>
                             <div className="report-section-title">Notas</div>
@@ -1153,13 +1623,11 @@ function App() {
     }
 
     /* ════════════════════════════════════════════════════
-       VIEW: TRACKING  (portrait + landscape)
+       VIEW: TRACKING
     ════════════════════════════════════════════════════ */
     if(!currentGame){setView('games');return null;}
     const period=getPeriodInfo(currentGame.time);
 
-    // Landscape: compact header + 2-column stats side by side (no vertical scroll needed)
-    // Portrait: standard layout
     const headerPad   = isLandscape ? '6px 12px'  : '10px 16px';
     const timerSize   = isLandscape ? 18           : 22;
     const btnSize     = isLandscape ? 32           : 40;
@@ -1168,7 +1636,6 @@ function App() {
 
     return(
         <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)',overflow:'hidden'}}>
-            {/* ── HEADER ── */}
             <header className="ls-header" style={{padding:headerPad,background:'var(--surface)',borderBottom:'1px solid var(--border)',flexShrink:0,display:'flex',flexWrap:'wrap',gap:isLandscape?6:10,alignItems:'center',justifyContent:'space-between'}}>
                 <div style={{display:'flex',alignItems:'center',gap:6}}>
                     <div style={{padding:isLandscape?'5px 12px':'8px 16px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)',display:'flex',alignItems:'center',gap:8}}>
@@ -1179,18 +1646,17 @@ function App() {
                         style={{width:btnSize,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>↩</button>
                 </div>
                 <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'nowrap'}}>
-                    {/* Photo */}
                     <div style={{width:btnSize,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',overflow:'hidden',position:'relative',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                        {currentGame.pic?<img src={currentGame.pic} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:isLandscape?14:18}}>📷</span>}
-                        <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f);updateGame({pic:c});showToast('✓ Foto');}}} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}/>
+                        {currentGame.pic?<img src={currentGame.pic} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:isLandscape?14:18}}>P</span>}
+                        <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f);updateGame({pic:c});showToast('Foto');} }} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}/>
                     </div>
                     <button onClick={()=>setShowNotes(p=>!p)} className="ls-btn-sm"
-                        style={{width:btnSize,height:btnSize,borderRadius:10,background:currentGame.notes?'rgba(67,97,238,0.3)':'var(--bg)',border:`1px solid ${currentGame.notes?'var(--accent)':'var(--border)'}`,cursor:'pointer',fontSize:isLandscape?14:16,display:'flex',alignItems:'center',justifyContent:'center'}}>📝</button>
+                        style={{width:btnSize,height:btnSize,borderRadius:10,background:currentGame.notes?'rgba(67,97,238,0.3)':'var(--bg)',border:`1px solid ${currentGame.notes?'var(--accent)':'var(--border)'}`,cursor:'pointer',fontSize:isLandscape?14:16,display:'flex',alignItems:'center',justifyContent:'center'}}>N</button>
                     <button onClick={()=>adjustTime(-10)} className="ls-btn-sm"
                         style={{width:isLandscape?36:38,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:btnFontSize,fontWeight:700}}>-10s</button>
                     <button onClick={()=>adjustTime(60)} className="ls-btn-sm"
                         style={{width:isLandscape?36:38,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:btnFontSize,fontWeight:700}}>+1m</button>
-                    <button className="ls-start-btn" onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('⏸ Pausado');return n;})}
+                    <button className="ls-start-btn" onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('Pausado');return n;})}
                         style={{padding:`0 ${isLandscape?10:16}px`,height:startH,borderRadius:10,border:'none',background:isActive?'var(--red)':'var(--green)',color:'white',fontFamily:'Bebas Neue',fontSize:isLandscape?14:16,letterSpacing:2,cursor:'pointer'}}>
                         {isActive?'STOP':'START'}
                     </button>
@@ -1199,17 +1665,16 @@ function App() {
                 </div>
             </header>
 
-            {/* ── NOTES ── */}
             {showNotes&&(
-                <div className="ls-notes" style={{padding:'12px 16px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}} >
-                    <textarea value={currentGame.notes} onChange={e=>updateGame({notes:e.target.value})} placeholder="✍ Observações..."
+                <div className="ls-notes" style={{padding:'12px 16px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+                    <textarea value={currentGame.notes} onChange={e=>updateGame({notes:e.target.value})} placeholder="Observacoes..."
                         style={{width:'100%',height:isLandscape?48:72,borderRadius:10,padding:'10px 14px',fontSize:12,resize:'none',lineHeight:1.5}}/>
                     <div style={{display:'flex',justifyContent:'flex-end',marginTop:6}}>
                         <button onClick={()=>{
-                            if(!currentGame.notes?.trim()){showToast('⚠️ Nota vazia');return;}
+                            if(!currentGame.notes?.trim()){showToast('Nota vazia');return;}
                             const label=`${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
                             updateGame(g=>({...g,notesHistory:[...(g.notesHistory||[]),{label,text:g.notes.trim()}]}));
-                            showToast('✓ Nota guardada');
+                            showToast('Nota guardada');
                         }} style={{padding:'6px 16px',borderRadius:10,background:'var(--accent)',border:'none',color:'white',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:1,cursor:'pointer'}}>
                             Guardar
                         </button>
@@ -1217,12 +1682,11 @@ function App() {
                 </div>
             )}
 
-            {/* ── STAT COLUMNS ── */}
             <div style={{flex:1,display:'flex',overflow:'hidden'}}>
                 {['ataque','defesa'].map(type=>(
                     <div key={type} style={{flex:1,display:'flex',flexDirection:'column',borderRight:type==='ataque'?'1px solid var(--border)':'none'}}>
                         <div className="ls-col-header" style={{padding:isLandscape?'5px 10px':'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-                            <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?13:16,letterSpacing:3,color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type}</span>
+                            <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?13:16,letterSpacing:3,color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type.toUpperCase()}</span>
                             <button onClick={()=>addCustomStat(type)}
                                 style={{width:isLandscape?24:28,height:isLandscape?24:28,borderRadius:8,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
                         </div>
@@ -1235,8 +1699,8 @@ function App() {
                                         <span className="stat-name" style={{fontSize:isLandscape?9:10}}>{s.name}</span>
                                     </button>
                                     <div style={{display:'flex',flexDirection:'column',gap:4,width:isLandscape?24:28,flexShrink:0}}>
-                                        <button onClick={()=>removeStat(s.id)} style={{flex:1,background:'rgba(239,35,60,0.08)',border:'1px solid rgba(239,35,60,0.2)',borderRadius:8,color:'var(--red)',cursor:'pointer',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>−</button>
-                                        <button onClick={()=>renameStat(s.id,s.name)} title="Renomear em todos os jogos" style={{flex:1,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,color:'var(--muted)',cursor:'pointer',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center'}}>✎</button>
+                                        <button onClick={()=>removeStat(s.id)} style={{flex:1,background:'rgba(239,35,60,0.08)',border:'1px solid rgba(239,35,60,0.2)',borderRadius:8,color:'var(--red)',cursor:'pointer',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>-</button>
+                                        <button onClick={()=>renameStat(s.id,s.name)} title="Renomear em todos os jogos" style={{flex:1,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,color:'var(--muted)',cursor:'pointer',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center'}}>E</button>
                                     </div>
                                 </div>
                             ))}
@@ -1245,19 +1709,33 @@ function App() {
                 ))}
             </div>
 
-            {/* ── HOME BUTTON (hidden in landscape via CSS) ── */}
             <button className="ls-home-btn" onClick={()=>setView('folders')}
-                style={{position:'absolute',bottom:24,left:24,width:52,height:52,borderRadius:'50%',background:'var(--surface)',border:'1px solid var(--border)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>🏠</button>
+                style={{position:'absolute',bottom:24,left:24,width:52,height:52,borderRadius:'50%',background:'var(--surface)',border:'1px solid var(--border)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>H</button>
 
-            {/* ── LANDSCAPE: home as small top-left link instead ── */}
             {isLandscape&&(
                 <button onClick={()=>setView('folders')}
-                    style={{position:'absolute',top:6,left:6,background:'transparent',border:'none',color:'var(--muted)',fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:2,cursor:'pointer',zIndex:10}}>🏠</button>
+                    style={{position:'absolute',top:6,left:6,background:'transparent',border:'none',color:'var(--muted)',fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:2,cursor:'pointer',zIndex:10}}>H</button>
             )}
 
             {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
         </div>
     );
+
+    function adjustTime(delta){ updateGame(g=>({...g,time:Math.max(0,g.time+delta)})); }
+    function addCustomStat(type){
+        const n=promptText(`Nova acao de ${type}:\n(propagada a todos os jogos desta pasta)`);
+        if(!n) return;
+        const newStat={id:Date.now(),name:n,type,count:0};
+        updateGame(g=>({...g,stats:[...g.stats,newStat]}));
+        syncStatToFolder(currentFolderId,newStat);
+        showToast(`"${n}" em todos os jogos`);
+    }
+    function renameStat(statId,currentName){
+        const n=promptText('Novo nome:',currentName);
+        if(!n||n===currentName) return;
+        renameStatAcrossFolder(currentFolderId,statId,n);
+        showToast('Renomeado em todos os jogos');
+    }
 }
 
 const root=ReactDOM.createRoot(document.getElementById('root'));
