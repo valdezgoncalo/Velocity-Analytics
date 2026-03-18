@@ -1642,6 +1642,28 @@ function App() {
                         <span className="ls-timer-block" style={{fontFamily:'Space Mono',fontSize:timerSize,fontWeight:700,color:'var(--accent)'}}>{fmt(currentGame.time)}</span>
                         <span style={{fontSize:isLandscape?8:9,fontWeight:800,textTransform:'uppercase',letterSpacing:1,color:period.color,background:`${period.color}22`,padding:'3px 8px',borderRadius:6}}>{period.label}</span>
                     </div>
+                    {/* ── PLACAR AO VIVO ── */}
+                    {(()=>{
+                        const gf = currentGame.stats.find(s=>s.name==='Golo')?.count||0;
+                        const ga = currentGame.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+                        const scoreColor = gf>ga?'var(--green)':gf<ga?'var(--red)':'var(--muted)';
+                        return (
+                            <div style={{
+                                padding: isLandscape?'4px 10px':'6px 14px',
+                                background:'var(--bg)',
+                                borderRadius:10,
+                                border:`1px solid ${scoreColor}44`,
+                                display:'flex',
+                                alignItems:'center',
+                                gap: isLandscape?6:8,
+                                flexShrink:0,
+                            }}>
+                                <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?20:26,lineHeight:1,color:'var(--green)',letterSpacing:1}}>{gf}</span>
+                                <span style={{fontFamily:'Space Mono',fontSize:isLandscape?9:11,color:'var(--muted)',fontWeight:700,lineHeight:1}}>–</span>
+                                <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?20:26,lineHeight:1,color:'var(--red)',letterSpacing:1}}>{ga}</span>
+                            </div>
+                        );
+                    })()}
                     <button onClick={undoLast} className="ls-btn-sm"
                         style={{width:btnSize,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>↩</button>
                 </div>
