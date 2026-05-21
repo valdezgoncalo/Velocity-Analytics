@@ -1018,6 +1018,44 @@
             font-family: 'Space Mono', monospace;
         }
 
+        /* ── STORAGE INDICATOR ──────────────────────── */
+        .storage-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--green);
+            z-index: 9998;
+            transform-origin: left;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+        }
+        .storage-badge {
+            position: fixed;
+            bottom: calc(var(--nav-h) + 10px);
+            right: 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            animation: fadeIn 0.3s ease, fadeOut 0.4s ease 1.8s forwards;
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(6px); }
+        }
+        .storage-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+
         /* ── INTENSITY CHART ────────────────────────── */
         .intensity-legend {
             display: flex;
@@ -1042,32 +1080,158 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-/* ═══════════════ STORAGE ═══════════════ */
-const DB_KEY       = 'socceranalyst_v4';
-const DB_BAK       = 'socceranalyst_v4_bak';
-const PLAYERS_KEY  = 'socceranalyst_players_v1';
+/* ═══════════════════════════════════════════════════════
+   STORAGE  —  3 camadas de persistência
+   1. localStorage   → instantâneo, leitura rápida
+   2. IndexedDB      → grande capacidade, sobrevive a limpeza do browser
+   3. Auto-backup    → ficheiro JSON descarregado automaticamente
+═══════════════════════════════════════════════════════ */
 
-function loadDB() {
-    for (const key of [DB_KEY, DB_BAK]) {
-        try { const r = localStorage.getItem(key); if (r) { const p = JSON.parse(r); if (Array.isArray(p)) return p; } } catch(_) {}
-    }
-    return [];
+const LS_KEY      = 'socceranalyst_v4';
+const LS_BAK      = 'socceranalyst_v4_bak';
+const PLAYERS_KEY = 'socceranalyst_players_v1';
+const IDB_NAME    = 'SoccerAnalystDB';
+const IDB_VER     = 1;
+const IDB_STORE   = 'appdata';
+
+// ── IndexedDB helpers ──────────────────────────────────
+function openIDB() {
+    return new Promise((resolve, reject) => {
+        if (!window.indexedDB) { reject('no-idb'); return; }
+        const req = indexedDB.open(IDB_NAME, IDB_VER);
+        req.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) {
+                db.createObjectStore(IDB_STORE, { keyPath: 'key' });
+            }
+        };
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror   = e => reject(e.target.error);
+    });
 }
-function saveDB(folders) {
+
+async function idbSet(key, value) {
     try {
-        const s = JSON.stringify(folders);
-        const prev = localStorage.getItem(DB_KEY);
-        if (prev) localStorage.setItem(DB_BAK, prev);
-        localStorage.setItem(DB_KEY, s);
-    } catch(e) { console.warn('save failed', e); }
+        const db = await openIDB();
+        return new Promise((res, rej) => {
+            const tx = db.transaction(IDB_STORE, 'readwrite');
+            tx.objectStore(IDB_STORE).put({ key, value });
+            tx.oncomplete = () => res(true);
+            tx.onerror    = e => rej(e.target.error);
+        });
+    } catch(_) { return false; }
 }
-function loadGlobalPlayers() {
-    try { const r=localStorage.getItem(PLAYERS_KEY); if(r) return JSON.parse(r); } catch(_){}
-    return [];
+
+async function idbGet(key) {
+    try {
+        const db = await openIDB();
+        return new Promise((res, rej) => {
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const req = tx.objectStore(IDB_STORE).get(key);
+            req.onsuccess = e => res(e.target.result?.value ?? null);
+            req.onerror   = e => rej(e.target.error);
+        });
+    } catch(_) { return null; }
 }
-function saveGlobalPlayers(players) {
-    try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(players)); } catch(e){}
+
+// ── localStorage helpers ───────────────────────────────
+function lsSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch(_) { return false; }
 }
+function lsGet(key) {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch(_) { return null; }
+}
+
+// ── Unified save: localStorage + IndexedDB ─────────────
+async function saveAll(folders, players) {
+    // localStorage (sync, fast)
+    try {
+        const prev = localStorage.getItem(LS_KEY);
+        if (prev) localStorage.setItem(LS_BAK, prev);
+        localStorage.setItem(LS_KEY, JSON.stringify(folders));
+        localStorage.setItem(PLAYERS_KEY, JSON.stringify(players));
+    } catch(_) {}
+    // IndexedDB (async, robust)
+    await idbSet('folders', folders);
+    await idbSet('players', players);
+}
+
+// ── Load with fallback chain ───────────────────────────
+async function loadAll() {
+    let folders = null, players = null;
+
+    // Try IndexedDB first (most reliable)
+    try {
+        const idbFolders = await idbGet('folders');
+        const idbPlayers = await idbGet('players');
+        if (Array.isArray(idbFolders)) folders = idbFolders;
+        if (Array.isArray(idbPlayers)) players = idbPlayers;
+    } catch(_) {}
+
+    // Fallback to localStorage
+    if (!folders) {
+        for (const key of [LS_KEY, LS_BAK]) {
+            const r = lsGet(key);
+            if (Array.isArray(r)) { folders = r; break; }
+        }
+    }
+    if (!players) {
+        const r = lsGet(PLAYERS_KEY);
+        if (Array.isArray(r)) players = r;
+    }
+
+    return { folders: folders||[], players: players||[] };
+}
+
+// ── Sync localStorage → IndexedDB on first load ────────
+// (migrates existing localStorage data into IndexedDB)
+async function migrateToIDB() {
+    const existingFolders = await idbGet('folders');
+    if (existingFolders !== null) return; // already migrated
+    const lsFolders = lsGet(LS_KEY) || lsGet(LS_BAK) || [];
+    const lsPlayers = lsGet(PLAYERS_KEY) || [];
+    if (lsFolders.length > 0 || lsPlayers.length > 0) {
+        await idbSet('folders', lsFolders);
+        await idbSet('players', lsPlayers);
+    }
+}
+
+// ── JSON backup download ───────────────────────────────
+function downloadBackup(folders, players) {
+    try {
+        const payload = {
+            version: 5,
+            exportedAt: new Date().toISOString(),
+            folders,
+            players,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return true;
+    } catch(_) { return false; }
+}
+
+// ── Import from JSON backup ────────────────────────────
+function parseBackup(raw) {
+    try {
+        const p = JSON.parse(raw);
+        // Support both old format (array) and new format (object with version)
+        if (Array.isArray(p))       return { folders: p, players: [] };
+        if (Array.isArray(p.folders)) return { folders: p.folders, players: p.players||[] };
+        return null;
+    } catch(_) { return null; }
+}
+
+// Legacy sync shims (keep old call-sites working)
+function loadDB()           { return lsGet(LS_KEY) || []; }
+function loadGlobalPlayers(){ return lsGet(PLAYERS_KEY) || []; }
 
 /* ═══════════════ TEMPLATE ══════════════ */
 const DEFAULT_TEMPLATE = [
@@ -2354,11 +2518,30 @@ function PlayerStatsTable({ events, players }) {
     );
 }
 
+/* ═══════════════ SAVE INDICATOR ════════ */
+function SaveIndicator({ status }) {
+    if(!status) return null;
+    const cfg = {
+        saving: { color:'var(--gold)',   dot:'#f9c74f', label:'A guardar...' },
+        saved:  { color:'var(--green)',  dot:'#2dc653', label:'Guardado'     },
+        error:  { color:'var(--red)',    dot:'#ef233c', label:'Erro ao guardar' },
+    }[status];
+    if(!cfg) return null;
+    return (
+        <div className="storage-badge">
+            <div className="storage-dot" style={{background:cfg.dot}}/>
+            <span style={{color:cfg.color}}>{cfg.label}</span>
+        </div>
+    );
+}
+
 /* ═══════════════ APP ═══════════════════ */
 function App() {
     const [view,            setView]            = useState('folders');
-    const [folders,         setFolders]         = useState(loadDB);
+    const [folders,         setFolders]         = useState(loadDB);         // sync initial load
     const [globalPlayers,   setGlobalPlayers]   = useState(loadGlobalPlayers);
+    const [dataLoaded,      setDataLoaded]      = useState(false);          // true after async IDB load
+    const [saveStatus,      setSaveStatus]      = useState(null);           // null | 'saving' | 'saved' | 'error'
     const [currentFolderId, setCurrentFolderId] = useState(null);
     const [currentGameId,   setCurrentGameId]   = useState(null);
     const [isActive,        setIsActive]        = useState(false);
@@ -2394,8 +2577,57 @@ function App() {
     const currentGame   = (currentGameId && currentFolder)
         ? (currentFolder.games||[]).find(g=>g.id===currentGameId)||null : null;
 
-    useEffect(()=>{ saveDB(folders); },[folders]);
-    useEffect(()=>{ saveGlobalPlayers(globalPlayers); },[globalPlayers]);
+    // ── On mount: migrate localStorage → IDB, then load best data ──
+    useEffect(()=>{
+        (async()=>{
+            await migrateToIDB();
+            const { folders: f, players: p } = await loadAll();
+            // Only override if IDB has more data than the localStorage sync load
+            if(f.length > 0) setFolders(f);
+            if(p.length > 0) setGlobalPlayers(p);
+            setDataLoaded(true);
+        })();
+    },[]); // eslint-disable-line
+
+    // ── Auto-save to localStorage + IndexedDB on every change ──
+    const saveTimer = useRef(null);
+    useEffect(()=>{
+        if(!dataLoaded) return; // don't overwrite with empty on first render
+        clearTimeout(saveTimer.current);
+        setSaveStatus('saving');
+        saveTimer.current = setTimeout(async()=>{
+            try {
+                await saveAll(folders, globalPlayers);
+                setSaveStatus('saved');
+                setTimeout(()=>setSaveStatus(null), 2000);
+            } catch(_) {
+                setSaveStatus('error');
+            }
+        }, 600); // debounce 600ms
+        return ()=>clearTimeout(saveTimer.current);
+    },[folders, globalPlayers, dataLoaded]);
+
+    // ── Auto-backup JSON every 15 minutes ──
+    const autoBackupRef = useRef(null);
+    useEffect(()=>{
+        if(!dataLoaded) return;
+        autoBackupRef.current = setInterval(()=>{
+            if(folders.length===0&&globalPlayers.length===0) return;
+            downloadBackup(folders, globalPlayers);
+        }, 15 * 60 * 1000); // 15 min
+        return ()=>clearInterval(autoBackupRef.current);
+    },[dataLoaded]); // only restart when load completes
+
+    // ── Warn before unload if there's data ──
+    useEffect(()=>{
+        const handler = e => {
+            if(folders.length===0) return;
+            e.preventDefault();
+            e.returnValue = '';
+        };
+        window.addEventListener('beforeunload', handler);
+        return ()=>window.removeEventListener('beforeunload', handler);
+    },[folders]);
 
     useEffect(()=>{
         if(!isActive||!currentGameId) return;
@@ -2704,24 +2936,20 @@ function App() {
     };
 
     const handleExport=()=>{
-        const blob=new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),folders})],{type:'application/json'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download=`socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-        showToast('Backup exportado');
+        const ok=downloadBackup(folders, globalPlayers);
+        showToast(ok?'Backup exportado':'Erro ao exportar');
     };
 
     const handleImport=file=>{
         if(!file) return;
         const r=new FileReader();
-        r.onload=()=>{
-            try{
-                const p=JSON.parse(r.result);
-                const imported=Array.isArray(p)?p:p?.folders;
-                if(!Array.isArray(imported)){showToast('Ficheiro inválido');return;}
-                setFolders(imported);showToast('✅ Dados importados');
-            } catch(_){showToast('Erro ao importar');}
+        r.onload=async()=>{
+            const parsed=parseBackup(r.result);
+            if(!parsed){showToast('Ficheiro invalido');return;}
+            setFolders(parsed.folders);
+            if(parsed.players.length>0) setGlobalPlayers(parsed.players);
+            await saveAll(parsed.folders, parsed.players.length>0?parsed.players:globalPlayers);
+            showToast('Dados importados');
         };
         r.readAsText(file);
     };
@@ -2780,7 +3008,7 @@ function App() {
                     <div style={{fontFamily:'Bebas Neue',fontSize:14,letterSpacing:6,color:'var(--muted)'}}>PRO</div>
                 </div>
                 <div style={{display:'flex',gap:8}}>
-                    <button className="btn-ghost" onClick={handleExport}>Exportar</button>
+                    <button className="btn-ghost" onClick={handleExport} title="Guardar backup JSON">Backup</button>
                     <button className="btn-ghost" onClick={()=>importRef.current?.click()}>Importar</button>
                     <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
                 </div>
@@ -2837,13 +3065,21 @@ function App() {
                         );
                     })}
                 </div>
+
+                {/* Storage info */}
+                <div style={{marginTop:24,padding:'12px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,display:'flex',alignItems:'center',gap:12}}>
+                    <div style={{width:8,height:8,borderRadius:'50%',background:'var(--green)',flexShrink:0,boxShadow:'0 0 6px var(--green)'}}/>
+                    <div style={{flex:1}}>
+                        <div style={{fontSize:11,fontWeight:700,color:'var(--text)'}}>Dados guardados automaticamente</div>
+                        <div style={{fontSize:10,color:'var(--muted)',marginTop:2}}>localStorage + IndexedDB · Backup a cada 15 min</div>
+                    </div>
+                    <button className="btn-ghost" style={{fontSize:10,padding:'6px 12px',flexShrink:0}} onClick={handleExport}>
+                        Backup
+                    </button>
+                </div>
             </div>
         </div>
     );
-
-    /* ════════════════════════════════════
-       VIEW: GAMES
-    ════════════════════════════════════ */
     const renderGames=()=>{
         if(!currentFolder) return <div className="empty"><div className="empty-text">Seleciona uma pasta</div></div>;
         const sumGF=filteredGames.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
@@ -3662,6 +3898,17 @@ function App() {
     ════════════════════════════════════ */
     return (
         <div style={{position:'relative',width:'100%',height:'100vh',background:'var(--bg)',overflow:'hidden'}}>
+            {/* Loading splash */}
+            {!dataLoaded&&(
+                <div style={{position:'absolute',inset:0,background:'var(--bg)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:16,zIndex:500}}>
+                    <div style={{fontFamily:'Bebas Neue',fontSize:32,letterSpacing:4,color:'var(--accent)'}}>SoccerAnalyst</div>
+                    <div style={{fontFamily:'Bebas Neue',fontSize:14,letterSpacing:6,color:'var(--muted)'}}>PRO</div>
+                    <div style={{marginTop:8,width:120,height:3,background:'var(--border)',borderRadius:2,overflow:'hidden'}}>
+                        <div style={{height:'100%',background:'var(--accent)',borderRadius:2,animation:'loadBar 1.2s ease-in-out infinite'}}/>
+                    </div>
+                    <style>{`@keyframes loadBar{0%{width:0%;margin-left:0%}50%{width:70%;margin-left:15%}100%{width:0%;margin-left:100%}}`}</style>
+                </div>
+            )}
             {view==='folders' && renderFolders()}
             {view==='squad'   && renderSquad()}
             {view==='games'   && renderGames()}
@@ -3686,6 +3933,7 @@ function App() {
                     <div style={{fontSize:11,color:'var(--muted)',fontWeight:700}}>{pdfProgress}%</div>
                 </div>
             )}
+            <SaveIndicator status={saveStatus}/>
             {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
         </div>
     );
