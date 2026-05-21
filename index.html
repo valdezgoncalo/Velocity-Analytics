@@ -950,6 +950,74 @@
         }
         .track-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
+        /* ── SQUAD SCREEN ───────────────────────────── */
+        .squad-screen-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: border-color 0.15s;
+        }
+        .squad-screen-player:hover { border-color: rgba(67,97,238,0.3); }
+        .num-badge {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Space Mono', monospace;
+            font-size: 13px; font-weight: 700;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        /* ── CONVOCATION SCREEN ─────────────────────── */
+        .convoc-player {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 14px;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.12s;
+            position: relative;
+        }
+        .convoc-player.selected {
+            border-color: var(--accent);
+            background: rgba(67,97,238,0.08);
+        }
+        .convoc-player:active { transform: scale(0.97); }
+        .convoc-check {
+            width: 24px; height: 24px;
+            border-radius: 7px;
+            border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.12s;
+            font-size: 13px;
+        }
+        .convoc-player.selected .convoc-check {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+        .convoc-count-badge {
+            position: absolute;
+            top: -6px; right: -6px;
+            background: var(--accent);
+            color: white;
+            border-radius: 10px;
+            padding: 2px 7px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+        }
+
         /* ── INTENSITY CHART ────────────────────────── */
         .intensity-legend {
             display: flex;
@@ -975,8 +1043,9 @@
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 /* ═══════════════ STORAGE ═══════════════ */
-const DB_KEY = 'socceranalyst_v4';
-const DB_BAK = 'socceranalyst_v4_bak';
+const DB_KEY       = 'socceranalyst_v4';
+const DB_BAK       = 'socceranalyst_v4_bak';
+const PLAYERS_KEY  = 'socceranalyst_players_v1';
 
 function loadDB() {
     for (const key of [DB_KEY, DB_BAK]) {
@@ -991,6 +1060,13 @@ function saveDB(folders) {
         if (prev) localStorage.setItem(DB_BAK, prev);
         localStorage.setItem(DB_KEY, s);
     } catch(e) { console.warn('save failed', e); }
+}
+function loadGlobalPlayers() {
+    try { const r=localStorage.getItem(PLAYERS_KEY); if(r) return JSON.parse(r); } catch(_){}
+    return [];
+}
+function saveGlobalPlayers(players) {
+    try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(players)); } catch(e){}
 }
 
 /* ═══════════════ TEMPLATE ══════════════ */
@@ -1025,19 +1101,17 @@ function Toast({ message, isGoal, onClose }) {
 /* ═══════════════ BOTTOM NAV ════════════ */
 const NAV_ITEMS = [
     { id:'folders',  icon:'🗂',  label:'Pastas'   },
+    { id:'squad',    icon:'👥',  label:'Plantel'  },
     { id:'games',    icon:'📋',  label:'Jogos'    },
     { id:'tracking', icon:'⚽',  label:'Tracking' },
     { id:'report',   icon:'📊',  label:'Relatório'},
 ];
 
 function BottomNav({ view, setView, hasGame, hasFolder }) {
-    const canTrack  = hasGame;
-    const canReport = hasGame;
-    const canGames  = hasFolder;
     return (
         <nav className="bottom-nav">
             {NAV_ITEMS.map(n => {
-                const disabled = (n.id==='tracking'&&!canTrack)||(n.id==='report'&&!canReport)||(n.id==='games'&&!canGames);
+                const disabled = (n.id==='tracking'&&!hasGame)||(n.id==='report'&&!hasGame)||(n.id==='games'&&!hasFolder);
                 return (
                     <button key={n.id} className={`nav-btn${view===n.id?' active':''}`}
                         onClick={() => !disabled && setView(n.id)}
@@ -1283,7 +1357,7 @@ function Timeline({ events, totalTime }) {
 }
 
 /* ═══════════════ PDF ═══════════════════ */
-function buildNativePDF(game, folderName='') {
+function buildNativePDF(game, folderName='', folderPlayers=[]) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const C = {
@@ -1538,11 +1612,10 @@ function buildNativePDF(game, folderName='') {
     txt('Gerado automaticamente • Uso exclusivo interno', PW/2, PH-3.5, {align:'center'});
 
     // ══════════════════════════════
-    // PÁGINA 2 — Estatísticas
+    // PÁGINA 2 — Análise Estatística
     // ══════════════════════════════
     doc.addPage();
     sf(C.bg); rct(0,0,PW,PH);
-    // Header pequeno nas páginas interiores
     sf(C.surface); rct(0,0,PW,10);
     sf(C.accent); rct(0,0,PW,1.5);
     st(C.accent); doc.setFontSize(7); doc.setFont('helvetica','bold');
@@ -1551,34 +1624,36 @@ function buildNativePDF(game, folderName='') {
     txt(`${game.opponent.toUpperCase()}  ·  ${game.date}  ·  ${gfC}–${gaC}`, PW-ML, 7, {align:'right'});
     y = 18;
 
-    st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','bold');txt('RELATORIO DE JOGO',ML,y);y+=6;
-    st(C.accent);doc.setFontSize(24);doc.setFont('helvetica','bold');txt(g.opponent.toUpperCase(),ML,y);y+=5;
-    st(C.muted);doc.setFontSize(7);doc.setFont('helvetica','normal');txt(`${g.date}   |   ${fmt(g.time)}   |   SoccerAnalyst Pro`,ML,y);y+=3;
-    ss(C.border);ln(ML,y,ML+CW,y,0.3);y+=5;
+    // ── Sub-header desta página ──
+    st(C.text); doc.setFontSize(14); doc.setFont('helvetica','bold');
+    txt('ANÁLISE ESTATÍSTICA', ML, y);
+    ss(C.border); ln(ML, y+2, ML+CW, y+2, 0.3); y+=10;
 
+    // ── KPIs compactos ──
     const kpis=[{val:golos,label:'GOLOS',sub:'marcados',color:C.green},{val:sofr,label:'SOFR.',sub:'sofridos',color:C.red},{val:remates,label:'REMATES',sub:'total',color:C.accent},{val:`${ef}%`,label:'EFICACIA',sub:'golo/rem',color:C.gold}];
-    const kW=(CW-9)/4,kH=20;
+    const kW=(CW-9)/4,kH=18;
     kpis.forEach((k,i)=>{
         const kx=ML+i*(kW+3);
         sf(C.surface);rct(kx,y,kW,kH,2);
-        doc.setDrawColor(...k.color);doc.setLineWidth(0.4);doc.roundedRect(kx,y,kW,kH,2,2,'S');
-        st(k.color);doc.setFontSize(18);doc.setFont('helvetica','bold');txt(String(k.val),kx+kW/2,y+11,{align:'center'});
-        st(C.muted);doc.setFontSize(5.5);doc.setFont('helvetica','bold');txt(k.label,kx+kW/2,y+16,{align:'center'});
-        doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(k.sub,kx+kW/2,y+19,{align:'center'});
+        sf(k.color); rct(kx,y,kW,1.5,1);
+        doc.setDrawColor(...k.color);doc.setLineWidth(0.3);doc.roundedRect(kx,y,kW,kH,2,2,'S');
+        st(k.color);doc.setFontSize(16);doc.setFont('helvetica','bold');txt(String(k.val),kx+kW/2,y+10,{align:'center'});
+        st(C.muted);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(k.label,kx+kW/2,y+14.5,{align:'center'});
     });
-    y+=kH+6;
+    y+=kH+8;
 
+    // ── Distribuição Ataque/Defesa ──
     secLabel('DISTRIBUICAO ATAQUE / DEFESA');
     const total=totalAtk+totalDef,pAtk=total>0?(totalAtk/total):0.5;
-    sf(C.accent);rct(ML,y,CW*pAtk,5,1);
-    sf(C.red);rct(ML+CW*pAtk,y,CW*(1-pAtk),5,1);
-    st(C.white);doc.setFontSize(5);doc.setFont('helvetica','bold');
-    if(pAtk>0.05)txt(String(totalAtk),ML+CW*pAtk-4,y+3.5,{align:'right'});
-    if((1-pAtk)>0.05)txt(String(totalDef),ML+CW*pAtk+4,y+3.5,{align:'left'});
-    y+=5+3;
-    st(C.accent);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(`ATAQUE (${totalAtk})`,ML,y);
-    st(C.red);txt(`DEFESA (${totalDef})`,ML+CW,y,{align:'right'});y+=6;
+    const sbW=CW, sbH2=8;
+    sf(C.accent);rct(ML,y,sbW*pAtk,sbH2,1);
+    sf(C.red);rct(ML+sbW*pAtk,y,sbW*(1-pAtk),sbH2,1);
+    st(C.white);doc.setFontSize(5.5);doc.setFont('helvetica','bold');
+    if(pAtk>0.08)txt(`ATAQUE  ${totalAtk}`,ML+4,y+5.5);
+    if((1-pAtk)>0.08)txt(`DEFESA  ${totalDef}`,ML+sbW-4,y+5.5,{align:'right'});
+    y+=sbH2+8;
 
+    // ── Radar (esq) + Donuts (dir) ──
     secLabel('RADAR DE PERFORMANCE   /   INDICADORES');
     const radarH=48,colL=ML,colR=ML+CW/2+2,colW=CW/2-2;
     sf(C.surface);rct(colL,y,colW,radarH,2);
@@ -1604,18 +1679,20 @@ function buildNativePDF(game, folderName='') {
     donuts.forEach((d,i)=>{const col=i%2,row=Math.floor(i/2);const dcx=colR+col*(colW/2)+colW/4;const dcy=y+row*(radarH/2)+radarH/4+1;drawDonut(dcx,dcy,6,d.max>0?Math.min(d.val/d.max,1):0,d.color,String(d.val),d.label);});
     y+=radarH+7;
 
-    checkPage(38);secLabel('INTENSIDADE POR MINUTO');
-    const intH=20;sf(C.surface);rct(ML,y,CW,intH+14,2);
+    // ── Intensidade por minuto ──
+    checkPage(38); secLabel('INTENSIDADE POR MINUTO');
+    const intH=20; sf(C.surface);rct(ML,y,CW,intH+14,2);
     drawIntensity(ML+4,y+intH,CW-8,intH-2,g.events,g.time);y+=intH+18;
 
-    checkPage(50);secLabel('ESTATISTICAS DETALHADAS');
+    // ── Barras detalhadas ──
+    checkPage(50); secLabel('ESTATISTICAS DETALHADAS');
     const atkStats=g.stats.filter(s=>s.type==='ataque'),defStats=g.stats.filter(s=>s.type==='defesa');
     const maxRows=Math.max(atkStats.length,defStats.length),bH=5.5,bGap=1.5,bColW=(CW-6)/2,bSectionH=maxRows*(bH+bGap)+10;
     sf(C.surface);rct(ML,y,bColW,bSectionH,2);rct(ML+bColW+6,y,bColW,bSectionH,2);
     st(C.accent);doc.setFontSize(6);doc.setFont('helvetica','bold');txt('ATAQUE',ML+bColW/2,y+4,{align:'center'});
     st(C.red);txt('DEFESA',ML+bColW+6+bColW/2,y+4,{align:'center'});y+=7;
-    const atkC=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
-    const defC=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
+    const atkC2=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
+    const defC2=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
     const drawBars=(stats,cx,colors)=>{
         const maxV=Math.max(...stats.map(s=>s.count),1),lW=22,bAW=bColW-lW-10;
         stats.forEach((s,i)=>{
@@ -1626,42 +1703,380 @@ function buildNativePDF(game, folderName='') {
             st(C.text);doc.setFontSize(4.5);doc.setFont('helvetica','bold');txt(String(s.count),cx+lW+bAW+2,by+bH-1.2);
         });
     };
-    drawBars(atkStats,ML+2,atkC);drawBars(defStats,ML+bColW+8,defC);
+    drawBars(atkStats,ML+2,atkC2);drawBars(defStats,ML+bColW+8,defC2);
     y+=maxRows*(bH+bGap)+6;
 
-    checkPage(30);secLabel('CRONOLOGIA DE EVENTOS');
+    // ══════════════════════════════════════
+    // SECÇÃO: ESTATÍSTICAS POR ATLETA
+    // ══════════════════════════════════════
+    const players = folderPlayers||[];
+    const eventsWithPlayer = g.events.filter(e=>e.playerId);
+    if(players.length>0 && eventsWithPlayer.length>0){
+        checkPage(60);
+        newPage();
+
+        // Page sub-header
+        st(C.text); doc.setFontSize(14); doc.setFont('helvetica','bold');
+        txt('ESTATÍSTICAS POR ATLETA', ML, y);
+        ss(C.border); ln(ML,y+2,ML+CW,y+2,0.3); y+=12;
+
+        // Calcular stats por jogador
+        const playerStats = players.map(p=>{
+            const pevs = g.events.filter(e=>e.playerId===p.id);
+            const goals  = pevs.filter(e=>e.isGoal).length;
+            const shots  = pevs.filter(e=>['Remate','Rem. Enquad.','Rem. Area'].includes(e.name)).length;
+            const assists= pevs.filter(e=>e.name==='Assist.').length;
+            const recovs = pevs.filter(e=>e.name==='Recuper.').length;
+            const fouls  = pevs.filter(e=>e.name==='Faltas').length;
+            const total  = pevs.length;
+            // Group other events
+            const grouped = {};
+            pevs.forEach(e=>{grouped[e.name]=(grouped[e.name]||0)+1;});
+            return{...p,goals,shots,assists,recovs,fouls,total,grouped,pevs};
+        }).filter(p=>p.total>0).sort((a,b)=>b.total-a.total);
+
+        if(playerStats.length===0){
+            st(C.muted); doc.setFontSize(8); doc.setFont('helvetica','italic');
+            txt('Nenhum evento associado a atletas neste jogo.',ML,y); y+=10;
+        } else {
+            // ── Tabela de resumo ──
+            secLabel(`RESUMO  (${playerStats.length} atletas com eventos)`);
+            const tCols=[
+                {label:'ATLETA',    w:50},
+                {label:'Nº',        w:10},
+                {label:'POS.',      w:16},
+                {label:'GOLOS',     w:18},
+                {label:'REMATES',   w:20},
+                {label:'RECUP.',    w:20},
+                {label:'FALTAS',    w:18},
+                {label:'TOTAL',     w:18},
+            ];
+            const tRowH=7, tHeaderH=8;
+            const tTotalW=CW, tX=ML;
+
+            // Header row
+            sf(C.surface2); rct(tX,y,tTotalW,tHeaderH,2);
+            sf(C.accent); rct(tX,y,tTotalW,1.5,1);
+            let cx2=tX+2;
+            tCols.forEach(col=>{
+                st(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
+                txt(col.label, cx2+col.w/2, y+5.5, {align:'center'});
+                cx2+=col.w;
+            });
+            y+=tHeaderH;
+
+            // Data rows
+            playerStats.forEach((p,pi)=>{
+                checkPage(tRowH+3);
+                const rowBg = pi%2===0 ? C.surface : C.surface2;
+                sf(rowBg); rct(tX,y,tTotalW,tRowH,0);
+                // left accent bar for top scorer
+                if(pi===0&&p.goals>0){ sf(C.gold); rct(tX,y,1.5,tRowH); }
+                let cx3=tX+2;
+                const cells=[
+                    {val:p.name.substring(0,16), color:C.text,    bold:true,  fs:5.5},
+                    {val:`#${p.number||'?'}`,     color:C.accent,  bold:true,  fs:5},
+                    {val:p.position||'—',          color:C.muted,   bold:false, fs:5},
+                    {val:p.goals>0?String(p.goals):'—',   color:p.goals>0?C.gold:C.muted,   bold:p.goals>0, fs:6},
+                    {val:p.shots>0?String(p.shots):'—',   color:p.shots>0?C.accent:C.muted, bold:false,     fs:5.5},
+                    {val:p.recovs>0?String(p.recovs):'—', color:p.recovs>0?C.green:C.muted, bold:false,     fs:5.5},
+                    {val:p.fouls>0?String(p.fouls):'—',   color:p.fouls>0?C.red:C.muted,    bold:false,     fs:5.5},
+                    {val:String(p.total),                  color:C.text,                      bold:true,      fs:6},
+                ];
+                cells.forEach((c,ci)=>{
+                    const col=tCols[ci];
+                    st(c.color); doc.setFontSize(c.fs); doc.setFont('helvetica',c.bold?'bold':'normal');
+                    txt(String(c.val), cx3+col.w/2, y+tRowH-1.5, {align:'center'});
+                    cx3+=col.w;
+                });
+                // row separator
+                ss(C.border); doc.setLineWidth(0.15); doc.line(tX,y+tRowH,tX+tTotalW,y+tRowH);
+                y+=tRowH;
+            });
+            y+=8;
+
+            // ── Cards individuais por atleta (top 6) ──
+            checkPage(30);
+            secLabel('DETALHE POR ATLETA');
+            const cardCols=2, cardW=(CW-6)/2, cardH=28;
+            playerStats.slice(0,6).forEach((p,pi)=>{
+                checkPage(cardH+4);
+                const col=pi%cardCols, row=Math.floor(pi/cardCols);
+                if(col===0&&pi>0) y+=0; // already advanced
+                const cx4=ML+col*(cardW+6);
+                const cy4=y;
+
+                sf(C.surface); rct(cx4,cy4,cardW,cardH,2);
+                // colored top bar
+                const barColor=p.goals>0?C.gold:p.shots>2?C.accent:C.green;
+                sf(barColor); rct(cx4,cy4,cardW,2,1);
+
+                // Number badge
+                sf(C.bg); rct(cx4+2,cy4+4,10,10,1.5);
+                st(C.accent); doc.setFontSize(7); doc.setFont('helvetica','bold');
+                txt(`#${p.number||'?'}`, cx4+7, cy4+10.5, {align:'center'});
+
+                // Name + position
+                st(C.text); doc.setFontSize(7); doc.setFont('helvetica','bold');
+                txt(p.name.substring(0,14), cx4+15, cy4+8);
+                st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
+                txt(p.position||'Sem posição', cx4+15, cy4+12.5);
+
+                // Mini stats row
+                const mStats=[
+                    {v:p.goals,  l:'GOL', c:C.gold},
+                    {v:p.shots,  l:'REM', c:C.accent},
+                    {v:p.recovs, l:'REC', c:C.green},
+                    {v:p.fouls,  l:'FAL', c:C.red},
+                    {v:p.total,  l:'TOT', c:C.text},
+                ];
+                const msW=(cardW-4)/mStats.length;
+                mStats.forEach((ms,mi)=>{
+                    const msx=cx4+2+mi*msW;
+                    sf(C.bg); rct(msx,cy4+16,msW-1,10,1);
+                    st(ms.c); doc.setFontSize(8); doc.setFont('helvetica','bold');
+                    txt(String(ms.v), msx+msW/2-0.5, cy4+22, {align:'center'});
+                    st(C.muted); doc.setFontSize(4); doc.setFont('helvetica','normal');
+                    txt(ms.l, msx+msW/2-0.5, cy4+25.5, {align:'center'});
+                });
+
+                if(col===cardCols-1||pi===playerStats.slice(0,6).length-1){
+                    y+=cardH+4;
+                }
+            });
+        }
+    }
+
+    // ══════════════════════════════════════
+    // SECÇÃO: MAPA TÁTICO DE AÇÕES
+    // ══════════════════════════════════════
+    const eventsWithPos = g.events.filter(e=>e.x!=null&&e.y!=null);
+    if(eventsWithPos.length>0){
+        checkPage(40);
+        newPage();
+
+        st(C.text); doc.setFontSize(14); doc.setFont('helvetica','bold');
+        txt('MAPA TÁTICO DE AÇÕES', ML, y);
+        ss(C.border); ln(ML,y+2,ML+CW,y+2,0.3); y+=12;
+
+        // ── Função para desenhar campo jsPDF ──
+        const drawPDF_Pitch = (px,py,pw,ph)=>{
+            // Fundo verde
+            sf([20,50,20]); rct(px,py,pw,ph,2);
+            // Riscas alternadas
+            for(let i=0;i<10;i++){
+                if(i%2===0){ doc.setFillColor(22,54,22); rct(px+i*(pw/10),py,pw/10,ph); }
+            }
+            // Contorno
+            ss([200,220,200]); doc.setLineWidth(0.4);
+            doc.roundedRect(px+1,py+1,pw-2,ph-2,1,1,'S');
+            // Linha de meio
+            doc.setLineWidth(0.3);
+            doc.line(px+pw/2,py+1,px+pw/2,py+ph-1);
+            // Círculo central
+            doc.circle(px+pw/2,py+ph/2,ph*0.12,'S');
+            doc.circle(px+pw/2,py+ph/2,0.6,'F');
+            // Área esquerda grande
+            const aW=pw*0.16,aH=ph*0.48,aY=py+(ph-aH)/2;
+            doc.rect(px+1,aY,aW,aH,'S');
+            // Área esquerda pequena
+            const saW=pw*0.06,saH=ph*0.26,saY=py+(ph-saH)/2;
+            doc.rect(px+1,saY,saW,saH,'S');
+            // Área direita grande
+            doc.rect(px+pw-1-aW,aY,aW,aH,'S');
+            // Área direita pequena
+            doc.rect(px+pw-1-saW,saY,saW,saH,'S');
+            // Penalty spots
+            doc.circle(px+pw*0.11,py+ph/2,0.6,'F');
+            doc.circle(px+pw*0.89,py+ph/2,0.6,'F');
+            // Balizas
+            const gH=ph*0.14,gW=pw*0.015,gY=py+(ph-gH)/2;
+            ss([255,255,255]); doc.setLineWidth(0.5);
+            doc.rect(px,gY,gW,gH,'S');
+            doc.rect(px+pw-gW,gY,gW,gH,'S');
+            // Cantos
+            [[px+1,py+1],[px+pw-1,py+1],[px+1,py+ph-1],[px+pw-1,py+ph-1]].forEach(([cx,cy])=>{
+                doc.setLineWidth(0.2); doc.circle(cx,cy,pw*0.025,'S');
+            });
+        };
+
+        // ── Campo completo — todos os eventos ──
+        secLabel(`TODAS AS AÇÕES  (${eventsWithPos.length} eventos com posição)`);
+        const pitchW=CW, pitchH=pitchW*0.65;
+        drawPDF_Pitch(ML,y,pitchW,pitchH);
+
+        // Plot dots
+        eventsWithPos.forEach(ev=>{
+            const ex=ML+ev.x*pitchW, ey2=y+ev.y*pitchH;
+            const r=ev.isGoal?2.2:1.4;
+            const color=ev.isGoal?C.gold:ev.type==='ataque'?C.accent:C.red;
+            sf(color); doc.circle(ex,ey2,r,'F');
+            if(ev.isGoal){
+                ss(C.gold); doc.setLineWidth(0.3); doc.circle(ex,ey2,r+1.2,'S');
+            }
+            // Player number if available
+            if(ev.playerName){
+                st(C.white); doc.setFontSize(3.5); doc.setFont('helvetica','bold');
+                const pNum=(players.find(p=>p.id===ev.playerId)||{}).number||'';
+                if(pNum) txt(String(pNum),ex,ey2+1.2,{align:'center'});
+            }
+        });
+
+        // Legend
+        y+=pitchH+5;
+        const legItems=[{c:C.gold,l:'Golo'},{c:C.accent,l:'Ataque'},{c:C.red,l:'Defesa'}];
+        let lx=ML;
+        legItems.forEach(li=>{
+            sf(li.c); doc.circle(lx+1.5,y-0.5,1.5,'F');
+            st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
+            txt(li.l, lx+5, y); lx+=24;
+        });
+        if(players.length>0){
+            st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
+            txt('Nº = número da atleta', lx+5, y);
+        }
+        y+=10;
+
+        // ── Mapas separados: Ataque vs Defesa ──
+        checkPage(70);
+        secLabel('AÇÕES POR FASE DE JOGO');
+        const halfW=(CW-6)/2, halfH=halfW*0.65;
+
+        // Ataque
+        const atkEvs=eventsWithPos.filter(e=>e.type==='ataque');
+        sf(C.surface); rct(ML,y,halfW,halfH+8,2);
+        sf(C.accent); rct(ML,y,halfW,1.5,1);
+        st(C.accent); doc.setFontSize(6); doc.setFont('helvetica','bold');
+        txt(`ATAQUE  (${atkEvs.length})`, ML+halfW/2, y+5.5, {align:'center'});
+        drawPDF_Pitch(ML+1,y+7,halfW-2,halfH);
+        atkEvs.forEach(ev=>{
+            const ex=ML+1+ev.x*(halfW-2), ey2=y+7+ev.y*halfH;
+            const clr=ev.isGoal?C.gold:C.accent;
+            sf(clr); doc.circle(ex,ey2,ev.isGoal?1.8:1.2,'F');
+        });
+
+        // Defesa
+        const defEvs=eventsWithPos.filter(e=>e.type==='defesa');
+        const rx=ML+halfW+6;
+        sf(C.surface); rct(rx,y,halfW,halfH+8,2);
+        sf(C.red); rct(rx,y,halfW,1.5,1);
+        st(C.red); doc.setFontSize(6); doc.setFont('helvetica','bold');
+        txt(`DEFESA  (${defEvs.length})`, rx+halfW/2, y+5.5, {align:'center'});
+        drawPDF_Pitch(rx+1,y+7,halfW-2,halfH);
+        defEvs.forEach(ev=>{
+            const ex=rx+1+ev.x*(halfW-2), ey2=y+7+ev.y*halfH;
+            sf(C.red); doc.circle(ex,ey2,1.2,'F');
+        });
+
+        y+=halfH+12;
+
+        // ── Tabela de eventos com posição ──
+        checkPage(30);
+        secLabel(`LISTA DE EVENTOS COM POSIÇÃO  (${eventsWithPos.length})`);
+        const eColW=(CW-8)/4, eRowH=6;
+        const eHeaders=['MIN.','EVENTO','TIPO','ATLETA'];
+        const eColWs=[16,60,28,CW-8-16-60-28];
+
+        // Header
+        sf(C.surface2); rct(ML,y,CW,7,1);
+        sf(C.accent); rct(ML,y,CW,1.2,0.5);
+        let ehx=ML+2;
+        eHeaders.forEach((h,hi)=>{
+            st(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
+            txt(h,ehx,y+5.2); ehx+=eColWs[hi];
+        });
+        y+=7;
+
+        eventsWithPos.forEach((ev,ei)=>{
+            checkPage(eRowH+2);
+            sf(ei%2===0?C.surface:C.surface2); rct(ML,y,CW,eRowH);
+            const evColor=ev.isGoal?C.gold:ev.type==='ataque'?C.accent:C.red;
+            sf(evColor); doc.circle(ML+3,y+eRowH/2,1.2,'F');
+            const playerName=(players.find(p=>p.id===ev.playerId)||{}).name||'—';
+            const cells=[
+                {v:fmtMin(ev.time), c:C.muted},
+                {v:ev.name.substring(0,20), c:C.text},
+                {v:ev.type.toUpperCase(), c:evColor},
+                {v:playerName.substring(0,12), c:C.muted},
+            ];
+            let ecx=ML+7;
+            cells.forEach((c,ci)=>{
+                st(c.c); doc.setFontSize(5); doc.setFont('helvetica',ci===1?'bold':'normal');
+                txt(c.v,ecx,y+eRowH-1.2); ecx+=eColWs[ci];
+            });
+            ss(C.border); doc.setLineWidth(0.1); doc.line(ML,y+eRowH,ML+CW,y+eRowH);
+            y+=eRowH;
+        });
+        y+=6;
+    }
+
+    // ══════════════════════════════════════
+    // SECÇÃO: CRONOLOGIA + EVENTOS + NOTAS
+    // ══════════════════════════════════════
+    checkPage(30);
+    newPage();
+
+    st(C.text); doc.setFontSize(14); doc.setFont('helvetica','bold');
+    txt('CRONOLOGIA E EVENTOS', ML, y);
+    ss(C.border); ln(ML,y+2,ML+CW,y+2,0.3); y+=12;
+
+    secLabel('CRONOLOGIA DE EVENTOS');
     sf(C.surface);rct(ML,y,CW,22,2);
     drawTimeline(ML+4,y+5,CW-8,g.events,g.time);y+=28;
+
     const goals2=g.events.filter(e=>e.isGoal);
     if(goals2.length){
         goals2.forEach((e,i)=>{
-            const gx=ML+i*18;ss(C.gold);doc.setLineWidth(0.3);doc.roundedRect(gx,y,15,5,1,1,'S');
-            st(C.gold);doc.setFontSize(5.5);doc.setFont('helvetica','bold');txt(`GOLO ${fmtMin(e.time)}`,gx+7.5,y+3.5,{align:'center'});
+            const gx=ML+i*22;
+            ss(C.gold);doc.setLineWidth(0.3);doc.roundedRect(gx,y,19,6,1.5,1.5,'S');
+            st(C.gold);doc.setFontSize(5.5);doc.setFont('helvetica','bold');
+            const gLabel=e.playerName?`${fmtMin(e.time)} ${e.playerName.substring(0,8)}`:`GOLO ${fmtMin(e.time)}`;
+            txt(gLabel,gx+9.5,y+3.8,{align:'center'});
         });
-        y+=8;
+        y+=10;
     }
+
     if(g.events.length){
-        checkPage(20);secLabel(`LISTA DE EVENTOS (${g.events.length})`);
-        const evCols=4,evW=(CW-evCols*2)/evCols,evH=6;
+        checkPage(20); secLabel(`LISTA COMPLETA DE EVENTOS  (${g.events.length})`);
+        const evCols=3, evW=(CW-(evCols-1)*3)/evCols, evH=7;
         g.events.forEach((e,i)=>{
             checkPage(evH+2);
-            const col=i%evCols,ex=ML+col*(evW+2),ey=y+Math.floor(i/evCols)*(evH+1.5);
+            const col=i%evCols;
+            const row=Math.floor(i/evCols);
+            const ex=ML+col*(evW+3);
+            const ey=y+row*(evH+1.5);
             const evColor=e.isGoal?C.gold:e.type==='ataque'?C.accent:C.red;
             sf(C.surface);rct(ex,ey,evW,evH,1);
-            sf(evColor);doc.circle(ex+2.5,ey+evH/2,0.9,'F');
-            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(fmtMin(e.time),ex+5,ey+2.8);
-            st(C.text);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(e.name.toUpperCase().substring(0,14),ex+5,ey+5.2);
+            sf(evColor);rct(ex,ey,1.5,evH,0.5);
+            // time
+            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');
+            txt(fmtMin(e.time),ex+4,ey+3.2);
+            // event name
+            st(C.text);doc.setFontSize(5.5);doc.setFont('helvetica','bold');
+            txt(e.name.toUpperCase().substring(0,15),ex+4,ey+6);
+            // player name if exists
+            if(e.playerName){
+                st(evColor);doc.setFontSize(4);doc.setFont('helvetica','normal');
+                txt(e.playerName.substring(0,12),ex+evW-2,ey+6,{align:'right'});
+            }
+            // position dot if exists
+            if(e.x!=null){
+                sf(C.green); doc.circle(ex+evW-2,ey+2.5,0.8,'F');
+            }
         });
-        const evRows=Math.ceil(g.events.length/evCols);y+=evRows*(evH+1.5)+6;
+        const evRows=Math.ceil(g.events.length/evCols);
+        y+=evRows*(evH+1.5)+6;
     }
+
     const hasNotes=g.notes||(g.notesHistory||[]).length>0;
     if(hasNotes){
-        checkPage(25);secLabel('NOTAS');
+        checkPage(25); secLabel('NOTAS');
         if(g.notes){
             sf(C.surface);rct(ML,y,CW,10,2);
+            sf(C.accent); rct(ML,y,2,10,0.5);
             st(C.text);doc.setFontSize(6.5);doc.setFont('helvetica','italic');
-            const lines=doc.splitTextToSize(`"${g.notes}"`,CW-8);
-            lines.slice(0,3).forEach((l,i)=>txt(l,ML+4,y+4+i*4));y+=14;
+            const lines=doc.splitTextToSize(`"${g.notes}"`,CW-10);
+            lines.slice(0,2).forEach((l,i)=>txt(l,ML+5,y+4+i*3.5));y+=14;
         }
         (g.notesHistory||[]).forEach(n=>{
             checkPage(16);sf(C.surface2);rct(ML,y,CW,12,2);sf(C.accent);rct(ML,y,1.5,12,0.5);
@@ -1851,6 +2266,7 @@ function PlayerStatsTable({ events, players }) {
 function App() {
     const [view,            setView]            = useState('folders');
     const [folders,         setFolders]         = useState(loadDB);
+    const [globalPlayers,   setGlobalPlayers]   = useState(loadGlobalPlayers);
     const [currentFolderId, setCurrentFolderId] = useState(null);
     const [currentGameId,   setCurrentGameId]   = useState(null);
     const [isActive,        setIsActive]        = useState(false);
@@ -1864,14 +2280,22 @@ function App() {
     const [minGF,           setMinGF]           = useState('');
     const [minGA,           setMinGA]           = useState('');
     const [eventFilter,     setEventFilter]     = useState('all');
-    const [showShare,    setShowShare]    = useState(false);
-    const [pdfProgress,  setPdfProgress]  = useState(null);
-    const [trackTab,     setTrackTab]     = useState('stats');   // 'stats' | 'pitch' | 'squad'
-    const [playerPicker, setPlayerPicker] = useState(null);      // { statId } | null
-    const [pendingPitch, setPendingPitch] = useState(null);      // { statId, x, y } | null
-    const [editModal,    setEditModal]    = useState(null);      // { gameId } | null
-    const [editOpponent, setEditOpponent] = useState('');
-    const [editDate,     setEditDate]     = useState('');
+    const [showShare,       setShowShare]       = useState(false);
+    const [pdfProgress,     setPdfProgress]     = useState(null);
+    const [trackTab,        setTrackTab]        = useState('stats');
+    const [playerPicker,    setPlayerPicker]    = useState(null);
+    const [pendingPitch,    setPendingPitch]    = useState(null);
+    const [editModal,       setEditModal]       = useState(null);
+    const [editOpponent,    setEditOpponent]    = useState('');
+    const [editDate,        setEditDate]        = useState('');
+    // Convocation state
+    const [convocView,      setConvocView]      = useState(null);  // { opponent, folderId } | null
+    const [convocSelected,  setConvocSelected]  = useState([]);    // array of player IDs
+    const [convocOpponent,  setConvocOpponent]  = useState('');
+    // Squad edit state
+    const [editingPlayer,   setEditingPlayer]   = useState(null);  // player object | null
+    const [newPlayerName,   setNewPlayerName]   = useState('');
+    const [newPlayerNum,    setNewPlayerNum]    = useState('');
     const importRef = useRef(null);
 
     const currentFolder = currentFolderId ? folders.find(f=>f.id===currentFolderId)||null : null;
@@ -1879,6 +2303,7 @@ function App() {
         ? (currentFolder.games||[]).find(g=>g.id===currentGameId)||null : null;
 
     useEffect(()=>{ saveDB(folders); },[folders]);
+    useEffect(()=>{ saveGlobalPlayers(globalPlayers); },[globalPlayers]);
 
     useEffect(()=>{
         if(!isActive||!currentGameId) return;
@@ -1938,10 +2363,25 @@ function App() {
         }));
     },[]);
 
+    // Returns global players merged with any folder-specific additions
     const getFolderPlayers = useCallback(fid=>{
         const f=folders.find(x=>x.id===fid);
-        return f?.players||[];
-    },[folders]);
+        const folderExtra=f?.players||[];
+        // Merge: global first, then folder-specific (no duplicates by id)
+        const globalIds=new Set(globalPlayers.map(p=>p.id));
+        const extras=folderExtra.filter(p=>!globalIds.has(p.id));
+        return [...globalPlayers,...extras];
+    },[folders,globalPlayers]);
+
+    // Players available for a game = squad if set, else all folder players
+    const getGamePlayers = useCallback((game, fid)=>{
+        if(!game) return [];
+        const all=getFolderPlayers(fid);
+        if(game.squad&&game.squad.length>0){
+            return all.filter(p=>game.squad.includes(p.id));
+        }
+        return all;
+    },[getFolderPlayers]);
 
     const addPlayer = useCallback((fid, player)=>{
         setFolders(prev=>prev.map(f=>{
@@ -1977,7 +2417,7 @@ function App() {
 
     const addStat = id=>{
         if(!isActive){showToast('▶ Inicia o cronómetro!');return;}
-        const players=getFolderPlayers(currentFolderId);
+        const players=getGamePlayers(currentGame, currentFolderId);
         if(players.length>0){
             setPlayerPicker({statId:id});
         } else {
@@ -2067,7 +2507,7 @@ function App() {
         try {
             setPdfProgress(30);
             await new Promise(r=>setTimeout(r,30));
-            const doc=buildNativePDF(currentGame, currentFolder?.name||'');
+            const doc=buildNativePDF(currentGame, currentFolder?.name||'', getFolderPlayers(currentFolderId));
             setPdfProgress(80);
             await new Promise(r=>setTimeout(r,30));
             const filename=`SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`;
@@ -2326,11 +2766,19 @@ function App() {
                     <button className="btn-primary" style={{marginBottom:16}} onClick={()=>{
                         const o=promptText('Nome do adversário:');
                         if(!o) return;
-                        const tpl=getFolderTemplate(currentFolderId);
-                        const ng={id:Date.now(),opponent:o,time:0,stats:statsFromTemplate(tpl),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT')};
-                        setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));
-                        setGameAndView(ng.id,'tracking');
-                        showToast('Jogo criado');
+                        if(globalPlayers.length>0){
+                            // Go to convocation screen
+                            setConvocOpponent(o);
+                            setConvocSelected(globalPlayers.map(p=>p.id)); // all selected by default
+                            setConvocView({opponent:o, folderId:currentFolderId, newGame:true});
+                        } else {
+                            // No players — create game directly
+                            const tpl=getFolderTemplate(currentFolderId);
+                            const ng={id:Date.now(),opponent:o,time:0,stats:statsFromTemplate(tpl),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT'),squad:[]};
+                            setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));
+                            setGameAndView(ng.id,'tracking');
+                            showToast('Jogo criado');
+                        }
                     }}>+ Adicionar Jogo</button>
 
                     {filteredGames.length>0&&(
@@ -2550,38 +2998,45 @@ function App() {
                 {/* Squad tab */}
                 {trackTab==='squad'&&(
                 <div style={{flex:1,overflowY:'auto',padding:12}} className="no-scrollbar">
-                    <button className="btn-primary" style={{marginBottom:14,fontSize:14,padding:'12px'}} onClick={()=>{
-                        const name=promptText('Nome do jogador:');
-                        if(!name) return;
-                        const num=promptText('Número (opcional):','');
-                        const pos=promptText('Posição (ex: GR, DC, MC, AV):','');
-                        addPlayer(currentFolderId,{id:Date.now(),name,number:num||'',position:pos||''});
-                        showToast(`${name} adicionado`);
-                    }}>+ Adicionar Jogador</button>
-                    {getFolderPlayers(currentFolderId).length===0&&(
-                        <div className="empty"><div className="empty-icon">👤</div><div className="empty-text">Plantel vazio</div></div>
-                    )}
-                    <div style={{display:'flex',flexDirection:'column',gap:7}}>
-                        {getFolderPlayers(currentFolderId).map(p=>{
-                            const evCount=currentGame.events.filter(e=>e.playerId===p.id).length;
-                            return(
-                                <div key={p.id} className="player-chip" style={{justifyContent:'space-between'}}>
-                                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    {currentGame?.squad?.length>0?(
+                        <>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+                            <div style={{fontSize:11,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:1}}>
+                                {currentGame.squad.length} convocadas
+                            </div>
+                            <button className="btn-ghost" style={{fontSize:10,padding:'6px 12px'}}
+                                onClick={()=>{setConvocOpponent(currentGame.opponent);setConvocSelected(currentGame.squad||[]);setConvocView({gameId:currentGame.id,folderId:currentFolderId,editMode:true});}}>
+                                Editar
+                            </button>
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                            {getGamePlayers(currentGame,currentFolderId).map(p=>{
+                                const evCount=currentGame.events.filter(e=>e.playerId===p.id).length;
+                                return(
+                                    <div key={p.id} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:12}}>
                                         <div className="player-num">#{p.number||'?'}</div>
-                                        <div>
-                                            <div className="player-name-txt">{p.name}</div>
-                                            <div className="player-pos-txt">{p.position||'Sem posição'}</div>
+                                        <div style={{flex:1}}>
+                                            <div style={{fontWeight:700,fontSize:13}}>{p.name}</div>
                                         </div>
+                                        {evCount>0&&<span style={{fontFamily:'Space Mono',fontSize:11,color:'var(--accent)',fontWeight:700}}>{evCount}</span>}
                                     </div>
-                                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                                        {evCount>0&&<span style={{fontFamily:'Space Mono',fontSize:11,color:'var(--accent)',fontWeight:700}}>{evCount} eventos</span>}
-                                        <button onClick={()=>{if(confirm(`Remover ${p.name}?`))removePlayer(currentFolderId,p.id);}}
-                                            style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:14,padding:4}}>✕</button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                        </div>
+                        </>
+                    ):(
+                        <div className="empty" style={{paddingTop:40}}>
+                            <div className="empty-icon">👥</div>
+                            <div className="empty-text">Sem convocatória</div>
+                            {globalPlayers.length>0?(
+                                <button className="btn-ghost" onClick={()=>{setConvocOpponent(currentGame?.opponent||'');setConvocSelected([]);setConvocView({gameId:currentGame?.id,folderId:currentFolderId,editMode:true});}}>
+                                    Definir convocatória
+                                </button>
+                            ):(
+                                <button className="btn-ghost" onClick={()=>setView('squad')}>Gerir Plantel</button>
+                            )}
+                        </div>
+                    )}
                 </div>
                 )}
             </div>
@@ -2757,22 +3212,220 @@ function App() {
         );
     };
 
+    /* ════════════════════════════════════
+       VIEW: SQUAD GLOBAL
+    ════════════════════════════════════ */
+    const renderSquad=()=>(
+        <div className="screen slide-in no-scrollbar" style={{padding:'0 0 24px'}}>
+            <div className="page-header">
+                <div>
+                    <div className="page-title">👥 Plantel</div>
+                    <div style={{fontSize:10,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:2,marginTop:2}}>
+                        {globalPlayers.length} atleta{globalPlayers.length!==1?'s':''}
+                    </div>
+                </div>
+                <button className="btn-ghost" onClick={()=>{
+                    const name=promptText('Nome da atleta:');
+                    if(!name) return;
+                    const num=promptText('Número (opcional):','');
+                    const np={id:Date.now(),name:name.trim(),number:(num||'').trim()};
+                    setGlobalPlayers(prev=>[...prev,np].sort((a,b)=>{
+                        const na=Number(a.number)||999,nb=Number(b.number)||999;
+                        return na-nb||a.name.localeCompare(b.name);
+                    }));
+                    showToast(`${name} adicionada`);
+                }}>+ Adicionar</button>
+            </div>
+
+            <div style={{padding:'16px'}}>
+                {globalPlayers.length===0&&(
+                    <div className="empty" style={{paddingTop:60}}>
+                        <div className="empty-icon">👥</div>
+                        <div className="empty-text">Plantel vazio</div>
+                        <div style={{fontSize:12,color:'var(--muted)',textAlign:'center',lineHeight:1.6,maxWidth:260}}>
+                            Adiciona as atletas aqui uma vez.<br/>Depois convocas-as por jogo sem repetir.
+                        </div>
+                    </div>
+                )}
+
+                {globalPlayers.length>0&&(
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                        {globalPlayers.map(p=>(
+                            <div key={p.id} className="squad-screen-player">
+                                <div className="num-badge">
+                                    {p.number?`#${p.number}`:'—'}
+                                </div>
+                                <div style={{flex:1,minWidth:0}}>
+                                    <div style={{fontWeight:700,fontSize:15,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                                        {p.name}
+                                    </div>
+                                </div>
+                                <div style={{display:'flex',gap:6}}>
+                                    <button className="icon-btn" style={{background:'rgba(67,97,238,0.08)',borderColor:'rgba(67,97,238,0.2)',color:'var(--accent)',fontSize:13,width:34,height:34}}
+                                        onClick={()=>{
+                                            const name=promptText('Nome:',p.name);
+                                            if(!name) return;
+                                            const num=promptText('Número:',p.number||'');
+                                            setGlobalPlayers(prev=>prev.map(x=>x.id!==p.id?x:{...x,name:name.trim(),number:(num||'').trim()})
+                                                .sort((a,b)=>{const na=Number(a.number)||999,nb=Number(b.number)||999;return na-nb||a.name.localeCompare(b.name);}));
+                                            showToast('Atualizado');
+                                        }}>✎</button>
+                                    <button className="icon-btn" style={{background:'rgba(239,35,60,0.08)',borderColor:'rgba(239,35,60,0.2)',color:'var(--red)',fontSize:13,width:34,height:34}}
+                                        onClick={()=>{if(confirm(`Remover ${p.name} do plantel?`)){setGlobalPlayers(prev=>prev.filter(x=>x.id!==p.id));showToast('Removida');}}}>✕</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {globalPlayers.length>0&&(
+                    <div style={{marginTop:24,padding:'14px 16px',background:'rgba(67,97,238,0.08)',border:'1px solid rgba(67,97,238,0.2)',borderRadius:14}}>
+                        <div style={{fontSize:11,color:'var(--accent)',fontWeight:700,marginBottom:4}}>ℹ Como funciona</div>
+                        <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.6}}>
+                            Ao criar um jogo, escolhes as atletas convocadas a partir deste plantel. Só as convocadas aparecem no picker durante o tracking.
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+
+    /* ════════════════════════════════════
+       VIEW: CONVOCATÓRIA
+    ════════════════════════════════════ */
+    const renderConvocation=()=>{
+        if(!convocView) return null;
+        const allPlayers=[...globalPlayers,...(folders.find(f=>f.id===convocView.folderId)?.players||[]).filter(p=>!globalPlayers.find(g=>g.id===p.id))];
+        const sorted=[...allPlayers].sort((a,b)=>{const na=Number(a.number)||999,nb=Number(b.number)||999;return na-nb||a.name.localeCompare(b.name);});
+        const selCount=convocSelected.length;
+
+        const confirmConvocation=()=>{
+            if(convocView.newGame){
+                const tpl=getFolderTemplate(convocView.folderId);
+                const ng={id:Date.now(),opponent:convocOpponent,time:0,stats:statsFromTemplate(tpl),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT'),squad:convocSelected};
+                setFolders(prev=>prev.map(f=>f.id!==convocView.folderId?f:{...f,games:[ng,...f.games]}));
+                setConvocView(null);
+                setGameAndView(ng.id,'tracking');
+                showToast(`Jogo criado · ${selCount} convocadas`);
+            } else if(convocView.editMode&&convocView.gameId){
+                setFolders(prev=>prev.map(f=>{
+                    if(f.id!==convocView.folderId) return f;
+                    return{...f,games:f.games.map(g=>g.id!==convocView.gameId?g:{...g,squad:convocSelected})};
+                }));
+                setConvocView(null);
+                showToast(`Convocatória atualizada · ${selCount} atletas`);
+            }
+        };
+
+        return(
+            <div style={{position:'fixed',inset:0,zIndex:400,background:'var(--bg)',display:'flex',flexDirection:'column'}}>
+                {/* Header */}
+                <div style={{padding:'14px 16px',background:'var(--surface)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                        <button className="btn-ghost" style={{fontSize:11}} onClick={()=>setConvocView(null)}>← Cancelar</button>
+                        <div style={{position:'relative'}}>
+                            <button className="btn-save" style={{padding:'10px 22px',fontSize:13,letterSpacing:1}}
+                                onClick={confirmConvocation}>
+                                {convocView.newGame?'Iniciar Jogo':'Guardar'}
+                            </button>
+                            {selCount>0&&<span className="convoc-count-badge">{selCount}</span>}
+                        </div>
+                    </div>
+                    <div style={{marginTop:8}}>
+                        <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2,color:'var(--accent)'}}>
+                            Convocatória
+                        </div>
+                        <div style={{fontSize:11,color:'var(--muted)',fontWeight:600,marginTop:1}}>
+                            {convocView.newGame?`vs ${convocOpponent}`:'Editar convocatória'}
+                            {' · '}
+                            <span style={{color:'var(--accent)'}}>{selCount} selecionadas</span>
+                            {' de '}{sorted.length}
+                        </div>
+                    </div>
+                    {/* Select all / none */}
+                    <div style={{display:'flex',gap:8,marginTop:10}}>
+                        <button className="btn-ghost" style={{flex:1,fontSize:11}}
+                            onClick={()=>setConvocSelected(sorted.map(p=>p.id))}>
+                            ✓ Todas ({sorted.length})
+                        </button>
+                        <button className="btn-ghost" style={{flex:1,fontSize:11}}
+                            onClick={()=>setConvocSelected([])}>
+                            ✕ Limpar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Player list */}
+                <div style={{flex:1,overflowY:'auto',padding:'12px 16px',display:'flex',flexDirection:'column',gap:8}} className="no-scrollbar">
+                    {sorted.length===0&&(
+                        <div className="empty">
+                            <div className="empty-icon">👥</div>
+                            <div className="empty-text">Plantel vazio</div>
+                            <button className="btn-ghost" onClick={()=>{setConvocView(null);setView('squad');}}>
+                                Gerir Plantel
+                            </button>
+                        </div>
+                    )}
+                    {sorted.map(p=>{
+                        const sel=convocSelected.includes(p.id);
+                        return(
+                            <div key={p.id} className={`convoc-player${sel?' selected':''}`}
+                                onClick={()=>setConvocSelected(prev=>sel?prev.filter(id=>id!==p.id):[...prev,p.id])}>
+                                <div className="convoc-check">{sel?'✓':''}</div>
+                                <div className="num-badge" style={{width:34,height:34,fontSize:12}}>
+                                    {p.number?`#${p.number}`:'—'}
+                                </div>
+                                <div style={{flex:1}}>
+                                    <div style={{fontWeight:700,fontSize:14}}>{p.name}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Add player shortcut */}
+                    <button style={{marginTop:4,padding:'12px',borderRadius:14,border:'2px dashed var(--border)',background:'transparent',color:'var(--muted)',fontSize:12,fontWeight:700,cursor:'pointer',letterSpacing:1,textTransform:'uppercase'}}
+                        onClick={()=>{
+                            const name=promptText('Nome da atleta:');
+                            if(!name) return;
+                            const num=promptText('Número (opcional):','');
+                            const np={id:Date.now(),name:name.trim(),number:(num||'').trim()};
+                            setGlobalPlayers(prev=>[...prev,np].sort((a,b)=>{const na=Number(a.number)||999,nb=Number(b.number)||999;return na-nb||a.name.localeCompare(b.name);}));
+                            setConvocSelected(prev=>[...prev,np.id]);
+                            showToast(`${name} adicionada e convocada`);
+                        }}>
+                        + Adicionar nova atleta
+                    </button>
+                </div>
+
+                {/* Footer bar */}
+                <div style={{padding:'12px 16px',background:'var(--surface)',borderTop:'1px solid var(--border)',flexShrink:0,paddingBottom:'calc(12px + env(safe-area-inset-bottom,0px))'}}>
+                    <button className="btn-primary" onClick={confirmConvocation}>
+                        {convocView.newGame?`⚽ Iniciar Jogo com ${selCount} Convocadas`:`✅ Guardar Convocatória`}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     /* ── Player Picker Sheet ── */
     const renderPlayerPicker=()=>{
         if(!playerPicker) return null;
-        const players=getFolderPlayers(currentFolderId);
+        const players=getGamePlayers(currentGame, currentFolderId);
         return(
             <div className="player-picker-overlay" onClick={()=>setPlayerPicker(null)}>
                 <div className="player-picker-sheet" onClick={e=>e.stopPropagation()}>
                     <div className="drawer-handle"/>
-                    <div style={{fontFamily:'Bebas Neue',fontSize:18,letterSpacing:2,marginBottom:14}}>Quem foi?</div>
+                    <div style={{fontFamily:'Bebas Neue',fontSize:18,letterSpacing:2,marginBottom:14}}>
+                        Quem foi?
+                        {currentGame?.squad?.length>0&&<span style={{fontSize:10,color:'var(--muted)',fontFamily:'DM Sans',fontWeight:600,letterSpacing:0,marginLeft:8}}>({currentGame.squad.length} convocadas)</span>}
+                    </div>
                     <div style={{display:'flex',flexDirection:'column',gap:7}}>
                         <button className="player-chip" onClick={()=>{
                             commitStat(playerPicker.statId, pendingPitch?{x:pendingPitch.x,y:pendingPitch.y}:{});
                             setPendingPitch(null); setPlayerPicker(null);
                         }}>
                             <div className="player-num" style={{color:'var(--muted)'}}>—</div>
-                            <div><div className="player-name-txt" style={{color:'var(--muted)'}}>Sem jogador</div></div>
+                            <div><div className="player-name-txt" style={{color:'var(--muted)'}}>Sem atleta</div></div>
                         </button>
                         {players.map(p=>(
                             <button key={p.id} className="player-chip" onClick={()=>{
@@ -2782,7 +3435,7 @@ function App() {
                                 <div className="player-num">#{p.number||'?'}</div>
                                 <div>
                                     <div className="player-name-txt">{p.name}</div>
-                                    <div className="player-pos-txt">{p.position||''}</div>
+                                    {p.position&&<div className="player-pos-txt">{p.position}</div>}
                                 </div>
                             </button>
                         ))}
@@ -2879,6 +3532,7 @@ function App() {
     return (
         <div style={{position:'relative',width:'100%',height:'100vh',background:'var(--bg)',overflow:'hidden'}}>
             {view==='folders' && renderFolders()}
+            {view==='squad'   && renderSquad()}
             {view==='games'   && renderGames()}
             {view==='tracking'&& renderTracking()}
             {view==='report'  && renderReport()}
@@ -2888,6 +3542,7 @@ function App() {
                 hasGame={!!currentGame}
                 hasFolder={!!currentFolder}
             />
+            {convocView && renderConvocation()}
             {showShare && renderShareDrawer()}
             {playerPicker && renderPlayerPicker()}
             {editModal && renderEditModal()}
