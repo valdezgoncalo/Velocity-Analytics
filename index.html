@@ -746,6 +746,62 @@
             to   { opacity: 1; transform: translateX(0); }
         }
 
+        /* ── SHARE DRAWER ───────────────────────────── */
+        .share-btn-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .share-option {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            text-align: left;
+            width: 100%;
+        }
+        .share-option:active { background: rgba(67,97,238,0.1); border-color: var(--accent); transform: scale(0.98); }
+        .share-option-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .share-option-text { flex: 1; }
+        .share-option-title { font-size: 14px; font-weight: 700; color: var(--text); }
+        .share-option-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+        /* ── PDF PROGRESS ───────────────────────────── */
+        .pdf-progress-overlay {
+            position: fixed; inset: 0;
+            background: rgba(5,8,16,0.85);
+            z-index: 300;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 16px;
+            backdrop-filter: blur(6px);
+            animation: fadeIn 0.2s ease;
+        }
+        .pdf-progress-bar-wrap {
+            width: 220px; height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .pdf-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
         /* ── INTENSITY CHART ────────────────────────── */
         .intensity-legend {
             display: flex;
@@ -1079,12 +1135,12 @@ function Timeline({ events, totalTime }) {
 }
 
 /* ═══════════════ PDF ═══════════════════ */
-function buildNativePDF(game) {
+function buildNativePDF(game, folderName='') {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const C = {
         bg:[5,8,16],surface:[13,17,23],surface2:[22,27,34],border:[30,37,48],
-        accent:[67,97,238],green:[45,198,83],red:[239,35,60],gold:[249,199,79],
+        accent:[67,97,238],accent2:[114,9,183],green:[45,198,83],red:[239,35,60],gold:[249,199,79],
         text:[230,237,243],muted:[110,118,129],white:[255,255,255],
     };
     const PW=210,PH=297,ML=14,MR=14,MT=14,CW=182;
@@ -1095,7 +1151,17 @@ function buildNativePDF(game) {
     const rct=(x,yy,w,h,r=0)=>{if(r>0)doc.roundedRect(x,yy,w,h,r,r,'F');else doc.rect(x,yy,w,h,'F');};
     const ln=(x1,y1,x2,y2,lw=0.3)=>{doc.setLineWidth(lw);doc.line(x1,y1,x2,y2);};
     const txt=(s,x,yy,o={})=>doc.text(String(s),x,yy,o);
-    const newPage=()=>{doc.addPage();y=MT;sf(C.bg);rct(0,0,PW,PH);};
+    const newPage=()=>{
+        doc.addPage();
+        sf(C.bg);rct(0,0,PW,PH);
+        sf(C.surface);rct(0,0,PW,10);
+        sf(C.accent);rct(0,0,PW,1.5);
+        st(C.accent);doc.setFontSize(7);doc.setFont('helvetica','bold');
+        txt('SOCCERANALYST PRO',ML,7);
+        st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','normal');
+        txt(`${game.opponent.toUpperCase()}  ·  ${game.date}`,PW-ML,7,{align:'right'});
+        y=18;
+    };
     const checkPage=(n=20)=>{if(y+n>PH-10)newPage();};
     const secLabel=(label)=>{
         st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','bold');
@@ -1177,9 +1243,166 @@ function buildNativePDF(game) {
     const recuper=g.stats.find(s=>s.name==='Recuper.')?.count||0;
     const remConc=g.stats.find(s=>s.name==='Rem. Conc.')?.count||0;
 
-    sf(C.bg);rct(0,0,PW,PH);
-    sf(C.accent);rct(0,0,PW,1.5);
-    y=MT+2;
+    // ══════════════════════════════
+    // CAPA — Página 1
+    // ══════════════════════════════
+    sf(C.bg); rct(0,0,PW,PH);
+
+    // Faixa superior gradiente (simulada com dois rects)
+    sf(C.accent); rct(0,0,PW,52);
+    sf(C.accent2); rct(PW*0.55,0,PW*0.45,52); // slight overlap for gradient feel
+    // Diagonal decorativa
+    doc.setFillColor(...C.accent);
+    // triângulo decorativo via linhas
+    doc.setDrawColor(...C.accent2); doc.setLineWidth(0);
+
+    // Logo text na faixa
+    st(C.white); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    txt('SOCCERANALYST PRO', ML, 12, {});
+    st([255,255,255]); doc.setFontSize(28); doc.setFont('helvetica','bold');
+    txt('RELATÓRIO', ML, 30);
+    st([255,255,255]); doc.setFontSize(16); doc.setFont('helvetica','normal');
+    txt('DE JOGO', ML, 41);
+
+    // Score badge no canto direito da faixa
+    const gfC = game.stats.find(s=>s.name==='Golo')?.count||0;
+    const gaC = game.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+    const scoreTxt = `${gfC}  –  ${gaC}`;
+    st(C.white); doc.setFontSize(32); doc.setFont('helvetica','bold');
+    txt(scoreTxt, PW-ML, 34, {align:'right'});
+    st([255,255,255,0.7]); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    txt('RESULTADO FINAL', PW-ML, 44, {align:'right'});
+
+    // Linha divisória
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
+    doc.line(0,52,PW,52);
+
+    // Adversário — nome grande
+    y = 68;
+    st(C.muted); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    txt('ADVERSÁRIO', ML, y); y+=7;
+    st(C.text); doc.setFontSize(36); doc.setFont('helvetica','bold');
+    // Truncate if too long
+    const oppName = game.opponent.toUpperCase();
+    const oppSize = Math.min(36, Math.max(18, Math.floor(36 * 120 / Math.max(doc.getTextWidth(oppName)*36/doc.getFontSize(), 120))));
+    doc.setFontSize(oppSize);
+    txt(oppName, ML, y); y += oppSize*0.45 + 4;
+
+    // Pasta / data / duração
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); st(C.muted);
+    const metaLine = [folderName&&`📁 ${folderName}`, game.date&&`📅 ${game.date}`, game.time&&`⏱ ${fmt(game.time)}`].filter(Boolean).join('   ·   ');
+    txt(metaLine, ML, y); y+=12;
+
+    // Separador
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
+    doc.line(ML,y,ML+CW,y); y+=8;
+
+    // KPIs da capa — 4 caixas grandes
+    const coverKpis=[
+        {val:gfC,    label:'GOLOS',    sub:'marcados', color:C.green},
+        {val:gaC,    label:'SOFRIDOS', sub:'golos',    color:C.red},
+        {val:game.stats.find(s=>s.name==='Remate')?.count||0, label:'REMATES', sub:'total', color:C.accent},
+        {val:(()=>{const r=game.stats.find(s=>s.name==='Remate')?.count||0;return r>0?`${((gfC/r)*100).toFixed(0)}%`:'—';})(), label:'EFICÁCIA', sub:'golo/remate', color:C.gold},
+    ];
+    const ckW=(CW-12)/4, ckH=28;
+    coverKpis.forEach((k,i)=>{
+        const kx=ML+i*(ckW+4);
+        sf(C.surface); rct(kx,y,ckW,ckH,3);
+        doc.setDrawColor(...k.color); doc.setLineWidth(0.5);
+        doc.roundedRect(kx,y,ckW,ckH,3,3,'S');
+        // Faixa colorida topo
+        sf(k.color); rct(kx,y,ckW,2,1);
+        st(k.color); doc.setFontSize(20); doc.setFont('helvetica','bold');
+        txt(String(k.val), kx+ckW/2, y+16, {align:'center'});
+        st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+        txt(k.label, kx+ckW/2, y+21, {align:'center'});
+        doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+        txt(k.sub, kx+ckW/2, y+25.5, {align:'center'});
+    });
+    y += ckH + 10;
+
+    // Separador
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
+    doc.line(ML,y,ML+CW,y); y+=8;
+
+    // Distribuição Ataque/Defesa na capa
+    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    txt('DISTRIBUIÇÃO ATAQUE / DEFESA', ML, y); y+=5;
+    const totalAtkC=game.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
+    const totalDefC=game.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
+    const totC=totalAtkC+totalDefC, pAtkC=totC>0?(totalAtkC/totC):0.5;
+    const sbH=7;
+    sf(C.accent); rct(ML,y,CW*pAtkC,sbH,1);
+    sf(C.red); rct(ML+CW*pAtkC,y,CW*(1-pAtkC),sbH,1);
+    st(C.white); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+    if(pAtkC>0.1) txt(String(totalAtkC), ML+CW*pAtkC-5, y+5, {align:'right'});
+    if((1-pAtkC)>0.1) txt(String(totalDefC), ML+CW*pAtkC+5, y+5);
+    y+=sbH+4;
+    st(C.accent); doc.setFontSize(5.5); txt(`ATAQUE  ${totalAtkC} ações`, ML, y);
+    st(C.red); txt(`DEFESA  ${totalDefC} ações`, ML+CW, y, {align:'right'});
+    y+=10;
+
+    // Timeline na capa
+    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    txt('CRONOLOGIA', ML, y); y+=5;
+    sf(C.surface2); rct(ML,y,CW,9,2);
+    drawTimeline(ML+3,y+2,CW-6,game.events,game.time);
+    y+=18;
+
+    // Golos marcados na capa
+    const coverGoals=game.events.filter(e=>e.isGoal);
+    if(coverGoals.length){
+        coverGoals.forEach((e,i)=>{
+            const gx=ML+i*20;
+            sf([249,199,79]); doc.setFillColor(249,199,79,0.12);
+            doc.setDrawColor(249,199,79); doc.setLineWidth(0.4);
+            doc.roundedRect(gx,y,17,6,1.5,1.5,'S');
+            st(C.gold); doc.setFontSize(6); doc.setFont('helvetica','bold');
+            txt(`⚽ ${fmtMin(e.time)}`, gx+8.5, y+4.2, {align:'center'});
+        });
+        y+=9;
+    }
+
+    // Notas resumidas
+    if(game.notes&&game.notes.trim()){
+        y+=4;
+        sf(C.surface); rct(ML,y,CW,14,2);
+        sf(C.accent); rct(ML,y,2,14,0.5);
+        st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+        txt('NOTA DO JOGO', ML+5, y+4.5);
+        st(C.text); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
+        const nls=doc.splitTextToSize(`"${game.notes.trim()}"`, CW-10);
+        nls.slice(0,2).forEach((l,i)=>txt(l,ML+5,y+9+i*3.5));
+        y+=17;
+    }
+
+    // Rodapé da capa
+    sf(C.surface); rct(0,PH-14,PW,14);
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
+    doc.line(0,PH-14,PW,PH-14);
+    // Faixa accent no rodapé
+    sf(C.accent); rct(0,PH-2,PW,2);
+    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','normal');
+    txt('SoccerAnalyst Pro', ML, PH-7);
+    txt(new Date().toLocaleDateString('pt-PT'), PW/2, PH-7, {align:'center'});
+    txt('ANÁLISE DE JOGO', PW-ML, PH-7, {align:'right'});
+    st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
+    txt('Gerado automaticamente • Uso exclusivo interno', PW/2, PH-3.5, {align:'center'});
+
+    // ══════════════════════════════
+    // PÁGINA 2 — Estatísticas
+    // ══════════════════════════════
+    doc.addPage();
+    sf(C.bg); rct(0,0,PW,PH);
+    // Header pequeno nas páginas interiores
+    sf(C.surface); rct(0,0,PW,10);
+    sf(C.accent); rct(0,0,PW,1.5);
+    st(C.accent); doc.setFontSize(7); doc.setFont('helvetica','bold');
+    txt('SOCCERANALYST PRO', ML, 7);
+    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','normal');
+    txt(`${game.opponent.toUpperCase()}  ·  ${game.date}  ·  ${gfC}–${gaC}`, PW-ML, 7, {align:'right'});
+    y = 18;
+
     st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','bold');txt('RELATORIO DE JOGO',ML,y);y+=6;
     st(C.accent);doc.setFontSize(24);doc.setFont('helvetica','bold');txt(g.opponent.toUpperCase(),ML,y);y+=5;
     st(C.muted);doc.setFontSize(7);doc.setFont('helvetica','normal');txt(`${g.date}   |   ${fmt(g.time)}   |   SoccerAnalyst Pro`,ML,y);y+=3;
@@ -1302,12 +1525,17 @@ function buildNativePDF(game) {
     }
     const totalPages=doc.getNumberOfPages();
     for(let p=1;p<=totalPages;p++){
-        doc.setPage(p);sf(C.surface);rct(0,PH-8,PW,8);
-        ss(C.border);doc.setLineWidth(0.3);doc.line(0,PH-8,PW,PH-8);
-        st(C.muted);doc.setFontSize(5);doc.setFont('helvetica','normal');
-        txt('SoccerAnalyst Pro',ML,PH-3);
-        txt(new Date().toLocaleDateString('pt-PT'),PW/2,PH-3,{align:'center'});
-        txt(`${p} / ${totalPages}`,PW-MR,PH-3,{align:'right'});
+        doc.setPage(p);
+        if(p>1){
+            // Interior page footer
+            sf(C.surface); rct(0,PH-8,PW,8);
+            doc.setDrawColor(...C.border); doc.setLineWidth(0.3); doc.line(0,PH-8,PW,PH-8);
+            sf(C.accent); rct(0,PH-1,PW,1);
+            st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
+            txt('SoccerAnalyst Pro',ML,PH-3);
+            txt(game.opponent.toUpperCase(), PW/2, PH-3, {align:'center'});
+            txt(`${p} / ${totalPages}`,PW-MR,PH-3,{align:'right'});
+        }
     }
     return doc;
 }
@@ -1329,6 +1557,8 @@ function App() {
     const [minGF,           setMinGF]           = useState('');
     const [minGA,           setMinGA]           = useState('');
     const [eventFilter,     setEventFilter]     = useState('all');
+    const [showShare,    setShowShare]    = useState(false);
+    const [pdfProgress,  setPdfProgress]  = useState(null); // null | 0-100
     const importRef = useRef(null);
 
     const currentFolder = currentFolderId ? folders.find(f=>f.id===currentFolderId)||null : null;
@@ -1466,14 +1696,115 @@ function App() {
         r.readAsDataURL(file);
     });
 
-    const exportPDF=()=>{
-        if(!currentGame){showToast('Nenhum jogo carregado');return;}
-        showToast('A gerar PDF...');
+    const exportPDF = async (shareMode=false) => {
+        if(!currentGame){showToast('Nenhum jogo carregado');return null;}
+        setPdfProgress(10);
+        await new Promise(r=>setTimeout(r,50));
         try {
-            const doc=buildNativePDF(currentGame);
-            doc.save(`SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`);
+            setPdfProgress(30);
+            await new Promise(r=>setTimeout(r,30));
+            const doc=buildNativePDF(currentGame, currentFolder?.name||'');
+            setPdfProgress(80);
+            await new Promise(r=>setTimeout(r,30));
+            const filename=`SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`;
+            if(shareMode){
+                const blob=doc.output('blob');
+                setPdfProgress(100);
+                await new Promise(r=>setTimeout(r,200));
+                setPdfProgress(null);
+                return {blob, filename};
+            }
+            doc.save(filename);
+            setPdfProgress(100);
+            await new Promise(r=>setTimeout(r,300));
+            setPdfProgress(null);
             showToast('✅ PDF guardado');
-        } catch(e) { console.error(e); showToast('Erro ao gerar PDF'); }
+            return null;
+        } catch(e) {
+            console.error(e);
+            setPdfProgress(null);
+            showToast('Erro ao gerar PDF');
+            return null;
+        }
+    };
+
+    const buildShareText = () => {
+        if(!currentGame) return '';
+        const g=currentGame;
+        const gf=g.stats.find(s=>s.name==='Golo')?.count||0;
+        const ga=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+        const rem=g.stats.find(s=>s.name==='Remate')?.count||0;
+        const ef=rem>0?`${((gf/rem)*100).toFixed(0)}%`:'—';
+        const atk=g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
+        const def=g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
+        const goals=g.events.filter(e=>e.isGoal).map(e=>fmtMin(e.time)).join(', ');
+        return [
+            `⚽ *RELATÓRIO DE JOGO*`,
+            `📋 ${currentFolder?.name||''}`,
+            `🆚 *${g.opponent}*  |  ${g.date}`,
+            ``,
+            `🏆 *Resultado:  ${gf} – ${ga}*`,
+            ``,
+            `📊 *Estatísticas:*`,
+            `• Remates: ${rem}  |  Eficácia: ${ef}`,
+            `• Ações ataque: ${atk}  |  Defesa: ${def}`,
+            goals?`• ⚽ Golos: ${goals}`:``,
+            ``,
+            g.notes?`📝 "${g.notes}"`:null,
+            ``,
+            `_Gerado por SoccerAnalyst Pro_`,
+        ].filter(l=>l!==null).join('\n');
+    };
+
+    const handleShareWhatsApp = () => {
+        const text=buildShareText();
+        const encoded=encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`,'_blank');
+        setShowShare(false);
+    };
+
+    const handleShareEmail = () => {
+        const g=currentGame;
+        if(!g) return;
+        const gf=g.stats.find(s=>s.name==='Golo')?.count||0;
+        const ga=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+        const subject=encodeURIComponent(`Relatório: ${g.opponent} (${gf}–${ga}) - ${g.date}`);
+        const body=encodeURIComponent(buildShareText().replace(/\*/g,'').replace(/_/g,''));
+        window.open(`mailto:?subject=${subject}&body=${body}`,'_blank');
+        setShowShare(false);
+    };
+
+    const handleShareNative = async () => {
+        setShowShare(false);
+        const result = await exportPDF(true);
+        if(!result) return;
+        const {blob, filename}=result;
+        const file=new File([blob],filename,{type:'application/pdf'});
+        if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+            try{ await navigator.share({files:[file],title:`Relatório ${currentGame.opponent}`,text:buildShareText()}); }
+            catch(e){ if(e.name!=='AbortError') showToast('Erro ao partilhar'); }
+        } else {
+            // Fallback: download
+            const url=URL.createObjectURL(blob);
+            const a=document.createElement('a');
+            a.href=url;a.download=filename;
+            document.body.appendChild(a);a.click();a.remove();
+            URL.revokeObjectURL(url);
+            showToast('✅ PDF guardado');
+        }
+    };
+
+    const handleCopyText = () => {
+        const text=buildShareText().replace(/\*/g,'').replace(/_/g,'');
+        if(navigator.clipboard){
+            navigator.clipboard.writeText(text).then(()=>showToast('✅ Copiado!'));
+        } else {
+            const ta=document.createElement('textarea');
+            ta.value=text;document.body.appendChild(ta);ta.select();
+            document.execCommand('copy');document.body.removeChild(ta);
+            showToast('✅ Copiado!');
+        }
+        setShowShare(false);
     };
 
     const handleExport=()=>{
@@ -1856,7 +2187,9 @@ function App() {
                             <option value="ataque">Ataque</option>
                             <option value="defesa">Defesa</option>
                         </select>
-                        <button onClick={exportPDF} style={{padding:'8px 16px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:15,letterSpacing:2,cursor:'pointer',border:'none',fontWeight:700}}>PDF</button>
+                        <button onClick={()=>setShowShare(true)} style={{padding:'8px 16px',borderRadius:10,background:'linear-gradient(135deg,var(--accent),var(--accent2))',color:'white',fontFamily:'Bebas Neue',fontSize:15,letterSpacing:2,cursor:'pointer',border:'none',fontWeight:700,boxShadow:'0 4px 16px rgba(67,97,238,0.35)'}}>
+                            ↗ PARTILHAR
+                        </button>
                     </div>
                 </div>
 
@@ -1968,6 +2301,61 @@ function App() {
         );
     };
 
+    /* ── Share Drawer ── */
+    const renderShareDrawer=()=>(
+        <div className="filter-overlay" onClick={()=>setShowShare(false)}>
+            <div className="filter-drawer" onClick={e=>e.stopPropagation()}>
+                <div className="drawer-handle"/>
+                <div className="drawer-title">↗ Partilhar Relatório</div>
+                <div style={{fontSize:11,color:'var(--muted)',marginBottom:16,marginTop:-8}}>
+                    {currentGame?.opponent} · {currentGame?.stats.find(s=>s.name==='Golo')?.count||0}–{currentGame?.stats.find(s=>s.name==='Golo Sofr.')?.count||0} · {currentGame?.date}
+                </div>
+                <div className="share-btn-row">
+                    <button className="share-option" onClick={()=>{setShowShare(false);exportPDF(false);}}>
+                        <div className="share-option-icon" style={{background:'rgba(230,237,243,0.08)'}}>📄</div>
+                        <div className="share-option-text">
+                            <div className="share-option-title">Guardar PDF</div>
+                            <div className="share-option-sub">Download para o dispositivo</div>
+                        </div>
+                        <span style={{color:'var(--muted)',fontSize:16}}>›</span>
+                    </button>
+                    <button className="share-option" onClick={handleShareNative}>
+                        <div className="share-option-icon" style={{background:'rgba(67,97,238,0.15)'}}>📤</div>
+                        <div className="share-option-text">
+                            <div className="share-option-title">Partilhar PDF</div>
+                            <div className="share-option-sub">WhatsApp, Email, AirDrop…</div>
+                        </div>
+                        <span style={{color:'var(--muted)',fontSize:16}}>›</span>
+                    </button>
+                    <button className="share-option" onClick={handleShareWhatsApp}>
+                        <div className="share-option-icon" style={{background:'rgba(37,211,102,0.15)'}}>💬</div>
+                        <div className="share-option-text">
+                            <div className="share-option-title">WhatsApp</div>
+                            <div className="share-option-sub">Enviar resumo como mensagem</div>
+                        </div>
+                        <span style={{color:'var(--muted)',fontSize:16}}>›</span>
+                    </button>
+                    <button className="share-option" onClick={handleShareEmail}>
+                        <div className="share-option-icon" style={{background:'rgba(67,97,238,0.12)'}}>📧</div>
+                        <div className="share-option-text">
+                            <div className="share-option-title">Email</div>
+                            <div className="share-option-sub">Abrir cliente de email</div>
+                        </div>
+                        <span style={{color:'var(--muted)',fontSize:16}}>›</span>
+                    </button>
+                    <button className="share-option" onClick={handleCopyText}>
+                        <div className="share-option-icon" style={{background:'rgba(249,199,79,0.12)'}}>📋</div>
+                        <div className="share-option-text">
+                            <div className="share-option-title">Copiar Resumo</div>
+                            <div className="share-option-sub">Texto formatado para colar</div>
+                        </div>
+                        <span style={{color:'var(--muted)',fontSize:16}}>›</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     /* ════════════════════════════════════
        MAIN RENDER
     ════════════════════════════════════ */
@@ -1983,6 +2371,16 @@ function App() {
                 hasGame={!!currentGame}
                 hasFolder={!!currentFolder}
             />
+            {showShare && renderShareDrawer()}
+            {pdfProgress!==null&&(
+                <div className="pdf-progress-overlay">
+                    <div style={{fontFamily:'Bebas Neue',fontSize:20,letterSpacing:3,color:'var(--text)'}}>A GERAR PDF</div>
+                    <div className="pdf-progress-bar-wrap">
+                        <div className="pdf-progress-bar" style={{width:`${pdfProgress}%`}}/>
+                    </div>
+                    <div style={{fontSize:11,color:'var(--muted)',fontWeight:700}}>{pdfProgress}%</div>
+                </div>
+            )}
             {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
         </div>
     );
