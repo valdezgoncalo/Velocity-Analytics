@@ -2,8 +2,23 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0a0a0a">
     <title>SoccerAnalyst Pro</title>
+    <!-- PWA Manifest inline -->
+    <link rel="manifest" href="data:application/manifest+json,{
+        &quot;name&quot;:&quot;SoccerAnalyst Pro&quot;,
+        &quot;short_name&quot;:&quot;SoccerAnalyst&quot;,
+        &quot;display&quot;:&quot;standalone&quot;,
+        &quot;orientation&quot;:&quot;portrait&quot;,
+        &quot;background_color&quot;:&quot;#0a0a0a&quot;,
+        &quot;theme_color&quot;:&quot;#0a0a0a&quot;,
+        &quot;start_url&quot;:&quot;.&quot;,
+        &quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%230a0a0a'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-size='110' font-family='sans-serif'%3E%E2%9A%BD%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]
+    }">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -46,17 +61,42 @@
             --radius-lg: 14px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        * {
+            box-sizing: border-box; margin: 0; padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            /* Prevent text selection on tap everywhere */
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        /* Re-enable selection only where needed */
+        input, textarea { -webkit-user-select: text; user-select: text; }
+
+        html {
+            /* Lock the html element so browser chrome changes don't cause layout shifts */
+            height: -webkit-fill-available;
+            height: 100%;
+            overflow: hidden;
+        }
 
         body {
             background: var(--bg);
             color: var(--text);
             font-family: 'Barlow', sans-serif;
-            overflow: hidden;
-            touch-action: manipulation;
-            user-select: none;
-            height: 100dvh;
+            /* Use fill-available as the most reliable PWA height on Android Chrome */
             height: 100vh;
+            height: 100dvh;
+            height: -webkit-fill-available;
+            /* Prevent body scroll — screens handle their own scroll */
+            overflow: hidden;
+            overscroll-behavior: none;
+            /* Single touch-action on body: manipulation kills 300ms tap delay */
+            touch-action: manipulation;
+            /* Safe areas for notch/navbar */
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            position: fixed;
+            width: 100%;
         }
 
         /* ── Subtle grid texture on bg ── */
@@ -81,16 +121,18 @@
         .bottom-nav {
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: var(--nav-h);
+            /* Height = base + safe area bottom */
+            height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
             background: var(--surface);
             border-top: 1px solid var(--border);
             display: flex;
-            align-items: stretch;
+            align-items: flex-start; /* align to top so padding-bottom works */
             z-index: 100;
             padding-bottom: env(safe-area-inset-bottom, 0px);
         }
         .nav-btn {
             flex: 1;
+            height: var(--nav-h); /* fixed tap area, not stretched */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -107,29 +149,39 @@
             font-family: 'Barlow', sans-serif;
             transition: color 0.12s;
             position: relative;
+            /* Guaranteed 44px tap target */
+            min-height: 44px;
+            touch-action: manipulation;
         }
         .nav-btn.active { color: var(--accent); }
         .nav-btn.active::after {
             content: '';
             position: absolute;
-            bottom: 0; left: 25%; right: 25%;
+            bottom: env(safe-area-inset-bottom, 0px);
+            left: 25%; right: 25%;
             height: 2px;
             background: var(--accent);
         }
-        .nav-btn .nav-icon { font-size: 18px; line-height: 1; transition: transform 0.12s; }
+        .nav-btn .nav-icon { font-size: 20px; line-height: 1; transition: transform 0.12s; }
         .nav-btn.active .nav-icon { transform: scale(1.15); }
         .nav-btn:active .nav-icon { transform: scale(0.88); }
 
         /* ══ SCREEN ══════════════════════════════════ */
         .screen {
-            position: absolute;
-            inset: 0;
-            bottom: var(--nav-h);
+            position: fixed; /* fixed instead of absolute — avoids body scroll bleed */
+            top: env(safe-area-inset-top, 0px);
+            left: env(safe-area-inset-left, 0px);
+            right: env(safe-area-inset-right, 0px);
+            /* Bottom = nav bar + its safe area padding */
+            bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
             overflow-y: auto;
             overflow-x: hidden;
             background: var(--bg);
+            /* Momentum scrolling on iOS/Android */
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain; /* prevent pull-to-refresh on the screen itself */
         }
-        .screen.hidden { opacity: 0; pointer-events: none; }
+        .screen.hidden { opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 0.15s, transform 0.15s; }
 
         /* ══ PAGE HEADER ═════════════════════════════ */
         .page-header {
@@ -203,20 +255,21 @@
             margin-left: auto; flex-shrink: 0;
         }
         .hbtn {
-            height: 38px;
+            height: 44px; /* min touch target */
             border-radius: var(--radius);
             border: 1px solid var(--border2);
             background: var(--surface2);
             color: var(--text); cursor: pointer;
             font-family: 'Barlow', sans-serif; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.12s; white-space: nowrap;
+            white-space: nowrap;
+            touch-action: manipulation;
         }
-        .hbtn:active { transform: scale(0.93); background: var(--surface3); }
-        .hbtn-sq { width: 38px; font-size: 16px; }
+        .hbtn:active { background: var(--surface3); opacity: 0.8; }
+        .hbtn-sq { width: 44px; font-size: 18px; }
         .hbtn-rect { padding: 0 12px; font-size: 12px; letter-spacing: 0.5px; }
         .hbtn-start {
-            padding: 0 16px;
+            padding: 0 18px;
             font-family: 'Barlow Condensed', sans-serif;
             font-size: 18px; font-weight: 800; letter-spacing: 2px;
             border: none;
@@ -225,18 +278,23 @@
         /* ══ TRACKING COLUMNS ════════════════════════ */
         .track-cols {
             display: flex;
-            height: calc(100dvh - var(--nav-h) - var(--header-h) - 36px);
-            height: calc(100vh  - var(--nav-h) - var(--header-h) - 36px);
+            /* Fill remaining space after header + tabs — use flex in parent instead of fixed calc */
+            flex: 1;
             overflow: hidden;
+            min-height: 0; /* critical: allows flex children to shrink below content size */
         }
-        .track-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .track-col {
+            flex: 1; display: flex; flex-direction: column; min-width: 0;
+            min-height: 0;
+        }
         .track-col:first-child { border-right: 1px solid var(--border); }
         .col-header {
-            padding: 7px 10px;
+            padding: 8px 10px;
             background: var(--surface2);
             border-bottom: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
             flex-shrink: 0;
+            min-height: 40px; /* guaranteed tap area */
         }
         .col-title {
             font-family: 'Barlow Condensed', sans-serif;
@@ -244,63 +302,76 @@
             text-transform: uppercase;
         }
         .col-add-btn {
-            width: 28px; height: 28px;
+            /* 44×44 tap target */
+            width: 44px; height: 44px;
             border-radius: 6px;
             background: var(--surface3);
             border: 1px solid var(--border2);
             color: var(--text2);
-            cursor: pointer; font-size: 16px;
+            cursor: pointer; font-size: 20px;
             display: flex; align-items: center; justify-content: center;
+            touch-action: manipulation;
         }
         .col-add-btn:active { background: var(--accent); color: white; border-color: var(--accent); }
         .stats-scroll {
-            flex: 1; overflow-y: auto; padding: 7px;
-            display: flex; flex-direction: column; gap: 5px;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+            padding: 7px 7px calc(7px + env(safe-area-inset-bottom, 0px));
+            display: flex; flex-direction: column; gap: 6px;
         }
 
         /* ══ STAT BUTTON ═════════════════════════════ */
-        .stat-row { display: flex; gap: 4px; }
+        .stat-row { display: flex; gap: 5px; }
         .stat-main {
-            flex: 1; min-height: 62px;
+            flex: 1;
+            min-height: 66px; /* comfortable touch target */
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             border-left: 3px solid var(--border);
             display: flex; align-items: center;
-            padding: 8px 10px; gap: 8px;
+            padding: 10px 12px; gap: 10px;
             cursor: pointer;
-            transition: background 0.08s, border-color 0.08s, transform 0.06s;
-            user-select: none;
+            touch-action: manipulation;
+            /* Use will-change to avoid repaint jank on Android */
+            will-change: transform;
+            transition: background 0.06s;
+            user-select: none; -webkit-user-select: none;
         }
-        .stat-main:active { transform: scale(0.96); background: var(--surface2); }
+        .stat-main:active { background: var(--surface2); }
         .stat-main.atk-active { border-left-color: var(--accent); background: rgba(255,87,34,0.06); }
         .stat-main.def-active { border-left-color: var(--red); background: rgba(244,67,54,0.06); }
         .stat-main.goal-active { border-left-color: var(--gold); background: rgba(255,214,0,0.06); }
         .stat-count {
             font-family: 'Barlow Condensed', sans-serif;
-            font-size: 38px; font-weight: 900; line-height: 1;
-            min-width: 40px; text-align: center;
+            font-size: 40px; font-weight: 900; line-height: 1;
+            min-width: 44px; text-align: center;
         }
         .stat-count.zero { color: var(--border2); }
         .stat-name {
-            font-size: 10px; font-weight: 700;
+            font-size: 11px; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.09em;
             color: var(--text2); line-height: 1.3; flex: 1;
         }
         .stat-actions {
-            display: flex; flex-direction: column; gap: 3px;
-            width: 28px; flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 4px;
+            width: 36px; flex-shrink: 0; /* wider for easier tap */
         }
         .stat-side-btn {
-            flex: 1; min-height: 28px;
-            border-radius: 5px; border: 1px solid transparent;
-            cursor: pointer; font-size: 14px; font-weight: 700;
+            flex: 1;
+            min-height: 30px;
+            min-width: 36px; /* 44px total with gap */
+            border-radius: 6px; border: 1px solid transparent;
+            cursor: pointer; font-size: 15px; font-weight: 700;
             display: flex; align-items: center; justify-content: center;
-            transition: transform 0.08s;
+            touch-action: manipulation;
         }
-        .stat-side-btn:active { transform: scale(0.85); }
+        .stat-side-btn:active { opacity: 0.7; }
         .sbtn-minus { background: var(--red-dim); border-color: rgba(244,67,54,0.25); color: var(--red); }
-        .sbtn-edit { background: var(--surface2); border-color: var(--border); color: var(--muted); font-size: 10px; }
+        .sbtn-edit { background: var(--surface2); border-color: var(--border); color: var(--muted); font-size: 11px; }
 
         /* ══ NOTES PANEL ═════════════════════════════ */
         .notes-panel {
@@ -314,9 +385,9 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .notes-panel textarea {
-            width: 100%; height: 64px;
-            border-radius: var(--radius); padding: 8px 12px;
-            font-size: 13px; resize: none; line-height: 1.5;
+            width: 100%; height: 80px;
+            border-radius: var(--radius); padding: 12px 14px;
+            font-size: 16px; /* prevent auto-zoom */ resize: none; line-height: 1.5;
             font-family: 'Barlow', sans-serif;
         }
         .notes-footer { display: flex; justify-content: flex-end; margin-top: 6px; }
@@ -364,13 +435,14 @@
         }
         .game-card-actions { display: flex; gap: 5px; flex-shrink: 0; }
         .icon-btn {
-            width: 32px; height: 32px;
-            border-radius: 6px; border: 1px solid transparent;
-            cursor: pointer; font-size: 12px;
+            /* 44×44 minimum touch target */
+            width: 44px; height: 44px;
+            border-radius: 8px; border: 1px solid transparent;
+            cursor: pointer; font-size: 14px;
             display: flex; align-items: center; justify-content: center;
-            transition: transform 0.1s; font-weight: 700;
+            touch-action: manipulation; font-weight: 700;
         }
-        .icon-btn:active { transform: scale(0.86); }
+        .icon-btn:active { opacity: 0.7; }
 
         /* ══ FOLDER CARD ═════════════════════════════ */
         .folder-card {
@@ -420,7 +492,15 @@
             border-radius: var(--radius);
             font-family: 'Barlow', sans-serif;
             transition: border-color 0.15s;
+            /* CRITICAL: 16px minimum prevents auto-zoom on Android/iOS */
+            font-size: 16px;
+            /* Prevent iOS styling */
+            -webkit-appearance: none;
+            appearance: none;
         }
+        input { min-height: 44px; padding: 0 14px; }
+        select { min-height: 44px; padding: 0 14px; }
+        textarea { padding: 12px 14px; font-size: 16px; }
         input:focus, textarea:focus, select:focus { border-color: var(--accent); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
 
@@ -779,6 +859,56 @@
 
         /* ══ DONUT / RADAR ═══════════════════════════ */
         /* SVG-based — inherits vars via inline styles */
+
+        /* ══ GLOBAL MOBILE FIXES ════════════════════ */
+        /* All scrollable containers: momentum + no chaining */
+        [style*="overflow-y: auto"],
+        [style*="overflowY: auto"],
+        [style*="overflowY:'auto'"] {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        /* All buttons: min touch target + no delay */
+        button {
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+
+        /* Drawers: scroll momentum */
+        .filter-drawer, .player-picker-sheet {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Convocation list scroll */
+        .convoc-list {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        /* Fix btn-primary, btn-ghost, btn-save tap areas */
+        .btn-primary, .btn-ghost, .btn-save {
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        .btn-ghost { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-save  { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+        /* Prevent double-tap zoom on buttons */
+        .stat-main, .game-card, .folder-card, .player-chip,
+        .convoc-player, .squad-screen-player, .share-option, .nav-btn {
+            touch-action: manipulation;
+        }
+
+        /* Form modal inputs */
+        .form-input {
+            font-size: 16px !important; /* override any inline font-size to prevent zoom */
+            min-height: 48px;
+        }
+
+        /* Report & other scroll screens: proper padding at bottom */
+        .screen.no-scrollbar { padding-bottom: 0; }
+        .screen > div:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 
     </style>
 </head>
@@ -2708,7 +2838,7 @@ function App() {
        VIEW: FOLDERS
     ════════════════════════════════════ */
     const renderFolders=()=>(
-        <div className="screen slide-in no-scrollbar" style={{padding:'0 0 16px'}}>
+        <div className="screen slide-in no-scrollbar" style={{paddingBottom:'calc(16px + env(safe-area-inset-bottom,0px))'}}>
             <div className="page-header">
                 <div>
                     <div style={{fontFamily:'Barlow Condensed',fontSize:28,letterSpacing:3,color:'var(--accent)',lineHeight:1}}>SoccerAnalyst</div>
@@ -2792,7 +2922,7 @@ function App() {
         const sumGF=filteredGames.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
         const sumGA=filteredGames.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
         return(
-            <div className="screen slide-in no-scrollbar" style={{padding:'0 0 16px'}}>
+            <div className="screen slide-in no-scrollbar" style={{paddingBottom:'calc(16px + env(safe-area-inset-bottom,0px))'}}>
                 <div className="page-header">
                     <div>
                         <div className="page-title" style={{color:'var(--accent)'}}>{currentFolder.name}</div>
@@ -3119,7 +3249,7 @@ function App() {
         const atkC=['var(--accent)','var(--accent-dim)','#26C6DA','var(--accent-dim)','var(--accent-dim)','var(--accent2)'];
         const defC=['var(--red)','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
         return(
-            <div className="screen no-scrollbar" style={{padding:'0 0 16px'}}>
+            <div className="screen no-scrollbar" style={{paddingBottom:'calc(16px + env(safe-area-inset-bottom,0px))'}}>
                 <div className="page-header">
                     <div style={{flex:1,minWidth:0}}>
                         <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:3}}>Relatório</div>
@@ -3268,7 +3398,7 @@ function App() {
        VIEW: SQUAD GLOBAL
     ════════════════════════════════════ */
     const renderSquad=()=>(
-        <div className="screen slide-in no-scrollbar" style={{padding:'0 0 24px'}}>
+        <div className="screen slide-in no-scrollbar" style={{paddingBottom:'calc(24px + env(safe-area-inset-bottom,0px))'}}>
             <div className="page-header">
                 <div>
                     <div className="page-title">👥 Plantel</div>
