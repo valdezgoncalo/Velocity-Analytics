@@ -1357,7 +1357,7 @@ function Timeline({ events, totalTime }) {
 }
 
 /* ═══════════════ PDF ═══════════════════ */
-function buildNativePDF(game, folderName='', folderPlayers=[]) {
+function buildNativePDF(game, folderName='', folderPlayers=[], homeLogo=null) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const C = {
@@ -1381,7 +1381,7 @@ function buildNativePDF(game, folderName='', folderPlayers=[]) {
         st(C.accent);doc.setFontSize(7);doc.setFont('helvetica','bold');
         txt('SOCCERANALYST PRO',ML,7);
         st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','normal');
-        txt(`${game.opponent.toUpperCase()}  ·  ${game.date}`,PW-ML,7,{align:'right'});
+        txt(`${game.opponent.toUpperCase()}  |  ${game.date}`,PW-ML,7,{align:'right'});
         y=18;
     };
     const checkPage=(n=20)=>{if(y+n>PH-10)newPage();};
@@ -1465,151 +1465,243 @@ function buildNativePDF(game, folderName='', folderPlayers=[]) {
     const recuper=g.stats.find(s=>s.name==='Recuper.')?.count||0;
     const remConc=g.stats.find(s=>s.name==='Rem. Conc.')?.count||0;
 
-    // ══════════════════════════════
-    // CAPA — Página 1
-    // ══════════════════════════════
+    // ══════════════════════════════════════════
+    // CAPA — Página 1  (layout limpo, sem emojis)
+    // ══════════════════════════════════════════
     sf(C.bg); rct(0,0,PW,PH);
 
-    // Faixa superior gradiente (simulada com dois rects)
-    sf(C.accent); rct(0,0,PW,52);
-    sf(C.accent2); rct(PW*0.55,0,PW*0.45,52); // slight overlap for gradient feel
-    // Diagonal decorativa
-    doc.setFillColor(...C.accent);
-    // triângulo decorativo via linhas
-    doc.setDrawColor(...C.accent2); doc.setLineWidth(0);
-
-    // Logo text na faixa
-    st(C.white); doc.setFontSize(7); doc.setFont('helvetica','bold');
-    txt('SOCCERANALYST PRO', ML, 12, {});
-    st([255,255,255]); doc.setFontSize(28); doc.setFont('helvetica','bold');
-    txt('RELATÓRIO', ML, 30);
-    st([255,255,255]); doc.setFontSize(16); doc.setFont('helvetica','normal');
-    txt('DE JOGO', ML, 41);
-
-    // Score badge no canto direito da faixa
     const gfC = game.stats.find(s=>s.name==='Golo')?.count||0;
     const gaC = game.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-    const scoreTxt = `${gfC}  –  ${gaC}`;
-    st(C.white); doc.setFontSize(32); doc.setFont('helvetica','bold');
-    txt(scoreTxt, PW-ML, 34, {align:'right'});
-    st([255,255,255,0.7]); doc.setFontSize(7); doc.setFont('helvetica','normal');
-    txt('RESULTADO FINAL', PW-ML, 44, {align:'right'});
 
-    // Linha divisória
-    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
-    doc.line(0,52,PW,52);
+    // ── Bloco de topo — fundo sólido accent, altura fixa 72mm ──
+    const HERO_H = 72;
+    sf(C.accent); rct(0,0,PW,HERO_H);
 
-    // Adversário — nome grande
-    y = 68;
-    st(C.muted); doc.setFontSize(7); doc.setFont('helvetica','bold');
-    txt('ADVERSÁRIO', ML, y); y+=7;
-    st(C.text); doc.setFontSize(36); doc.setFont('helvetica','bold');
-    // Truncate if too long
-    const oppName = game.opponent.toUpperCase();
-    const oppSize = Math.min(36, Math.max(18, Math.floor(36 * 120 / Math.max(doc.getTextWidth(oppName)*36/doc.getFontSize(), 120))));
+    // Divisor diagonal: triângulo escuro no canto inf-dir para dar profundidade
+    doc.setFillColor(0,0,0,0.18);
+    // Polígono manual: canto dir do hero recortado
+    if(typeof doc.polygon==='function'){
+        doc.setGState(new doc.GState({opacity:0.18}));
+        doc.setFillColor(5,8,16);
+        doc.polygon([[PW*0.52,0],[PW,0],[PW,HERO_H]],'F');
+        doc.setGState(new doc.GState({opacity:1}));
+    }
+
+    // Linha accent2 vertical no hero (separador visual esq/dir)
+    sf(C.accent2); rct(PW*0.52-0.8,0,1.6,HERO_H);
+
+    // ── Lado esquerdo do hero — identidade ──
+    const HERO_ML = 14;
+    // Pill "RELATÓRIO DE JOGO"
+    sf([255,255,255,0.15]);
+    doc.setFillColor(255,255,255);
+    doc.setGState&&doc.setGState(new doc.GState({opacity:0.12}));
+    rct(HERO_ML, 10, 58, 7, 3);
+    doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+    st(C.white); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+    txt('RELATORIO DE JOGO', HERO_ML+4, 15.5);
+
+    // Nome da equipa / pasta
+    st(C.white); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    txt(folderName?folderName.toUpperCase():'SOCCERANALYST PRO', HERO_ML, 28);
+
+    // Logo da equipa da casa — círculo placeholder ou imagem
+    if(homeLogo){
+        try{
+            const lx=HERO_ML, ly=34, ls=18;
+            sf(C.white); rct(lx-1,ly-1,ls+2,ls+2,3);
+            doc.addImage(homeLogo,'JPEG',lx,ly,ls,ls);
+        }catch(_){}
+    } else {
+        // Círculo com inicial
+        sf(C.accent2); doc.circle(HERO_ML+9, 41, 9,'F');
+        st(C.white); doc.setFontSize(11); doc.setFont('helvetica','bold');
+        const ini=(folderName||'S').charAt(0).toUpperCase();
+        txt(ini, HERO_ML+9, 44.5, {align:'center'});
+    }
+
+    // App label abaixo do logo
+    st([255,255,255]); doc.setFontSize(5); doc.setFont('helvetica','normal');
+    doc.setGState&&doc.setGState(new doc.GState({opacity:0.6}));
+    txt('SoccerAnalyst Pro', HERO_ML, 63);
+    doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+
+    // ── Lado direito do hero — score + adversário ──
+    const HERO_RX = PW*0.52 + 8;
+    const HERO_RW = PW - HERO_RX - 10;
+
+    // Label "VS"
+    st(C.white); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    doc.setGState&&doc.setGState(new doc.GState({opacity:0.5}));
+    txt('VS', HERO_RX + HERO_RW/2, 17, {align:'center'});
+    doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+
+    // Score
+    const scoreStr = `${gfC}  -  ${gaC}`;
+    st(C.white); doc.setFontSize(34); doc.setFont('helvetica','bold');
+    txt(scoreStr, HERO_RX + HERO_RW/2, 44, {align:'center'});
+
+    // Label "RESULTADO FINAL"
+    st(C.white); doc.setFontSize(5.5); doc.setFont('helvetica','normal');
+    doc.setGState&&doc.setGState(new doc.GState({opacity:0.6}));
+    txt('RESULTADO FINAL', HERO_RX + HERO_RW/2, 52, {align:'center'});
+    doc.setGState&&doc.setGState(new doc.GState({opacity:1}));
+
+    // Logo adversário
+    if(game.awayLogo){
+        try{
+            const ls=16, lx=HERO_RX+HERO_RW/2-ls/2, ly=54;
+            sf(C.white); rct(lx-1,ly-1,ls+2,ls+2,3);
+            doc.addImage(game.awayLogo,'JPEG',lx,ly,ls,ls);
+        }catch(_){}
+    } else {
+        const aIni=(game.opponent||'A').charAt(0).toUpperCase();
+        sf(C.surface2); doc.circle(HERO_RX+HERO_RW/2, 63, 7,'F');
+        ss(C.border); doc.setLineWidth(0.4); doc.circle(HERO_RX+HERO_RW/2, 63, 7,'S');
+        st(C.muted); doc.setFontSize(9); doc.setFont('helvetica','bold');
+        txt(aIni, HERO_RX+HERO_RW/2, 66, {align:'center'});
+    }
+
+    // ── Linha divisória abaixo do hero ──
+    sf(C.accent); rct(0,HERO_H,PW,1);
+    ss(C.border); doc.setLineWidth(0.3); doc.line(0,HERO_H+1,PW,HERO_H+1);
+
+    // ── Secção principal — adversário + metadados ──
+    y = HERO_H + 12;
+
+    // Adversário
+    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
+    txt('ADVERSARIO', ML, y); y+=7;
+
+    const oppName = game.opponent ? game.opponent.toUpperCase() : '—';
+    // Calcular tamanho de fonte adaptativo
+    doc.setFont('helvetica','bold');
+    let oppSize = 32;
     doc.setFontSize(oppSize);
-    txt(oppName, ML, y); y += oppSize*0.45 + 4;
+    while(doc.getTextWidth(oppName) > CW - 4 && oppSize > 14){ oppSize-=2; doc.setFontSize(oppSize); }
+    st(C.text);
+    txt(oppName, ML, y);
+    y += oppSize * 0.42 + 5;
 
-    // Pasta / data / duração
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); st(C.muted);
-    const metaLine = [folderName&&`📁 ${folderName}`, game.date&&`📅 ${game.date}`, game.time&&`⏱ ${fmt(game.time)}`].filter(Boolean).join('   ·   ');
-    txt(metaLine, ML, y); y+=12;
+    // Data + duração (sem emojis — usar prefixos texto)
+    const metaParts = [];
+    if(folderName) metaParts.push(`PASTA: ${folderName}`);
+    if(game.date)  metaParts.push(`DATA: ${game.date}`);
+    if(game.time)  metaParts.push(`DURACAO: ${fmt(game.time)}`);
+    st(C.muted); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+    txt(metaParts.join('   |   '), ML, y); y+=12;
 
-    // Separador
-    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
-    doc.line(ML,y,ML+CW,y); y+=8;
+    // Linha separadora
+    ss(C.border); doc.setLineWidth(0.3); doc.line(ML,y,ML+CW,y); y+=8;
 
-    // KPIs da capa — 4 caixas grandes
+    // ── KPIs — 4 caixas ──
     const coverKpis=[
-        {val:gfC,    label:'GOLOS',    sub:'marcados', color:C.green},
-        {val:gaC,    label:'SOFRIDOS', sub:'golos',    color:C.red},
+        {val:gfC,    label:'GOLOS',    sub:'marcados',    color:C.green},
+        {val:gaC,    label:'SOFRIDOS', sub:'golos sofr.', color:C.red},
         {val:game.stats.find(s=>s.name==='Remate')?.count||0, label:'REMATES', sub:'total', color:C.accent},
-        {val:(()=>{const r=game.stats.find(s=>s.name==='Remate')?.count||0;return r>0?`${((gfC/r)*100).toFixed(0)}%`:'—';})(), label:'EFICÁCIA', sub:'golo/remate', color:C.gold},
+        {val:(()=>{const r=game.stats.find(s=>s.name==='Remate')?.count||0;return r>0?`${((gfC/r)*100).toFixed(0)}%`:'--';})(), label:'EFICACIA', sub:'golo/rem', color:C.gold},
     ];
-    const ckW=(CW-12)/4, ckH=28;
+    const ckW=(CW-12)/4, ckH=26;
     coverKpis.forEach((k,i)=>{
         const kx=ML+i*(ckW+4);
-        sf(C.surface); rct(kx,y,ckW,ckH,3);
-        doc.setDrawColor(...k.color); doc.setLineWidth(0.5);
-        doc.roundedRect(kx,y,ckW,ckH,3,3,'S');
-        // Faixa colorida topo
+        sf(C.surface); rct(kx,y,ckW,ckH,2);
+        // top color bar
         sf(k.color); rct(kx,y,ckW,2,1);
-        st(k.color); doc.setFontSize(20); doc.setFont('helvetica','bold');
-        txt(String(k.val), kx+ckW/2, y+16, {align:'center'});
-        st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        txt(k.label, kx+ckW/2, y+21, {align:'center'});
-        doc.setFontSize(4.5); doc.setFont('helvetica','normal');
-        txt(k.sub, kx+ckW/2, y+25.5, {align:'center'});
+        // border
+        doc.setDrawColor(...k.color); doc.setLineWidth(0.3);
+        doc.roundedRect(kx,y,ckW,ckH,2,2,'S');
+        // value
+        st(k.color); doc.setFontSize(18); doc.setFont('helvetica','bold');
+        txt(String(k.val), kx+ckW/2, y+14, {align:'center'});
+        // label
+        st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
+        txt(k.label, kx+ckW/2, y+19.5, {align:'center'});
+        // sub
+        doc.setFontSize(4); doc.setFont('helvetica','normal');
+        txt(k.sub, kx+ckW/2, y+23.5, {align:'center'});
     });
-    y += ckH + 10;
+    y += ckH + 8;
 
-    // Separador
-    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
-    doc.line(ML,y,ML+CW,y); y+=8;
+    // ── Separador ──
+    ss(C.border); doc.setLineWidth(0.2); doc.line(ML,y,ML+CW,y); y+=6;
 
-    // Distribuição Ataque/Defesa na capa
-    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
-    txt('DISTRIBUIÇÃO ATAQUE / DEFESA', ML, y); y+=5;
+    // ── Distribuição Ataque / Defesa ──
+    st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+    txt('DISTRIBUICAO  ATAQUE / DEFESA', ML, y); y+=5;
     const totalAtkC=game.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
     const totalDefC=game.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
     const totC=totalAtkC+totalDefC, pAtkC=totC>0?(totalAtkC/totC):0.5;
-    const sbH=7;
-    sf(C.accent); rct(ML,y,CW*pAtkC,sbH,1);
-    sf(C.red); rct(ML+CW*pAtkC,y,CW*(1-pAtkC),sbH,1);
-    st(C.white); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-    if(pAtkC>0.1) txt(String(totalAtkC), ML+CW*pAtkC-5, y+5, {align:'right'});
-    if((1-pAtkC)>0.1) txt(String(totalDefC), ML+CW*pAtkC+5, y+5);
+    const sbH=6;
+    // Barra de fundo
+    sf(C.surface2); rct(ML,y,CW,sbH,1);
+    // Ataque
+    if(pAtkC>0){ sf(C.accent); rct(ML,y,CW*pAtkC,sbH,1); }
+    // Defesa
+    if((1-pAtkC)>0){ sf(C.red); rct(ML+CW*pAtkC,y,CW*(1-pAtkC),sbH,1); }
+    // Valores dentro
+    st(C.white); doc.setFontSize(5); doc.setFont('helvetica','bold');
+    if(pAtkC>0.12) txt(`${totalAtkC}`, ML+4, y+4.2);
+    if((1-pAtkC)>0.12) txt(`${totalDefC}`, ML+CW-4, y+4.2, {align:'right'});
     y+=sbH+4;
-    st(C.accent); doc.setFontSize(5.5); txt(`ATAQUE  ${totalAtkC} ações`, ML, y);
-    st(C.red); txt(`DEFESA  ${totalDefC} ações`, ML+CW, y, {align:'right'});
-    y+=10;
+    // Labels
+    st(C.accent); doc.setFontSize(5); doc.setFont('helvetica','bold');
+    txt(`ATAQUE (${totalAtkC})`, ML, y);
+    st(C.red);
+    txt(`DEFESA (${totalDefC})`, ML+CW, y, {align:'right'});
+    y+=9;
 
-    // Timeline na capa
-    st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
-    txt('CRONOLOGIA', ML, y); y+=5;
-    sf(C.surface2); rct(ML,y,CW,9,2);
-    drawTimeline(ML+3,y+2,CW-6,game.events,game.time);
+    // ── Timeline ──
+    ss(C.border); doc.setLineWidth(0.2); doc.line(ML,y,ML+CW,y); y+=5;
+    st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+    txt('CRONOLOGIA DE EVENTOS', ML, y); y+=5;
+    sf(C.surface2); rct(ML,y,CW,8,2);
+    drawTimeline(ML+3,y+1.5,CW-6,game.events,game.time);
     y+=18;
 
-    // Golos marcados na capa
+    // ── Golos badges (sem emojis) ──
     const coverGoals=game.events.filter(e=>e.isGoal);
     if(coverGoals.length){
-        coverGoals.forEach((e,i)=>{
-            const gx=ML+i*20;
-            sf([249,199,79]); doc.setFillColor(249,199,79,0.12);
-            doc.setDrawColor(249,199,79); doc.setLineWidth(0.4);
-            doc.roundedRect(gx,y,17,6,1.5,1.5,'S');
-            st(C.gold); doc.setFontSize(6); doc.setFont('helvetica','bold');
-            txt(`⚽ ${fmtMin(e.time)}`, gx+8.5, y+4.2, {align:'center'});
-        });
-        y+=9;
-    }
-
-    // Notas resumidas
-    if(game.notes&&game.notes.trim()){
-        y+=4;
-        sf(C.surface); rct(ML,y,CW,14,2);
-        sf(C.accent); rct(ML,y,2,14,0.5);
         st(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        txt('NOTA DO JOGO', ML+5, y+4.5);
-        st(C.text); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
-        const nls=doc.splitTextToSize(`"${game.notes.trim()}"`, CW-10);
-        nls.slice(0,2).forEach((l,i)=>txt(l,ML+5,y+9+i*3.5));
-        y+=17;
+        txt('MARCADORES', ML, y); y+=5;
+        let gx=ML;
+        coverGoals.forEach((e,i)=>{
+            if(gx+22>ML+CW){ gx=ML; y+=8; }
+            sf(C.surface); rct(gx,y,20,7,2);
+            sf(C.gold); rct(gx,y,20,1.5,1);
+            ss(C.gold); doc.setLineWidth(0.3); doc.roundedRect(gx,y,20,7,2,2,'S');
+            st(C.gold); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
+            const goalLabel = e.playerName
+                ? `${fmtMin(e.time)} ${e.playerName.substring(0,7)}`
+                : `GOLO ${fmtMin(e.time)}`;
+            txt(goalLabel, gx+10, y+4.8, {align:'center'});
+            gx+=22;
+        });
+        y+=10;
     }
 
-    // Rodapé da capa
-    sf(C.surface); rct(0,PH-14,PW,14);
-    doc.setDrawColor(...C.border); doc.setLineWidth(0.3);
-    doc.line(0,PH-14,PW,PH-14);
-    // Faixa accent no rodapé
+    // ── Nota do jogo ──
+    if(game.notes&&game.notes.trim()){
+        y+=2;
+        sf(C.surface); rct(ML,y,CW,13,2);
+        sf(C.accent); rct(ML,y,2,13,0.5);
+        st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
+        txt('NOTA DO JOGO', ML+5, y+4.5);
+        st(C.text); doc.setFontSize(6); doc.setFont('helvetica','italic');
+        const nls=doc.splitTextToSize(`"${game.notes.trim()}"`, CW-10);
+        nls.slice(0,2).forEach((l,li)=>txt(l,ML+5,y+8.5+li*3.5));
+        y+=16;
+    }
+
+    // ── Rodapé da capa ──
+    sf(C.surface); rct(0,PH-12,PW,12);
+    ss(C.border); doc.setLineWidth(0.3); doc.line(0,PH-12,PW,PH-12);
     sf(C.accent); rct(0,PH-2,PW,2);
     st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','normal');
-    txt('SoccerAnalyst Pro', ML, PH-7);
-    txt(new Date().toLocaleDateString('pt-PT'), PW/2, PH-7, {align:'center'});
-    txt('ANÁLISE DE JOGO', PW-ML, PH-7, {align:'right'});
-    st(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
-    txt('Gerado automaticamente • Uso exclusivo interno', PW/2, PH-3.5, {align:'center'});
+    txt('SoccerAnalyst Pro', ML, PH-5.5);
+    txt(new Date().toLocaleDateString('pt-PT'), PW/2, PH-5.5, {align:'center'});
+    txt('ANALISE DE JOGO', PW-ML, PH-5.5, {align:'right'});
+    st(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+    txt('Gerado automaticamente  |  Uso exclusivo interno', PW/2, PH-2.5, {align:'center'});
 
     // ══════════════════════════════
     // PÁGINA 2 — Análise Estatística
@@ -1621,7 +1713,7 @@ function buildNativePDF(game, folderName='', folderPlayers=[]) {
     st(C.accent); doc.setFontSize(7); doc.setFont('helvetica','bold');
     txt('SOCCERANALYST PRO', ML, 7);
     st(C.muted); doc.setFontSize(6); doc.setFont('helvetica','normal');
-    txt(`${game.opponent.toUpperCase()}  ·  ${game.date}  ·  ${gfC}–${gaC}`, PW-ML, 7, {align:'right'});
+    txt(`${game.opponent.toUpperCase()}  |  ${game.date}  |  ${gfC}-${gaC}`, PW-ML, 7, {align:'right'});
     y = 18;
 
     // ── Sub-header desta página ──
@@ -2456,7 +2548,7 @@ function App() {
             return{...f,games:f.games.map(g=>g.id!==editModal.gameId?g:{...g,opponent:opp,date:dt||g.date})};
         }));
         setEditModal(null);
-        showToast('✅ Jogo atualizado');
+        showToast('Jogo atualizado');
     };
 
     const openEditModal = (g,e)=>{
@@ -2507,7 +2599,7 @@ function App() {
         try {
             setPdfProgress(30);
             await new Promise(r=>setTimeout(r,30));
-            const doc=buildNativePDF(currentGame, currentFolder?.name||'', getFolderPlayers(currentFolderId));
+            const doc=buildNativePDF(currentGame, currentFolder?.name||'', getFolderPlayers(currentFolderId), currentFolder?.homeLogo||null);
             setPdfProgress(80);
             await new Promise(r=>setTimeout(r,30));
             const filename=`SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`;
@@ -2707,9 +2799,26 @@ function App() {
                         return(
                             <div key={f.id} className="folder-card" onClick={()=>{setCurrentFolderId(f.id);setView('games');}}>
                                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:s?14:0}}>
-                                    <div>
-                                        <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2}}>{f.name}</div>
-                                        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogo{f.games.length!==1?'s':''}</div>
+                                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                        {/* Home logo */}
+                                        <div style={{width:40,height:40,borderRadius:10,overflow:'hidden',background:'var(--bg)',border:'1px solid var(--border)',flexShrink:0,position:'relative',cursor:'pointer'}}
+                                            onClick={e=>e.stopPropagation()}>
+                                            {f.homeLogo
+                                                ?<img src={f.homeLogo} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+                                                :<div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Bebas Neue',fontSize:18,color:'var(--accent)'}}>{f.name.charAt(0).toUpperCase()}</div>
+                                            }
+                                            <input type="file" accept="image/*" style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}
+                                                onChange={async e=>{
+                                                    const file=e.target.files[0]; if(!file) return;
+                                                    const c=await compressImage(file);
+                                                    setFolders(prev=>prev.map(x=>x.id!==f.id?x:{...x,homeLogo:c}));
+                                                    showToast('Logo guardado');
+                                                }}/>
+                                        </div>
+                                        <div>
+                                            <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2}}>{f.name}</div>
+                                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogo{f.games.length!==1?'s':''}</div>
+                                        </div>
                                     </div>
                                     <button className="icon-btn" style={{background:'rgba(239,35,60,0.08)',borderColor:'rgba(239,35,60,0.2)',color:'var(--red)'}}
                                         onClick={e=>{e.stopPropagation();if(confirm('Apagar pasta e todos os jogos?')){setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('Eliminada');}}}>✕</button>
@@ -3448,10 +3557,11 @@ function App() {
     /* ── Edit Game Modal ── */
     const renderEditModal=()=>{
         if(!editModal) return null;
+        const game=currentFolder?.games?.find(g=>g.id===editModal.gameId);
         return(
             <div className="modal-overlay" onClick={()=>setEditModal(null)}>
                 <div className="modal-box" onClick={e=>e.stopPropagation()}>
-                    <div className="modal-title">✎ Editar Jogo</div>
+                    <div className="modal-title">Editar Jogo</div>
                     <div className="form-field">
                         <label className="form-label">Adversário</label>
                         <input className="form-input" value={editOpponent} onChange={e=>setEditOpponent(e.target.value)}
@@ -3461,6 +3571,27 @@ function App() {
                         <label className="form-label">Data</label>
                         <input className="form-input" value={editDate} onChange={e=>setEditDate(e.target.value)}
                             placeholder="DD/MM/AAAA"/>
+                    </div>
+                    <div className="form-field">
+                        <label className="form-label">Logo Adversário (PDF)</label>
+                        <div style={{display:'flex',alignItems:'center',gap:10}}>
+                            {game?.awayLogo&&(
+                                <img src={game.awayLogo} style={{width:40,height:40,borderRadius:8,objectFit:'cover',border:'1px solid var(--border)'}}/>
+                            )}
+                            <label style={{flex:1,padding:'9px 14px',borderRadius:10,border:'1px dashed var(--border)',background:'var(--surface2)',cursor:'pointer',fontSize:12,color:'var(--muted)',textAlign:'center'}}>
+                                {game?.awayLogo?'Alterar logo':'+ Carregar logo'}
+                                <input type="file" accept="image/*" style={{display:'none'}} onChange={async e=>{
+                                    const f=e.target.files[0]; if(!f) return;
+                                    const compressed=await compressImage(f);
+                                    setFolders(prev=>prev.map(fo=>fo.id!==currentFolderId?fo:{...fo,games:fo.games.map(g=>g.id!==editModal.gameId?g:{...g,awayLogo:compressed})}));
+                                    showToast('Logo guardado');
+                                }}/>
+                            </label>
+                            {game?.awayLogo&&(
+                                <button onClick={()=>setFolders(prev=>prev.map(fo=>fo.id!==currentFolderId?fo:{...fo,games:fo.games.map(g=>g.id!==editModal.gameId?g:{...g,awayLogo:null})}))}
+                                    style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:18,padding:4}}>✕</button>
+                            )}
+                        </div>
                     </div>
                     <div className="modal-actions">
                         <button className="btn-ghost" style={{flex:1}} onClick={()=>setEditModal(null)}>Cancelar</button>
