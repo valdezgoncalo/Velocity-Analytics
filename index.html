@@ -12,20 +12,23 @@
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600;800&display=swap');
 
         :root {
-            --bg: #050810;
-            --surface: #0d1117;
+            --bg:       #050810;
+            --surface:  #0d1117;
             --surface2: #161b22;
-            --border: #1e2530;
-            --accent: #4361ee;
-            --accent2: #7209b7;
-            --green: #2dc653;
-            --red: #ef233c;
-            --gold: #f9c74f;
-            --text: #e6edf3;
-            --muted: #6e7681;
+            --border:   #1e2530;
+            --accent:   #4361ee;
+            --accent2:  #7209b7;
+            --green:    #2dc653;
+            --red:      #ef233c;
+            --gold:     #f9c74f;
+            --text:     #e6edf3;
+            --muted:    #6e7681;
+            --nav-h:    64px;
+            --header-h: 64px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
         body {
             background: var(--bg);
             color: var(--text);
@@ -33,156 +36,733 @@
             overflow: hidden;
             touch-action: manipulation;
             user-select: none;
+            height: 100dvh;
+            height: 100vh;
         }
+
         .bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
         .mono  { font-family: 'Space Mono', monospace; }
+        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .active-btn:active { transform: scale(0.95); opacity: 0.85; }
 
-        /* ── TIMELINE ───────────────────────────────── */
-        .timeline-wrap { position: relative; padding: 36px 0 24px; }
-        .timeline-track {
-            height: 56px; background: var(--surface);
-            border-radius: 14px; border: 1px solid var(--border);
-            position: relative; overflow: visible;
+        /* ── BOTTOM NAV ─────────────────────────────── */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: var(--nav-h);
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: stretch;
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
-        .timeline-half {
-            position: absolute; top: 0; bottom: 0;
-            background: rgba(255,255,255,0.015);
-            border-right: 1px dashed var(--border);
-            width: 50%; left: 0; border-radius: 14px 0 0 14px;
+        .nav-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-family: 'DM Sans', sans-serif;
+            transition: color 0.15s;
+            position: relative;
         }
-        .tl-minute-mark { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.04); }
-        .tl-label-top {
-            position: absolute; top: -22px;
-            font-family: 'Space Mono', monospace; font-size: 8px;
-            color: var(--muted); transform: translateX(-50%); white-space: nowrap;
+        .nav-btn.active { color: var(--accent); }
+        .nav-btn.active::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 20%; right: 20%;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 0 0 3px 3px;
         }
-        .tl-event-dot {
-            position: absolute; width: 9px; height: 9px; border-radius: 50%;
-            top: 50%; transform: translate(-50%, -50%);
-            cursor: pointer; transition: all 0.15s; z-index: 5;
+        .nav-btn .nav-icon {
+            font-size: 20px;
+            line-height: 1;
+            transition: transform 0.15s;
         }
-        .tl-event-dot:hover { transform: translate(-50%, -50%) scale(2); z-index: 10; }
-        .tl-event-dot.goal {
-            width: 13px; height: 13px; background: var(--gold);
-            box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4);
-            animation: pulse-gold 2s infinite;
-        }
-        .tl-event-dot.ataque { background: var(--accent); box-shadow: 0 0 6px rgba(67,97,238,0.5); }
-        .tl-event-dot.defesa { background: var(--red);    box-shadow: 0 0 6px rgba(239,35,60,0.4); }
-        .tl-tooltip {
-            position: absolute; bottom: calc(100% + 8px); left: 50%;
-            transform: translateX(-50%);
-            background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 8px; padding: 4px 8px;
-            font-size: 9px; font-family: 'Space Mono', monospace; color: var(--text);
-            white-space: nowrap; pointer-events: none; opacity: 0;
-            transition: opacity 0.15s; z-index: 20;
-        }
-        .tl-event-dot:hover .tl-tooltip { opacity: 1; }
-        .tl-cluster {
-            position: absolute; top: 50%; transform: translate(-50%, -50%);
-            display: flex; flex-direction: column;
-            align-items: center; gap: 2px; cursor: pointer; z-index: 5;
-        }
-        .tl-period-label {
-            position: absolute; bottom: -22px;
-            font-size: 8px; font-family: 'Space Mono', monospace;
-            color: var(--muted); transform: translateX(-50%);
-        }
-        @keyframes pulse-gold {
-            0%,100% { box-shadow: 0 0 12px var(--gold), 0 0 24px rgba(249,199,79,0.4); }
-            50%      { box-shadow: 0 0 22px var(--gold), 0 0 44px rgba(249,199,79,0.7); }
-        }
+        .nav-btn.active .nav-icon { transform: scale(1.1); }
+        .nav-btn:active .nav-icon { transform: scale(0.9); }
 
-        /* ── BAR CHART ──────────────────────────────── */
-        .bar-row   { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .bar-label { font-size: 10px; color: var(--muted); min-width: 90px; font-weight: 600; text-transform: uppercase; }
-        .bar-track { flex: 1; height: 22px; background: var(--surface); border-radius: 6px; overflow: hidden; position: relative; }
-        .bar-fill  { height: 100%; border-radius: 6px; transition: width 0.8s cubic-bezier(0.23,1,0.32,1); position: relative; }
-        .bar-value { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: 'Space Mono',monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); }
-
-        /* ── CARD ───────────────────────────────────── */
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
-
-        /* ── STAT BUTTON ────────────────────────────── */
-        .stat-btn {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 14px; display: flex; align-items: center;
-            padding: 12px 14px; gap: 10px; cursor: pointer;
-            transition: all 0.15s; width: 100%;
+        /* ── SCREEN WRAPPER ─────────────────────────── */
+        .screen {
+            position: absolute;
+            inset: 0;
+            bottom: var(--nav-h);
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--bg);
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
-        .stat-btn:active { border-color: var(--accent); background: rgba(67,97,238,0.1); }
-        .stat-count { font-family: 'Bebas Neue',sans-serif; font-size: 32px; line-height: 1; min-width: 36px; }
-        .stat-name  { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); line-height: 1.2; }
-
-        /* ── TOAST ──────────────────────────────────── */
-        .toast {
-            position: fixed; top: 16px; right: 16px;
-            background: var(--surface2); border: 1px solid var(--accent);
-            color: white; padding: 10px 18px; border-radius: 10px;
-            box-shadow: 0 8px 30px rgba(67,97,238,0.3);
-            z-index: 9999; animation: slideIn 0.25s ease-out;
-            font-weight: 700; font-size: 11px; text-transform: uppercase;
-            letter-spacing: 0.05em; pointer-events: none;
-        }
-        .toast.goal-toast {
-            border-color: var(--gold); box-shadow: 0 8px 30px rgba(249,199,79,0.4);
-            font-family: 'Bebas Neue',sans-serif; font-size: 18px;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(120%) scale(0.9); opacity: 0; }
-            to   { transform: translateX(0) scale(1); opacity: 1; }
-        }
-        .slide-enter { animation: slideEnter 0.3s ease-out; }
-        @keyframes slideEnter {
-            from { transform: translateX(-20px); opacity: 0; }
-            to   { transform: translateX(0); opacity: 1; }
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
         }
 
-        /* ── REPORT ─────────────────────────────────── */
-        #report-area { background: #050810; color: white; }
-        .report-section-title {
-            font-family: 'Bebas Neue',sans-serif; font-size: 11px; letter-spacing: 0.15em;
-            color: var(--muted); text-transform: uppercase; margin-bottom: 16px;
-            display: flex; align-items: center; gap: 8px;
+        /* ── PAGE HEADER ────────────────────────────── */
+        .page-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: var(--header-h);
         }
-        .report-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
-
-        /* ── INTENSITY CHART ────────────────────────── */
-        .intensity-chart { width: 100%; position: relative; }
-
-        /* ── LANDSCAPE MODE ─────────────────────────── */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .ls-header {
-                padding: 6px 12px !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                gap: 6px !important;
-            }
-            .ls-timer-block { font-size: 18px !important; }
-            .ls-btn-sm { width: 32px !important; height: 32px !important; font-size: 12px !important; }
-            .ls-start-btn { padding: 0 10px !important; height: 32px !important; font-size: 13px !important; }
-            .ls-pdf-btn  { padding: 0 10px !important; height: 32px !important; font-size: 12px !important; }
-            .stat-btn { padding: 6px 10px !important; }
-            .stat-count { font-size: 24px !important; }
-            .ls-notes textarea { height: 48px !important; }
-            .ls-col-header { padding: 4px 8px !important; }
-            .ls-home-btn { display: none !important; }
+        .page-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: var(--text);
+            line-height: 1;
         }
 
-        /* ── MISC ───────────────────────────────────── */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+        /* ── TRACKING HEADER ────────────────────────── */
+        .track-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: nowrap;
+            min-height: var(--header-h);
+        }
+        .timer-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            flex-shrink: 0;
+        }
+        .timer-digits {
+            font-family: 'Space Mono', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+            line-height: 1;
+        }
+        .period-badge {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+        .score-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            flex-shrink: 0;
+        }
+        .score-num {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 26px;
+            line-height: 1;
+        }
+        .header-actions {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .hbtn {
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .hbtn:active { transform: scale(0.92); opacity: 0.8; }
+        .hbtn-sq { width: 42px; font-size: 18px; }
+        .hbtn-rect { padding: 0 14px; font-size: 13px; letter-spacing: 1px; }
+        .hbtn-start {
+            padding: 0 16px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 17px;
+            letter-spacing: 2px;
+            border: none;
+        }
+
+        /* ── TRACKING COLUMNS ───────────────────────── */
+        .track-cols {
+            display: flex;
+            height: calc(100dvh - var(--nav-h) - var(--header-h));
+            height: calc(100vh  - var(--nav-h) - var(--header-h));
+            overflow: hidden;
+        }
+        .track-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .track-col:first-child { border-right: 1px solid var(--border); }
+        .col-header {
+            padding: 8px 12px;
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .col-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 17px;
+            letter-spacing: 3px;
+        }
+        .col-add-btn {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .stats-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* ── STAT BUTTON (mobile-first) ─────────────── */
+        .stat-row { display: flex; gap: 5px; }
+        .stat-main {
+            flex: 1;
+            min-height: 58px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            border-left: 3px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.1s, border-color 0.1s, transform 0.08s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .stat-main:active {
+            transform: scale(0.97);
+            background: rgba(255,255,255,0.04);
+        }
+        .stat-main.atk-active { border-left-color: var(--accent); }
+        .stat-main.def-active { border-left-color: var(--red); }
+        .stat-main.goal-active { border-left-color: var(--gold); }
+        .stat-count {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 34px;
+            line-height: 1;
+            min-width: 38px;
+            text-align: center;
+        }
+        .stat-count.zero { color: var(--border); }
+        .stat-name {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            line-height: 1.3;
+            flex: 1;
+        }
+        .stat-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 30px;
+            flex-shrink: 0;
+        }
+        .stat-side-btn {
+            flex: 1;
+            min-height: 26px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        .stat-side-btn:active { transform: scale(0.88); }
+        .sbtn-minus {
+            background: rgba(239,35,60,0.08);
+            border-color: rgba(239,35,60,0.2);
+            color: var(--red);
+        }
+        .sbtn-edit {
+            background: var(--surface);
+            border-color: var(--border);
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── NOTES PANEL ────────────────────────────── */
+        .notes-panel {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 14px;
+            flex-shrink: 0;
+            animation: slideDown 0.2s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .notes-panel textarea {
+            width: 100%;
+            height: 70px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            resize: none;
+            line-height: 1.5;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .notes-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+
+        /* ── CARDS ──────────────────────────────────── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+        .card-sm {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        /* ── GAME CARD ──────────────────────────────── */
+        .game-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.12s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .game-card:active { transform: scale(0.985); }
+        .game-card:hover { border-color: rgba(67,97,238,0.4); }
+        .game-result-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .game-info { flex: 1; min-width: 0; }
+        .game-opponent {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 1px;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .game-meta {
+            font-size: 10px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-top: 3px;
+        }
+        .game-score {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .game-score-num {
+            font-family: 'Space Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        .game-card-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .icon-btn {
+            width: 34px; height: 34px;
+            border-radius: 9px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+            font-weight: 700;
+        }
+        .icon-btn:active { transform: scale(0.88); }
+
+        /* ── FOLDER CARD ────────────────────────────── */
+        .folder-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            cursor: pointer;
+            transition: border-color 0.2s, transform 0.12s;
+        }
+        .folder-card:active { transform: scale(0.985); }
+        .folder-card:hover { border-color: rgba(67,97,238,0.4); }
+
+        /* ── FILTER DRAWER ──────────────────────────── */
+        .filter-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 200;
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s ease;
+        }
+        .filter-drawer {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: var(--surface);
+            border-radius: 20px 20px 0 0;
+            border-top: 1px solid var(--border);
+            padding: 20px 20px 40px;
+            animation: slideUp 0.25s cubic-bezier(0.23,1,0.32,1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        .drawer-handle {
+            width: 40px; height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            margin: 0 auto 18px;
+        }
+        .drawer-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+        }
+
+        /* ── INPUTS ─────────────────────────────────── */
         input, textarea, select {
-            background: var(--surface); color: var(--text);
-            border: 1px solid var(--border); outline: none;
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            outline: none;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
             transition: border-color 0.2s;
         }
         input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
+
+        /* ── BUTTONS ────────────────────────────────── */
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            border-radius: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 18px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(67,97,238,0.3);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-primary:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(67,97,238,0.2); }
+        .btn-ghost {
+            padding: 9px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+        .btn-save {
+            padding: 8px 18px;
+            border-radius: 10px;
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        /* ── TOAST ──────────────────────────────────── */
+        .toast {
+            position: fixed;
+            top: 16px; right: 16px;
+            background: var(--surface2);
+            border: 1px solid var(--accent);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 10px;
+            box-shadow: 0 8px 30px rgba(67,97,238,0.3);
+            z-index: 9999;
+            animation: toastIn 0.25s ease-out;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            pointer-events: none;
+            max-width: calc(100vw - 32px);
+        }
+        .toast.goal {
+            border-color: var(--gold);
+            box-shadow: 0 8px 30px rgba(249,199,79,0.5);
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            letter-spacing: 3px;
+        }
+        @keyframes toastIn {
+            from { transform: translateX(110%) scale(0.9); opacity: 0; }
+            to   { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        /* ── RIPPLE ─────────────────────────────────── */
+        .ripple-wrap { position: relative; overflow: hidden; }
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
+        }
+
+        /* ── SECTION TITLE ──────────────────────────── */
+        .section-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── TIMELINE ───────────────────────────────── */
+        .timeline-track {
+            height: 52px;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: visible;
+            margin: 28px 0 32px;
+        }
+        .tl-half {
+            position: absolute; top: 0; bottom: 0;
+            width: 50%; left: 0;
+            background: rgba(255,255,255,0.015);
+            border-right: 1px dashed var(--border);
+            border-radius: 12px 0 0 12px;
+        }
+        .tl-dot {
+            position: absolute;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: transform 0.12s;
+            z-index: 5;
+        }
+        .tl-dot:hover { transform: translate(-50%, -50%) scale(2); z-index: 10; }
+        .tl-dot.ev-goal {
+            width: 13px; height: 13px;
+            background: var(--gold);
+            box-shadow: 0 0 10px var(--gold), 0 0 22px rgba(249,199,79,0.4);
+            animation: pulseGold 2s infinite;
+        }
+        .tl-dot.ev-ataque { width: 9px; height: 9px; background: var(--accent); box-shadow: 0 0 6px rgba(67,97,238,0.5); }
+        .tl-dot.ev-defesa { width: 9px; height: 9px; background: var(--red); box-shadow: 0 0 6px rgba(239,35,60,0.4); }
+        @keyframes pulseGold {
+            0%,100% { box-shadow: 0 0 10px var(--gold), 0 0 20px rgba(249,199,79,0.4); }
+            50%      { box-shadow: 0 0 18px var(--gold), 0 0 36px rgba(249,199,79,0.7); }
+        }
+        .tl-tooltip {
+            position: absolute;
+            bottom: calc(100% + 7px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 9px;
+            font-family: 'Space Mono', monospace;
+            color: var(--text);
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.12s;
+            z-index: 20;
+        }
+        .tl-dot:hover .tl-tooltip { opacity: 1; }
+        .tl-period {
+            position: absolute;
+            bottom: -20px;
+            font-size: 8px;
+            font-family: 'Space Mono', monospace;
+            color: var(--muted);
+            transform: translateX(-50%);
+        }
+        .tl-min {
+            position: absolute;
+            top: -18px;
+            font-family: 'Space Mono', monospace;
+            font-size: 8px;
+            color: var(--muted);
+            transform: translateX(-50%);
+        }
+
+        /* ── BARS ───────────────────────────────────── */
+        .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+        .bar-label { font-size: 10px; color: var(--muted); min-width: 90px; font-weight: 600; text-transform: uppercase; }
+        .bar-track { flex: 1; height: 22px; background: var(--surface2); border-radius: 6px; overflow: hidden; position: relative; }
+        .bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s cubic-bezier(0.23,1,0.32,1); }
+        .bar-val { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: 'Space Mono',monospace; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.9); }
+        .bar-zero { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+        /* ── DONUT ──────────────────────────────────── */
+        /* SVG-based, no change needed */
+
+        /* ── STACKED BAR ────────────────────────────── */
+        .stacked-bar { display: flex; height: 28px; border-radius: 8px; overflow: hidden; gap: 2px; }
+        .stacked-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-family: 'Space Mono', monospace; font-weight: 700; transition: width 0.6s ease; min-width: 0; }
+
+        /* ── EMPTY STATE ────────────────────────────── */
+        .empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 60px 24px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .empty-icon { font-size: 48px; opacity: 0.3; }
+        .empty-text { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* ── REPORT ─────────────────────────────────── */
+        .report-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 480px) {
+            .report-kpis { grid-template-columns: repeat(2, 1fr); }
+        }
+        .kpi-card {
+            padding: 14px 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            text-align: center;
+        }
+        .kpi-val { font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: 1; }
+        .kpi-label { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+        .kpi-sub { font-size: 8px; color: var(--muted); font-style: italic; margin-top: 2px; }
+
+        /* ── SCROLLBAR ──────────────────────────────── */
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* ── SLIDE ANIM ─────────────────────────────── */
+        .slide-in { animation: slideEnter 0.22s ease-out both; }
+        @keyframes slideEnter {
+            from { opacity: 0; transform: translateX(-16px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── INTENSITY CHART ────────────────────────── */
+        .intensity-legend {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
     </style>
 </head>
 <body>
@@ -190,84 +770,84 @@
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
-/* ═══════════════════════════════════════════════════════════════
-   STORAGE
-═══════════════════════════════════════════════════════════════ */
-const DB_KEY        = 'socceranalyst_v4';
-const DB_BACKUP_KEY = 'socceranalyst_v4_bak';
+/* ═══════════════ STORAGE ═══════════════ */
+const DB_KEY = 'socceranalyst_v4';
+const DB_BAK = 'socceranalyst_v4_bak';
 
 function loadDB() {
-    for (const key of [DB_KEY, DB_BACKUP_KEY]) {
-        try {
-            const raw = localStorage.getItem(key);
-            if (raw) { const p = JSON.parse(raw); if (Array.isArray(p)) return p; }
-        } catch (_) {}
+    for (const key of [DB_KEY, DB_BAK]) {
+        try { const r = localStorage.getItem(key); if (r) { const p = JSON.parse(r); if (Array.isArray(p)) return p; } } catch(_) {}
     }
     return [];
 }
 function saveDB(folders) {
     try {
-        const str = JSON.stringify(folders);
+        const s = JSON.stringify(folders);
         const prev = localStorage.getItem(DB_KEY);
-        if (prev) localStorage.setItem(DB_BACKUP_KEY, prev);
-        localStorage.setItem(DB_KEY, str);
-    } catch (e) { console.warn('SoccerAnalyst: save failed', e); }
+        if (prev) localStorage.setItem(DB_BAK, prev);
+        localStorage.setItem(DB_KEY, s);
+    } catch(e) { console.warn('save failed', e); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DEFAULT TEMPLATE
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ TEMPLATE ══════════════ */
 const DEFAULT_TEMPLATE = [
-    { id: 1,  name: 'Golo',         type: 'ataque' },
-    { id: 2,  name: 'Remate',       type: 'ataque' },
-    { id: 3,  name: 'Rem. Enquad.', type: 'ataque' },
-    { id: 4,  name: 'Cantos',       type: 'ataque' },
-    { id: 5,  name: 'Rem. Area',    type: 'ataque' },
-    { id: 6,  name: 'Cruzam.',      type: 'ataque' },
-    { id: 7,  name: 'Golo Sofr.',   type: 'defesa' },
-    { id: 8,  name: 'Recuper.',     type: 'defesa' },
-    { id: 9,  name: 'Rem. Conc.',   type: 'defesa' },
-    { id: 10, name: 'Rem. Area C.', type: 'defesa' },
-    { id: 11, name: 'Perdas Bola',  type: 'defesa' },
-    { id: 12, name: 'Faltas',       type: 'defesa' },
+    { id:1,  name:'Golo',         type:'ataque' },
+    { id:2,  name:'Remate',       type:'ataque' },
+    { id:3,  name:'Rem. Enquad.', type:'ataque' },
+    { id:4,  name:'Cantos',       type:'ataque' },
+    { id:5,  name:'Rem. Area',    type:'ataque' },
+    { id:6,  name:'Cruzam.',      type:'ataque' },
+    { id:7,  name:'Golo Sofr.',   type:'defesa' },
+    { id:8,  name:'Recuper.',     type:'defesa' },
+    { id:9,  name:'Rem. Conc.',   type:'defesa' },
+    { id:10, name:'Rem. Area C.', type:'defesa' },
+    { id:11, name:'Perdas Bola',  type:'defesa' },
+    { id:12, name:'Faltas',       type:'defesa' },
 ];
-const statsFromTemplate = t => t.map(s => ({ id: s.id, name: s.name, type: s.type, count: 0 }));
+const statsFromTemplate = t => t.map(s => ({ id:s.id, name:s.name, type:s.type, count:0 }));
 
-/* ═══════════════════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════════════════ */
-const promptText = (msg, def = '') => { const r = prompt(msg, def); if (r===null) return null; const t=r.trim(); return t.length?t:null; };
+/* ═══════════════ HELPERS ═══════════════ */
+const promptText = (msg, def='') => { const r = prompt(msg, def); if (r===null) return null; const t=r.trim(); return t||null; };
 const parsePtDate = v => { if(!v) return null; const p=v.split('/'); if(p.length!==3) return null; const [d,m,y]=p.map(Number); return (d&&m&&y)?new Date(y,m-1,d):null; };
 const fmt    = s => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
 const fmtMin = s => `${Math.floor(s/60)}'`;
 
-/* ═══════════════════════════════════════════════════════════════
-   HOOK: orientation
-═══════════════════════════════════════════════════════════════ */
-function useOrientation() {
-    const [landscape, setLandscape] = useState(
-        () => window.innerWidth > window.innerHeight && window.innerHeight < 500
-    );
-    useEffect(() => {
-        const h = () => setLandscape(window.innerWidth > window.innerHeight && window.innerHeight < 500);
-        window.addEventListener('resize', h);
-        window.addEventListener('orientationchange', h);
-        return () => { window.removeEventListener('resize', h); window.removeEventListener('orientationchange', h); };
-    }, []);
-    return landscape;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   TOAST
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ TOAST ════════════════ */
 function Toast({ message, isGoal, onClose }) {
-    useEffect(() => { const t = setTimeout(onClose, isGoal?3000:2000); return ()=>clearTimeout(t); }, [onClose]);
-    return <div className={`toast${isGoal?' goal-toast':''}`}>{message}</div>;
+    useEffect(() => { const t = setTimeout(onClose, isGoal?3000:1800); return ()=>clearTimeout(t); }, [onClose]);
+    return <div className={`toast${isGoal?' goal':''}`}>{message}</div>;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   BAR CHART
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ BOTTOM NAV ════════════ */
+const NAV_ITEMS = [
+    { id:'folders',  icon:'🗂',  label:'Pastas'   },
+    { id:'games',    icon:'📋',  label:'Jogos'    },
+    { id:'tracking', icon:'⚽',  label:'Tracking' },
+    { id:'report',   icon:'📊',  label:'Relatório'},
+];
+
+function BottomNav({ view, setView, hasGame, hasFolder }) {
+    const canTrack  = hasGame;
+    const canReport = hasGame;
+    const canGames  = hasFolder;
+    return (
+        <nav className="bottom-nav">
+            {NAV_ITEMS.map(n => {
+                const disabled = (n.id==='tracking'&&!canTrack)||(n.id==='report'&&!canReport)||(n.id==='games'&&!canGames);
+                return (
+                    <button key={n.id} className={`nav-btn${view===n.id?' active':''}`}
+                        onClick={() => !disabled && setView(n.id)}
+                        style={{ opacity: disabled ? 0.3 : 1 }}>
+                        <span className="nav-icon">{n.icon}</span>
+                        {n.label}
+                    </button>
+                );
+            })}
+        </nav>
+    );
+}
+
+/* ═══════════════ BAR CHART ═════════════ */
 function BarChart({ data, colorFn }) {
     const max = Math.max(...data.map(d=>d.value), 1);
     return (
@@ -276,10 +856,10 @@ function BarChart({ data, colorFn }) {
                 <div key={i} className="bar-row">
                     <div className="bar-label">{d.label}</div>
                     <div className="bar-track">
-                        <div className="bar-fill" style={{width:`${(d.value/max)*100}%`, background: colorFn?colorFn(d,i):'var(--accent)'}}>
-                            {d.value>0 && <span className="bar-value">{d.value}</span>}
+                        <div className="bar-fill" style={{width:`${(d.value/max)*100}%`,background:colorFn?colorFn(d,i):'var(--accent)'}}>
+                            {d.value>0 && <span className="bar-val">{d.value}</span>}
                         </div>
-                        {d.value===0 && <span style={{position:'absolute',left:8,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'var(--muted)',fontFamily:'Space Mono'}}>0</span>}
+                        {d.value===0 && <span className="bar-zero">0</span>}
                     </div>
                 </div>
             ))}
@@ -287,14 +867,12 @@ function BarChart({ data, colorFn }) {
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   DONUT CHART
-═══════════════════════════════════════════════════════════════ */
-function DonutChart({ value, max, color, label, sublabel, size=80 }) {
+/* ═══════════════ DONUT ═════════════════ */
+function Donut({ value, max, color, label, sublabel, size=80 }) {
     const r=30, circ=2*Math.PI*r;
-    const dash = (max>0 ? Math.min(value/max,1) : 0)*circ;
+    const dash = (max>0?Math.min(value/max,1):0)*circ;
     return (
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5}}>
             <svg width={size} height={size} viewBox="0 0 80 80">
                 <circle cx="40" cy="40" r={r} fill="none" stroke="var(--border)" strokeWidth="8"/>
                 <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="8"
@@ -303,224 +881,134 @@ function DonutChart({ value, max, color, label, sublabel, size=80 }) {
                 <text x="40" y="38" textAnchor="middle" dominantBaseline="middle"
                     style={{fill:'white',fontFamily:'Bebas Neue',fontSize:20,letterSpacing:1}}>{value}</text>
                 <text x="40" y="52" textAnchor="middle" dominantBaseline="middle"
-                    style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:7,fontWeight:600,textTransform:'uppercase'}}>{sublabel}</text>
+                    style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:7,fontWeight:600}}>{sublabel}</text>
             </svg>
-            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:'0.06em'}}>{label}</div>
+            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:'0.05em',textAlign:'center'}}>{label}</div>
         </div>
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   STACKED BAR
-═══════════════════════════════════════════════════════════════ */
-function StackedBar({ leftVal, rightVal, leftColor, rightColor, leftLabel, rightLabel }) {
-    const total = leftVal+rightVal;
-    const lp = total>0?(leftVal/total)*100:50;
+/* ═══════════════ STACKED BAR ═══════════ */
+function StackedBar({ left, right, lColor, rColor, lLabel, rLabel }) {
+    const total = left+right;
+    const lp = total>0?(left/total)*100:50;
     return (
         <div>
-            <div style={{display:'flex',height:28,borderRadius:8,overflow:'hidden',gap:2}}>
-                <div style={{width:`${lp}%`,background:leftColor,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:lp>0?'30px':0}}>{leftVal>0?leftVal:''}</div>
-                <div style={{width:`${100-lp}%`,background:rightColor,display:'flex',alignItems:'center',justifyContent:'flex-start',paddingLeft:8,fontSize:11,fontFamily:'Space Mono',fontWeight:700,minWidth:(100-lp)>0?'30px':0}}>{rightVal>0?rightVal:''}</div>
+            <div className="stacked-bar">
+                <div className="stacked-seg" style={{width:`${lp}%`,background:lColor,paddingRight:lp>8?8:0}}>
+                    {left>0&&lp>10?left:''}
+                </div>
+                <div className="stacked-seg" style={{width:`${100-lp}%`,background:rColor,paddingLeft:(100-lp)>8?8:0}}>
+                    {right>0&&(100-lp)>10?right:''}
+                </div>
             </div>
             <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
-                <span style={{fontSize:9,color:leftColor,fontWeight:700,textTransform:'uppercase'}}>{leftLabel}</span>
-                <span style={{fontSize:9,color:rightColor,fontWeight:700,textTransform:'uppercase'}}>{rightLabel}</span>
+                <span style={{fontSize:9,color:lColor,fontWeight:700,textTransform:'uppercase'}}>{lLabel}</span>
+                <span style={{fontSize:9,color:rColor,fontWeight:700,textTransform:'uppercase'}}>{rLabel}</span>
             </div>
         </div>
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RADAR CHART
-═══════════════════════════════════════════════════════════════ */
-function RadarChart({ stats, size = 220 }) {
+/* ═══════════════ RADAR ═════════════════ */
+function Radar({ stats, size=220 }) {
     const axes = [
-        { key: 'Golo',         label: 'Golos',     max: 5,  color: 'var(--green)' },
-        { key: 'Remate',       label: 'Remates',   max: 20, color: 'var(--accent)' },
-        { key: 'Rem. Enquad.', label: 'Enquad.',   max: 12, color: '#4cc9f0' },
-        { key: 'Cantos',       label: 'Cantos',    max: 10, color: var_gold },
-        { key: 'Recuper.',     label: 'Recuper.',  max: 15, color: '#a8dadc' },
-        { key: 'Faltas',       label: 'Faltas',    max: 15, color: 'var(--red)' },
+        {key:'Golo',         label:'Golos',    max:5,  color:'var(--green)'},
+        {key:'Remate',       label:'Remates',  max:20, color:'var(--accent)'},
+        {key:'Rem. Enquad.', label:'Enquad.',  max:12, color:'#4cc9f0'},
+        {key:'Cantos',       label:'Cantos',   max:10, color:'#f9c74f'},
+        {key:'Recuper.',     label:'Recuper.', max:15, color:'#a8dadc'},
+        {key:'Faltas',       label:'Faltas',   max:15, color:'var(--red)'},
     ];
-    const N    = axes.length;
-    const cx   = size / 2;
-    const cy   = size / 2;
-    const R    = size * 0.38;
-    const rings = [0.25, 0.5, 0.75, 1.0];
-
-    const angleOf = i => (Math.PI * 2 * i) / N - Math.PI / 2;
-
-    const ptOf = (i, ratio) => {
-        const a = angleOf(i);
-        return { x: cx + R * ratio * Math.cos(a), y: cy + R * ratio * Math.sin(a) };
-    };
-
-    const dataPoints = axes.map((ax, i) => {
-        const stat = stats.find(s => s.name === ax.key);
-        const v    = stat ? stat.count : 0;
-        const ratio = Math.min(v / ax.max, 1);
-        return ptOf(i, ratio);
+    const N=axes.length, cx=size/2, cy=size/2, R=size*0.38;
+    const angOf = i => 2*Math.PI*i/N - Math.PI/2;
+    const ptOf  = (i,r) => ({x:cx+R*r*Math.cos(angOf(i)), y:cy+R*r*Math.sin(angOf(i))});
+    const dataPts = axes.map((ax,i)=>{
+        const s=stats.find(x=>x.name===ax.key); const v=s?s.count:0;
+        return ptOf(i, Math.min(v/ax.max,1));
     });
-    const dataPath = dataPoints.map((p, i) => `${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') + ' Z';
-
-    const labelPt = (i) => {
-        const a = angleOf(i);
-        const off = 18;
-        return { x: cx + (R + off) * Math.cos(a), y: cy + (R + off) * Math.sin(a) };
-    };
-
+    const path = dataPts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
     return (
-        <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
+        <div style={{display:'flex',justifyContent:'center'}}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{overflow:'visible'}}>
-                {rings.map((r, ri) => {
-                    const ringPts = axes.map((_,i) => ptOf(i, r));
-                    const rPath = ringPts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
+                {[0.25,0.5,0.75,1].map((r,ri)=>{
+                    const pts=axes.map((_,i)=>ptOf(i,r));
+                    const rPath=pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')+' Z';
                     return <path key={ri} d={rPath} fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray={r<1?"3,3":""}/>;
                 })}
-                {axes.map((_,i) => {
-                    const outer = ptOf(i,1);
-                    return <line key={i} x1={cx} y1={cy} x2={outer.x.toFixed(1)} y2={outer.y.toFixed(1)} stroke="var(--border)" strokeWidth="1"/>;
-                })}
-                <path d={dataPath} fill="rgba(67,97,238,0.18)" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"/>
-                {dataPoints.map((p,i) => (
-                    <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill={axes[i].color} stroke="var(--bg)" strokeWidth="1.5"/>
-                ))}
-                {axes.map((ax,i) => {
-                    const lp = labelPt(i);
-                    const anchor = Math.abs(Math.cos(angleOf(i))) < 0.1 ? 'middle' : Math.cos(angleOf(i)) > 0 ? 'start' : 'end';
-                    const stat = stats.find(s => s.name === ax.key);
-                    const val  = stat ? stat.count : 0;
+                {axes.map((_,i)=>{const o=ptOf(i,1);return <line key={i} x1={cx} y1={cy} x2={o.x.toFixed(1)} y2={o.y.toFixed(1)} stroke="var(--border)" strokeWidth="1"/>;} )}
+                <path d={path} fill="rgba(67,97,238,0.15)" stroke="var(--accent)" strokeWidth="2"/>
+                {dataPts.map((p,i)=><circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="4" fill={axes[i].color} stroke="var(--bg)" strokeWidth="1.5"/>)}
+                {axes.map((ax,i)=>{
+                    const lp={x:cx+(R+18)*Math.cos(angOf(i)),y:cy+(R+18)*Math.sin(angOf(i))};
+                    const anchor=Math.abs(Math.cos(angOf(i)))<0.15?'middle':Math.cos(angOf(i))>0?'start':'end';
+                    const v=(stats.find(s=>s.name===ax.key)||{count:0}).count;
                     return (
                         <g key={i}>
-                            <text x={lp.x.toFixed(1)} y={(lp.y - 4).toFixed(1)} textAnchor={anchor}
-                                style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:9,fontWeight:700,textTransform:'uppercase'}}>{ax.label}</text>
-                            <text x={lp.x.toFixed(1)} y={(lp.y + 8).toFixed(1)} textAnchor={anchor}
-                                style={{fill:axes[i].color,fontFamily:'Space Mono',fontSize:10,fontWeight:700}}>{val}</text>
+                            <text x={lp.x.toFixed(1)} y={(lp.y-4).toFixed(1)} textAnchor={anchor} style={{fill:'var(--muted)',fontFamily:'DM Sans',fontSize:9,fontWeight:700,textTransform:'uppercase'}}>{ax.label}</text>
+                            <text x={lp.x.toFixed(1)} y={(lp.y+8).toFixed(1)} textAnchor={anchor} style={{fill:axes[i].color,fontFamily:'Space Mono',fontSize:10,fontWeight:700}}>{v}</text>
                         </g>
                     );
                 })}
-                <circle cx={cx} cy={cy} r="3" fill="var(--accent)" opacity="0.5"/>
             </svg>
         </div>
     );
 }
-const var_gold = '#f9c74f';
 
-/* ═══════════════════════════════════════════════════════════════
-   INTENSITY CHART
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ INTENSITY CHART ══════ */
 function IntensityChart({ events, totalTime }) {
-    const W = 560, H = 90;
-    const BUCKET = 5 * 60;
-    const gameMin = Math.max(totalTime, 90 * 60);
-    const numBuckets = Math.ceil(gameMin / BUCKET);
-
-    const atkBuckets = new Array(numBuckets).fill(0);
-    const defBuckets = new Array(numBuckets).fill(0);
-    const totBuckets = new Array(numBuckets).fill(0);
-
-    events.forEach(e => {
-        const b = Math.min(Math.floor(e.time / BUCKET), numBuckets - 1);
-        if (e.type === 'ataque') atkBuckets[b]++;
-        else defBuckets[b]++;
-        totBuckets[b]++;
-    });
-
-    const maxVal = Math.max(...totBuckets, 1);
-
-    const smooth = arr => arr.map((v, i) => {
-        const win = arr.slice(Math.max(0, i-1), i+2);
-        return win.reduce((a,b)=>a+b,0) / win.length;
-    });
-
-    const atkS = smooth(atkBuckets);
-    const defS = smooth(defBuckets);
-    const totS = smooth(totBuckets);
-
-    const xOf = i => (i / (numBuckets - 1)) * W;
-    const yOf = v => H - 8 - ((v / maxVal) * (H - 20));
-
-    const buildPath = (arr, closed = false) => {
-        if (arr.length === 0) return '';
-        const pts = arr.map((v, i) => [xOf(i), yOf(v)]);
-        let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
-        for (let i = 0; i < pts.length - 1; i++) {
-            const p0 = pts[Math.max(0, i-1)];
-            const p1 = pts[i];
-            const p2 = pts[i+1];
-            const p3 = pts[Math.min(pts.length-1, i+2)];
-            const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
-            const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
-            const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
-            const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
-            d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
-        }
-        if (closed) {
-            d += ` L${pts[pts.length-1][0].toFixed(1)},${H} L${pts[0][0].toFixed(1)},${H} Z`;
+    const W=560, H=80, BUCKET=5*60;
+    const gameMin=Math.max(totalTime,90*60);
+    const numB=Math.ceil(gameMin/BUCKET);
+    const atk=new Array(numB).fill(0), def=new Array(numB).fill(0), tot=new Array(numB).fill(0);
+    events.forEach(e=>{const b=Math.min(Math.floor(e.time/BUCKET),numB-1);if(e.type==='ataque')atk[b]++;else def[b]++;tot[b]++;});
+    const maxV=Math.max(...tot,1);
+    const smooth=a=>a.map((v,i)=>{const w=a.slice(Math.max(0,i-1),i+2);return w.reduce((x,y)=>x+y,0)/w.length;});
+    const [atkS,defS,totS]=[smooth(atk),smooth(def),smooth(tot)];
+    const xOf=i=>(i/(numB-1))*W, yOf=v=>H-6-((v/maxV)*(H-16));
+    const buildPath=arr=>{
+        const pts=arr.map((v,i)=>[xOf(i),yOf(v)]);
+        let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+        for(let i=0;i<pts.length-1;i++){
+            const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+            const c1x=p1[0]+(p2[0]-p0[0])/6,c1y=p1[1]+(p2[1]-p0[1])/6;
+            const c2x=p2[0]-(p3[0]-p1[0])/6,c2y=p2[1]-(p3[1]-p1[1])/6;
+            d+=` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
         }
         return d;
     };
-
-    const gradId1 = 'ig1', gradId2 = 'ig2', gradId3 = 'ig3';
-    const minLabels = [0, 15, 30, 45, 60, 75, 90];
-
     return (
-        <div style={{width:'100%',overflowX:'auto'}} className="no-scrollbar">
-            <svg viewBox={`0 0 ${W} ${H+10}`} style={{width:'100%',minWidth:280,height:'auto',display:'block'}}>
+        <div>
+            <svg viewBox={`0 0 ${W} ${H+10}`} style={{width:'100%',height:'auto',display:'block'}}>
                 <defs>
-                    <linearGradient id={gradId3} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4361ee" stopOpacity="0.25"/>
-                        <stop offset="100%" stopColor="#4361ee" stopOpacity="0"/>
-                    </linearGradient>
-                    <linearGradient id={gradId1} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2dc653" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="#2dc653" stopOpacity="0"/>
-                    </linearGradient>
-                    <linearGradient id={gradId2} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ef233c" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="#ef233c" stopOpacity="0"/>
+                    <linearGradient id="ig1" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#4361ee" stopOpacity="0.22"/><stop offset="100%" stopColor="#4361ee" stopOpacity="0"/>
                     </linearGradient>
                 </defs>
                 <line x1={W/2} y1="0" x2={W/2} y2={H} stroke="var(--border)" strokeWidth="1" strokeDasharray="4,4"/>
-                {totS.length > 1 && <path d={buildPath(totS, true)} fill={`url(#${gradId3})`}/>}
-                {totS.length > 1 && <path d={buildPath(totS)} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"/>}
-                {atkS.length > 1 && <path d={buildPath(atkS)} fill="none" stroke="var(--green)" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="5,3"/>}
-                {defS.length > 1 && <path d={buildPath(defS)} fill="none" stroke="var(--red)" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="3,4"/>}
-                {events.filter(e=>e.isGoal).map((e,i) => {
-                    const b = Math.min(Math.floor(e.time / BUCKET), numBuckets-1);
-                    const x = xOf(b);
-                    const y = yOf(totS[b]);
-                    return (
-                        <g key={i}>
-                            <circle cx={x.toFixed(1)} cy={y.toFixed(1)} r="5" fill="var(--gold)" stroke="var(--bg)" strokeWidth="1.5"/>
-                        </g>
-                    );
+                {tot.length>1&&<path d={buildPath(totS)+` L${xOf(numB-1).toFixed(1)},${H} L0,${H} Z`} fill="url(#ig1)"/>}
+                {tot.length>1&&<path d={buildPath(totS)} fill="none" stroke="var(--accent)" strokeWidth="2"/>}
+                {atk.length>1&&<path d={buildPath(atkS)} fill="none" stroke="var(--green)" strokeWidth="1.5" strokeDasharray="5,3"/>}
+                {def.length>1&&<path d={buildPath(defS)} fill="none" stroke="var(--red)" strokeWidth="1.5" strokeDasharray="3,4"/>}
+                {events.filter(e=>e.isGoal).map((e,i)=>{
+                    const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
+                    return <circle key={i} cx={xOf(b).toFixed(1)} cy={yOf(totS[b]).toFixed(1)} r="5" fill="var(--gold)" stroke="var(--bg)" strokeWidth="1.5"/>;
                 })}
-                {minLabels.map(m => {
-                    const x = (m / 90) * W;
-                    return (
-                        <g key={m}>
-                            <line x1={x.toFixed(1)} y1={H-2} x2={x.toFixed(1)} y2={H+2} stroke="var(--muted)" strokeWidth="1"/>
-                            <text x={x.toFixed(1)} y={H+10} textAnchor="middle"
-                                style={{fill:'var(--muted)',fontFamily:'Space Mono',fontSize:8}}>{m}'</text>
-                        </g>
-                    );
+                {[0,15,30,45,60,75,90].map(m=>{
+                    const x=(m/90)*W;
+                    return <g key={m}>
+                        <line x1={x.toFixed(1)} y1={H} x2={x.toFixed(1)} y2={H+4} stroke="var(--muted)" strokeWidth="1"/>
+                        <text x={x.toFixed(1)} y={H+10} textAnchor="middle" style={{fill:'var(--muted)',fontFamily:'Space Mono',fontSize:8}}>{m}'</text>
+                    </g>;
                 })}
                 <line x1="0" y1={H} x2={W} y2={H} stroke="var(--border)" strokeWidth="1"/>
             </svg>
-            <div style={{display:'flex',gap:16,justifyContent:'center',marginTop:10}}>
-                {[
-                    {color:'var(--accent)', label:'Total', dash:false},
-                    {color:'var(--green)',  label:'Ataque', dash:true},
-                    {color:'var(--red)',    label:'Defesa', dash:true},
-                    {color:'var(--gold)',   label:'Golos', dot:true},
-                ].map(l => (
-                    <div key={l.label} style={{display:'flex',alignItems:'center',gap:5}}>
-                        {l.dot
-                            ? <div style={{width:8,height:8,borderRadius:'50%',background:l.color}}/>
-                            : <svg width={20} height={8}><line x1="0" y1="4" x2="20" y2="4" stroke={l.color} strokeWidth="2" strokeDasharray={l.dash?"4,3":"none"}/></svg>
-                        }
-                        <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)'}}>{l.label}</span>
+            <div className="intensity-legend">
+                {[{c:'var(--accent)',l:'Total',d:false},{c:'var(--green)',l:'Ataque',d:true},{c:'var(--red)',l:'Defesa',d:true},{c:'var(--gold)',l:'Golos',dot:true}].map(x=>(
+                    <div key={x.l} className="legend-item">
+                        {x.dot?<div style={{width:8,height:8,borderRadius:'50%',background:x.c}}/>
+                              :<svg width={20} height={8}><line x1="0" y1="4" x2="20" y2="4" stroke={x.c} strokeWidth="2" strokeDasharray={x.d?"4,3":"none"}/></svg>}
+                        {x.l}
                     </div>
                 ))}
             </div>
@@ -528,67 +1016,61 @@ function IntensityChart({ events, totalTime }) {
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   TIMELINE
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ TIMELINE ══════════════ */
 function Timeline({ events, totalTime }) {
     const [hovered, setHovered] = useState(null);
     const displayTime = Math.max(totalTime, 90*60);
-    const THRESHOLD = 0.025;
+    const THRESH = 0.024;
     const clusters = [];
-    [...events].sort((a,b)=>a.time-b.time).forEach(ev => {
-        const pct = ev.time / displayTime;
-        const last = clusters[clusters.length-1];
-        if (last && Math.abs(last.pct-pct)<THRESHOLD) {
-            last.events.push(ev);
-            last.pct = last.events.reduce((s,e)=>s+e.time/displayTime,0)/last.events.length;
-        } else { clusters.push({pct, events:[ev]}); }
+    [...events].sort((a,b)=>a.time-b.time).forEach(ev=>{
+        const pct=ev.time/displayTime;
+        const last=clusters[clusters.length-1];
+        if(last&&Math.abs(last.pct-pct)<THRESH){ last.events.push(ev); last.pct=last.events.reduce((s,e)=>s+e.time/displayTime,0)/last.events.length; }
+        else clusters.push({pct,events:[ev]});
     });
-    const minutes = [15,30,45,60,75,90];
     return (
-        <div className="timeline-wrap">
+        <div>
             <div className="timeline-track">
-                <div className="timeline-half"/>
-                {minutes.map(m=>(
-                    <div key={m} className="tl-minute-mark" style={{left:`${(m*60/displayTime)*100}%`}}>
-                        <span className="tl-label-top">{m}'</span>
+                <div className="tl-half"/>
+                {[15,30,45,60,75].map(m=>(
+                    <div key={m} style={{position:'absolute',top:0,bottom:0,width:1,background:'rgba(255,255,255,0.04)',left:`${(m*60/displayTime)*100}%`}}>
+                        <span className="tl-min">{m}'</span>
                     </div>
                 ))}
-                {clusters.map((cluster, ci) => {
-                    if (cluster.events.length===1) {
-                        const e = cluster.events[0];
+                {clusters.map((cl,ci)=>{
+                    if(cl.events.length===1){
+                        const e=cl.events[0];
                         return (
-                            <div key={ci} className={`tl-event-dot ${e.isGoal?'goal':e.type}`} style={{left:`${cluster.pct*100}%`}}
+                            <div key={ci} className={`tl-dot ${e.isGoal?'ev-goal':e.type==='ataque'?'ev-ataque':'ev-defesa'}`}
+                                style={{left:`${cl.pct*100}%`}}
                                 onMouseEnter={()=>setHovered(ci)} onMouseLeave={()=>setHovered(null)}>
                                 <div className="tl-tooltip">{fmtMin(e.time)} {e.name}</div>
                             </div>
                         );
                     }
                     return (
-                        <div key={ci} className="tl-cluster" style={{left:`${cluster.pct*100}%`}}
+                        <div key={ci} style={{position:'absolute',left:`${cl.pct*100}%`,top:'50%',transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',gap:2,alignItems:'center',cursor:'pointer',zIndex:5}}
                             onMouseEnter={()=>setHovered(ci)} onMouseLeave={()=>setHovered(null)}>
-                            {cluster.events.slice(0,4).map((e,ei)=>(
-                                <div key={ei} className={`tl-event-dot ${e.isGoal?'goal':e.type}`}
-                                    style={{position:'relative',transform:'none',top:'auto',left:'auto',marginBottom:1}}/>
+                            {cl.events.slice(0,4).map((e,ei)=>(
+                                <div key={ei} className={`tl-dot ${e.isGoal?'ev-goal':e.type==='ataque'?'ev-ataque':'ev-defesa'}`}
+                                    style={{position:'relative',transform:'none',top:'auto',left:'auto'}}/>
                             ))}
-                            {hovered===ci && (
-                                <div style={{position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',zIndex:20,whiteSpace:'nowrap',minWidth:120}}>
-                                    {cluster.events.map((e,ei)=>(
-                                        <div key={ei} style={{fontSize:9,fontFamily:'Space Mono',color:'var(--text)',marginBottom:2}}>{fmtMin(e.time)} {e.name}</div>
-                                    ))}
+                            {hovered===ci&&(
+                                <div style={{position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',background:'var(--surface2)',border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px',zIndex:20,whiteSpace:'nowrap'}}>
+                                    {cl.events.map((e,ei)=><div key={ei} style={{fontSize:9,fontFamily:'Space Mono',color:'var(--text)',marginBottom:2}}>{fmtMin(e.time)} {e.name}</div>)}
                                 </div>
                             )}
                         </div>
                     );
                 })}
-                <span className="tl-period-label" style={{left:'25%'}}>1 Tempo</span>
-                <span className="tl-period-label" style={{left:'75%'}}>2 Tempo</span>
+                <span className="tl-period" style={{left:'25%'}}>1 Tempo</span>
+                <span className="tl-period" style={{left:'75%'}}>2 Tempo</span>
             </div>
-            <div style={{display:'flex',gap:16,marginTop:28,justifyContent:'center'}}>
-                {[{color:'var(--gold)',label:'Golo'},{color:'var(--accent)',label:'Ataque'},{color:'var(--red)',label:'Defesa'}].map(l=>(
-                    <div key={l.label} style={{display:'flex',alignItems:'center',gap:6}}>
-                        <div style={{width:8,height:8,borderRadius:'50%',background:l.color}}/>
-                        <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)'}}>{l.label}</span>
+            <div style={{display:'flex',gap:14,justifyContent:'center',marginTop:4}}>
+                {[{c:'var(--gold)',l:'Golo'},{c:'var(--accent)',l:'Ataque'},{c:'var(--red)',l:'Defesa'}].map(x=>(
+                    <div key={x.l} style={{display:'flex',alignItems:'center',gap:5}}>
+                        <div style={{width:8,height:8,borderRadius:'50%',background:x.c}}/>
+                        <span style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)'}}>{x.l}</span>
                     </div>
                 ))}
             </div>
@@ -596,559 +1078,241 @@ function Timeline({ events, totalTime }) {
     );
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   NATIVE PDF EXPORT  ← COMPLETAMENTE REESCRITO
-   Usa jsPDF puro: texto vectorial, barras, arcos, timeline.
-   Sem html2canvas → resultado nítido, seleccionável, leve.
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ PDF ═══════════════════ */
 function buildNativePDF(game) {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    // ── Paleta (RGB arrays para jsPDF)
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const C = {
-        bg:      [5,   8,  16],
-        surface: [13,  17,  23],
-        surface2:[22,  27,  34],
-        border:  [30,  37,  48],
-        accent:  [67,  97, 238],
-        green:   [45, 198,  83],
-        red:     [239, 35,  60],
-        gold:    [249,199,  79],
-        text:    [230,237, 243],
-        muted:   [110,118, 129],
-        white:   [255,255, 255],
+        bg:[5,8,16],surface:[13,17,23],surface2:[22,27,34],border:[30,37,48],
+        accent:[67,97,238],green:[45,198,83],red:[239,35,60],gold:[249,199,79],
+        text:[230,237,243],muted:[110,118,129],white:[255,255,255],
     };
-
-    const PW = 210, PH = 297;
-    const ML = 14, MR = 14, MT = 14;
-    const CW = PW - ML - MR;  // 182 mm content width
-    let y = MT;
-
-    // ── Helpers ─────────────────────────────────────
-    const setFill   = (c) => doc.setFillColor(...c);
-    const setStroke = (c) => doc.setDrawColor(...c);
-    const setTxt    = (c) => doc.setTextColor(...c);
-    const rect      = (x,yy,w,h,r=0) => { if(r>0) doc.roundedRect(x,yy,w,h,r,r,'F'); else doc.rect(x,yy,w,h,'F'); };
-    const strokeRect= (x,yy,w,h,r=0,lw=0.3) => { doc.setLineWidth(lw); if(r>0) doc.roundedRect(x,yy,w,h,r,r,'S'); else doc.rect(x,yy,w,h,'S'); };
-    const line      = (x1,y1,x2,y2,lw=0.3) => { doc.setLineWidth(lw); doc.line(x1,y1,x2,y2); };
-    const txt       = (s,x,yy,opts={}) => { doc.text(String(s),x,yy,opts); };
-    const newPage   = () => { doc.addPage(); y = MT; };
-    const checkPage = (needed=20) => { if(y+needed > PH-10) newPage(); };
-
-    // Helpers de cor "hex → rgb array"  (não precisamos, usando C directamente)
-
-    // ── Helper: desenhar barra horizontal de progresso ─
-    // x, yy: canto sup-esq  w: largura total  h: altura  val 0-1  color
-    const progressBar = (x, yy, w, h, ratio, colorFill, rounding=1) => {
-        setFill(C.surface2);  rect(x, yy, w, h, rounding);
-        if(ratio>0) { setFill(colorFill); rect(x, yy, Math.max(w*ratio, 1), h, rounding); }
+    const PW=210,PH=297,ML=14,MR=14,MT=14,CW=182;
+    let y=MT;
+    const sf=(c)=>doc.setFillColor(...c);
+    const ss=(c)=>doc.setDrawColor(...c);
+    const st=(c)=>doc.setTextColor(...c);
+    const rct=(x,yy,w,h,r=0)=>{if(r>0)doc.roundedRect(x,yy,w,h,r,r,'F');else doc.rect(x,yy,w,h,'F');};
+    const ln=(x1,y1,x2,y2,lw=0.3)=>{doc.setLineWidth(lw);doc.line(x1,y1,x2,y2);};
+    const txt=(s,x,yy,o={})=>doc.text(String(s),x,yy,o);
+    const newPage=()=>{doc.addPage();y=MT;sf(C.bg);rct(0,0,PW,PH);};
+    const checkPage=(n=20)=>{if(y+n>PH-10)newPage();};
+    const secLabel=(label)=>{
+        st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','bold');
+        txt(label,ML,y);
+        ss(C.border);doc.setLineWidth(0.2);
+        const tw=doc.getTextWidth(label);
+        doc.line(ML+tw+2,y-0.5,ML+CW,y-0.5);
+        y+=5;
     };
-
-    // ── Helper: arco (donut) ─
-    // jsPDF não tem arco nativo nítido, simulamos com linhas densas (polyline circular)
-    const drawArc = (cx, cy, r, startDeg, endDeg, color, lw=2) => {
-        if(endDeg <= startDeg) return;
-        doc.setDrawColor(...color);
-        doc.setLineWidth(lw);
-        const steps = Math.max(2, Math.round((endDeg-startDeg)/2));
-        const pts = [];
-        for(let i=0; i<=steps; i++) {
-            const ang = (startDeg + (endDeg-startDeg)*(i/steps)) * Math.PI/180;
-            pts.push([cx + r*Math.cos(ang), cy + r*Math.sin(ang)]);
-        }
-        for(let i=0;i<pts.length-1;i++) doc.line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);
+    const drawArc=(cx,cy,r,s,e,color,lw=2)=>{
+        if(e<=s)return;
+        doc.setDrawColor(...color);doc.setLineWidth(lw);
+        const steps=Math.max(2,Math.round((e-s)/2));
+        const pts=[];
+        for(let i=0;i<=steps;i++){const a=(s+(e-s)*(i/steps))*Math.PI/180;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+        for(let i=0;i<pts.length-1;i++)doc.line(pts[i][0],pts[i][1],pts[i+1][0],pts[i+1][1]);
     };
-
-    const drawDonut = (cx, cy, r, ratio, color, valStr, labelStr) => {
-        // fundo cinza
-        drawArc(cx, cy, r, -90, 270, C.border, 2.5);
-        // arco colorido
-        if(ratio>0) drawArc(cx, cy, r, -90, -90 + 360*Math.min(ratio,1), color, 2.5);
-        // valor central
-        setTxt(C.text); doc.setFontSize(9); doc.setFont('helvetica','bold');
-        txt(valStr, cx, cy+1.5, {align:'center'});
-        // label abaixo
-        setTxt(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','normal');
-        txt(labelStr.toUpperCase(), cx, cy+r+5, {align:'center'});
+    const drawDonut=(cx,cy,r,ratio,color,val,label)=>{
+        drawArc(cx,cy,r,-90,270,C.border,2.5);
+        if(ratio>0)drawArc(cx,cy,r,-90,-90+360*Math.min(ratio,1),color,2.5);
+        st(C.text);doc.setFontSize(9);doc.setFont('helvetica','bold');txt(val,cx,cy+1.5,{align:'center'});
+        st(C.muted);doc.setFontSize(5.5);doc.setFont('helvetica','normal');txt(label.toUpperCase(),cx,cy+r+5,{align:'center'});
     };
-
-    // ── Helper: spider/radar simplificado (hexágono)
-    const drawRadar = (cx, cy, R, stats) => {
-        const axes = [
-            { key:'Golo',         label:'GOLOS',    max:5  },
-            { key:'Remate',       label:'REMATES',  max:20 },
-            { key:'Rem. Enquad.', label:'ENQUAD.',  max:12 },
-            { key:'Cantos',       label:'CANTOS',   max:10 },
-            { key:'Recuper.',     label:'RECUPER.', max:15 },
-            { key:'Faltas',       label:'FALTAS',   max:15 },
-        ];
-        const N = axes.length;
-        const ang = i => (2*Math.PI*i/N) - Math.PI/2;
-
-        // rings
-        [0.25,0.5,0.75,1].forEach(rv => {
-            const pts = axes.map((_,i)=>({x: cx+R*rv*Math.cos(ang(i)), y: cy+R*rv*Math.sin(ang(i))}));
-            setStroke(C.border); doc.setLineWidth(0.2);
-            for(let i=0;i<N;i++) doc.line(pts[i].x,pts[i].y,pts[(i+1)%N].x,pts[(i+1)%N].y);
-        });
-        // spokes
-        axes.forEach((_,i)=>{
-            setStroke(C.border); doc.setLineWidth(0.2);
-            doc.line(cx,cy,cx+R*Math.cos(ang(i)),cy+R*Math.sin(ang(i)));
-        });
-        // data polygon
-        const vals = axes.map((ax,i)=>{
-            const s=stats.find(s=>s.name===ax.key);
-            return s?Math.min(s.count/ax.max,1):0;
-        });
-        const dataPts = vals.map((v,i)=>({x:cx+R*v*Math.cos(ang(i)),y:cy+R*v*Math.sin(ang(i))}));
-        // fill (semi-transparent via alpha trick: draw multiple times with low opacity → just use light stroke+fill)
-        doc.setFillColor(67,97,238); doc.setGState(doc.GState({opacity:0.18}));
-        doc.setDrawColor(67,97,238); doc.setLineWidth(0.5);
-        // polygon fill
-        const xPts = dataPts.map(p=>p.x);
-        const yPts = dataPts.map(p=>p.y);
-        // jsPDF polygon
-        if(typeof doc.polygon === 'function') {
-            const ptsArr = dataPts.map(p=>[p.x,p.y]);
-            doc.setGState(doc.GState({opacity:0.18}));
-            doc.polygon(ptsArr,'FD');
-        } else {
-            // fallback: draw outline only
-            doc.setGState(new doc.GState({opacity:1}));
-            for(let i=0;i<N;i++) doc.line(dataPts[i].x,dataPts[i].y,dataPts[(i+1)%N].x,dataPts[(i+1)%N].y);
-        }
-        doc.setGState(new doc.GState({opacity:1}));
-        // dots + labels
-        axes.forEach((ax,i)=>{
-            const s=stats.find(s=>s.name===ax.key);
-            const v=s?s.count:0;
-            // dot
-            setFill(C.accent); doc.circle(dataPts[i].x,dataPts[i].y,0.8,'F');
-            // label
-            const lx = cx+(R+6)*Math.cos(ang(i));
-            const ly = cy+(R+6)*Math.sin(ang(i));
-            const align = Math.abs(Math.cos(ang(i)))<0.15?'center':Math.cos(ang(i))>0?'left':'right';
-            setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
-            txt(ax.label, lx, ly-1, {align});
-            setTxt(C.accent); doc.setFontSize(6);
-            txt(String(v), lx, ly+3, {align});
-        });
-    };
-
-    // ── Helper: intensity sparkline (polyline) ─
-    const drawIntensityLine = (x0, yBase, w, h, events, totalSecs) => {
-        const BUCKET = 5*60;
-        const gameMin = Math.max(totalSecs, 90*60);
-        const numB = Math.ceil(gameMin/BUCKET);
-        const atkB = new Array(numB).fill(0);
-        const defB = new Array(numB).fill(0);
-        const totB = new Array(numB).fill(0);
+    const drawTimeline=(x0,yLine,w,events,totalSecs)=>{
+        const displayTime=Math.max(totalSecs,90*60),h=5;
+        sf(C.surface2);rct(x0,yLine,w,h,1);
+        ss(C.border);doc.setLineWidth(0.2);doc.setLineDashPattern([1,1],0);
+        doc.line(x0+w/2,yLine,x0+w/2,yLine+h);doc.setLineDashPattern([],0);
         events.forEach(e=>{
-            const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
-            if(e.type==='ataque') atkB[b]++; else defB[b]++;
-            totB[b]++;
-        });
-        const maxV = Math.max(...totB,1);
-        const smooth = arr=>arr.map((v,i)=>{
-            const win=arr.slice(Math.max(0,i-1),i+2);
-            return win.reduce((a,b)=>a+b,0)/win.length;
-        });
-        const totS=smooth(totB), atkS=smooth(atkB), defS=smooth(defB);
-        const xOf=i=>x0+(i/(numB-1))*w;
-        const yOf=v=>yBase-(v/maxV)*h;
-
-        // HT line
-        setStroke(C.border); doc.setLineWidth(0.2); doc.setLineDashPattern([1,1],0);
-        doc.line(x0+w/2, yBase-h, x0+w/2, yBase);
-        doc.setLineDashPattern([],0);
-
-        // baseline
-        setStroke(C.border); doc.setLineWidth(0.3);
-        doc.line(x0,yBase,x0+w,yBase);
-
-        // total line (accent)
-        doc.setDrawColor(...C.accent); doc.setLineWidth(0.6);
-        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(totS[i]),xOf(i+1),yOf(totS[i+1]));
-
-        // ataque dashed (green)
-        doc.setDrawColor(...C.green); doc.setLineWidth(0.4);
-        doc.setLineDashPattern([1.5,1],0);
-        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(atkS[i]),xOf(i+1),yOf(atkS[i+1]));
-
-        // defesa dashed (red)
-        doc.setDrawColor(...C.red); doc.setLineWidth(0.4);
-        doc.setLineDashPattern([1,1.5],0);
-        for(let i=0;i<numB-1;i++) doc.line(xOf(i),yOf(defS[i]),xOf(i+1),yOf(defS[i+1]));
-
-        doc.setLineDashPattern([],0);
-
-        // goal dots
-        events.filter(e=>e.isGoal).forEach(e=>{
-            const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
-            const gx=xOf(b), gy=yOf(totS[b]);
-            setFill(C.gold); doc.circle(gx,gy,1.2,'F');
-        });
-
-        // minute labels
-        [0,15,30,45,60,75,90].forEach(m=>{
-            const mx=x0+(m/90)*w;
-            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
-            txt(`${m}'`,mx,yBase+3.5,{align:'center'});
-        });
-
-        // legend
-        const lx=x0, ly=yBase+7;
-        const legends=[
-            {color:C.accent,label:'Total',dash:false},
-            {color:C.green,label:'Ataque',dash:true},
-            {color:C.red,label:'Defesa',dash:true},
-            {color:C.gold,label:'Golos',dot:true},
-        ];
-        legends.forEach((l,i)=>{
-            const lxi=lx+i*22;
-            if(l.dot){
-                setFill(l.color); doc.circle(lxi+1.5,ly-0.5,1,'F');
-            } else {
-                doc.setDrawColor(...l.color); doc.setLineWidth(0.5);
-                if(l.dash) doc.setLineDashPattern([1,0.8],0);
-                doc.line(lxi,ly-0.5,lxi+4,ly-0.5);
-                doc.setLineDashPattern([],0);
-            }
-            setTxt(C.muted); doc.setFontSize(4); doc.setFont('helvetica','bold');
-            txt(l.label.toUpperCase(),lxi+5.5,ly,{align:'left'});
-        });
-    };
-
-    // ── Helper: timeline bar ─
-    const drawTimeline = (x0, yLine, w, events, totalSecs) => {
-        const displayTime = Math.max(totalSecs, 90*60);
-        const h=5;
-        // track
-        setFill(C.surface2); rect(x0,yLine,w,h,1);
-        // HT divider
-        setStroke(C.border); doc.setLineWidth(0.2);
-        doc.setLineDashPattern([1,1],0);
-        doc.line(x0+w/2,yLine,x0+w/2,yLine+h);
-        doc.setLineDashPattern([],0);
-        // events
-        events.forEach(e=>{
-            const pct=e.time/displayTime;
-            const ex=x0+pct*w;
+            const pct=e.time/displayTime,ex=x0+pct*w;
             const color=e.isGoal?C.gold:e.type==='ataque'?C.accent:C.red;
-            setFill(color);
-            const r=e.isGoal?1.8:1.3;
-            doc.circle(ex,yLine+h/2,r,'F');
+            sf(color);doc.circle(ex,yLine+h/2,e.isGoal?1.8:1.3,'F');
         });
-        // minute ticks
-        [15,30,45,60,75].forEach(m=>{
-            const mx=x0+(m*60/displayTime)*w;
-            setStroke(C.muted); doc.setLineWidth(0.2);
-            doc.line(mx,yLine+h-0.5,mx,yLine+h);
-        });
-        // period labels
-        setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
+        st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');
         txt('1 Tempo',x0+w*0.25,yLine+h+3.5,{align:'center'});
         txt('2 Tempo',x0+w*0.75,yLine+h+3.5,{align:'center'});
-        // legend dots
-        const lx=x0, ly=yLine+h+8;
-        [{color:C.gold,label:'Golo'},{color:C.accent,label:'Ataque'},{color:C.red,label:'Defesa'}].forEach((l,i)=>{
-            const lxi=lx+i*25;
-            setFill(l.color); doc.circle(lxi+1.5,ly-0.8,1,'F');
-            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
-            txt(l.label.toUpperCase(),lxi+4,ly,{align:'left'});
+        [{c:C.gold,l:'Golo'},{c:C.accent,l:'Ataque'},{c:C.red,l:'Defesa'}].forEach((x,i)=>{
+            const lxi=x0+i*22;sf(x.c);doc.circle(lxi+1.5,yLine+h+8,1,'F');
+            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','bold');txt(x.l.toUpperCase(),lxi+4,yLine+h+8.5);
         });
     };
+    const drawIntensity=(x0,yBase,w,h,events,totalSecs)=>{
+        const BUCKET=5*60,gameMin=Math.max(totalSecs,90*60),numB=Math.ceil(gameMin/BUCKET);
+        const atk=new Array(numB).fill(0),def=new Array(numB).fill(0),tot=new Array(numB).fill(0);
+        events.forEach(e=>{const b=Math.min(Math.floor(e.time/BUCKET),numB-1);if(e.type==='ataque')atk[b]++;else def[b]++;tot[b]++;});
+        const maxV=Math.max(...tot,1);
+        const smooth=a=>a.map((v,i)=>{const win=a.slice(Math.max(0,i-1),i+2);return win.reduce((x,y)=>x+y,0)/win.length;});
+        const [atkS,defS,totS]=[smooth(atk),smooth(def),smooth(tot)];
+        const xOf=i=>x0+(i/(numB-1))*w,yOf=v=>yBase-(v/maxV)*h;
+        ss(C.border);doc.setLineWidth(0.2);doc.setLineDashPattern([1,1],0);
+        doc.line(x0+w/2,yBase-h,x0+w/2,yBase);doc.setLineDashPattern([],0);
+        ss(C.border);doc.setLineWidth(0.3);doc.line(x0,yBase,x0+w,yBase);
+        doc.setDrawColor(...C.accent);doc.setLineWidth(0.6);
+        for(let i=0;i<numB-1;i++)doc.line(xOf(i),yOf(totS[i]),xOf(i+1),yOf(totS[i+1]));
+        doc.setDrawColor(...C.green);doc.setLineWidth(0.4);doc.setLineDashPattern([1.5,1],0);
+        for(let i=0;i<numB-1;i++)doc.line(xOf(i),yOf(atkS[i]),xOf(i+1),yOf(atkS[i+1]));
+        doc.setDrawColor(...C.red);doc.setLineWidth(0.4);doc.setLineDashPattern([1,1.5],0);
+        for(let i=0;i<numB-1;i++)doc.line(xOf(i),yOf(defS[i]),xOf(i+1),yOf(defS[i+1]));
+        doc.setLineDashPattern([],0);
+        events.filter(e=>e.isGoal).forEach(e=>{
+            const b=Math.min(Math.floor(e.time/BUCKET),numB-1);
+            sf(C.gold);doc.circle(xOf(b),yOf(totS[b]),1.2,'F');
+        });
+        [0,15,30,45,60,75,90].forEach(m=>{
+            const mx=x0+(m/90)*w;
+            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(`${m}'`,mx,yBase+3.5,{align:'center'});
+        });
+    };
+    const hexToRgb=hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)];
 
-    // ════════════════════════════════════════════════
-    // PÁGINA 1 – HEADER + KPIs + DISTRIBUIÇÃO + RADAR + DONUTS
-    // ════════════════════════════════════════════════
+    const g=game;
+    const golos=g.stats.find(s=>s.name==='Golo')?.count||0;
+    const sofr=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+    const remates=g.stats.find(s=>s.name==='Remate')?.count||0;
+    const ef=remates>0?((golos/remates)*100).toFixed(1):'0.0';
+    const totalAtk=g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
+    const totalDef=g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
+    const remEnq=g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0;
+    const recuper=g.stats.find(s=>s.name==='Recuper.')?.count||0;
+    const remConc=g.stats.find(s=>s.name==='Rem. Conc.')?.count||0;
 
-    const g = game;
-    const golos   = g.stats.find(s=>s.name==='Golo')?.count||0;
-    const sofr    = g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-    const remates = g.stats.find(s=>s.name==='Remate')?.count||0;
-    const ef      = remates>0?((golos/remates)*100).toFixed(1):'0.0';
-    const totalAtk= g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
-    const totalDef= g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
-    const remEnq  = g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0;
-    const recuper = g.stats.find(s=>s.name==='Recuper.')?.count||0;
-    const remConc = g.stats.find(s=>s.name==='Rem. Conc.')?.count||0;
+    sf(C.bg);rct(0,0,PW,PH);
+    sf(C.accent);rct(0,0,PW,1.5);
+    y=MT+2;
+    st(C.muted);doc.setFontSize(6);doc.setFont('helvetica','bold');txt('RELATORIO DE JOGO',ML,y);y+=6;
+    st(C.accent);doc.setFontSize(24);doc.setFont('helvetica','bold');txt(g.opponent.toUpperCase(),ML,y);y+=5;
+    st(C.muted);doc.setFontSize(7);doc.setFont('helvetica','normal');txt(`${g.date}   |   ${fmt(g.time)}   |   SoccerAnalyst Pro`,ML,y);y+=3;
+    ss(C.border);ln(ML,y,ML+CW,y,0.3);y+=5;
 
-    // ── Fundo página ──────────────────────────────
-    setFill(C.bg); rect(0,0,PW,PH);
-
-    // ── Barra topo accent ─────────────────────────
-    setFill(C.accent); rect(0,0,PW,1.5);
-
-    // ── "RELATÓRIO DE JOGO" label ─────────────────
-    y = MT + 2;
-    setTxt(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
-    txt('RELATORIO DE JOGO', ML, y);
-    y += 6;
-
-    // ── Nome adversário ───────────────────────────
-    setTxt(C.accent); doc.setFontSize(24); doc.setFont('helvetica','bold');
-    txt(g.opponent.toUpperCase(), ML, y);
-    y += 5;
-
-    // ── Data + tempo ──────────────────────────────
-    setTxt(C.muted); doc.setFontSize(7); doc.setFont('helvetica','normal');
-    txt(`${g.date}   |   ${fmt(g.time)}   |   SoccerAnalyst Pro`, ML, y);
-    y += 3;
-
-    // ── Linha separadora ──────────────────────────
-    setStroke(C.border); line(ML, y, ML+CW, y, 0.3);
-    y += 5;
-
-    // ── KPI BOXES (4 em linha) ────────────────────
-    const kpis = [
-        {val:golos,    label:'GOLOS',   sub:'marcados', color:C.green},
-        {val:sofr,     label:'SOFR.',   sub:'sofridos',  color:C.red},
-        {val:remates,  label:'REMATES', sub:'total',     color:C.accent},
-        {val:`${ef}%`, label:'EFICACIA',sub:'golo/rem',  color:C.gold},
-    ];
-    const kW=(CW-9)/4, kH=20;
+    const kpis=[{val:golos,label:'GOLOS',sub:'marcados',color:C.green},{val:sofr,label:'SOFR.',sub:'sofridos',color:C.red},{val:remates,label:'REMATES',sub:'total',color:C.accent},{val:`${ef}%`,label:'EFICACIA',sub:'golo/rem',color:C.gold}];
+    const kW=(CW-9)/4,kH=20;
     kpis.forEach((k,i)=>{
         const kx=ML+i*(kW+3);
-        setFill(C.surface); rect(kx,y,kW,kH,2);
-        setStroke(k.color); doc.setLineWidth(0.4); doc.setDrawColor(...k.color);
-        doc.roundedRect(kx,y,kW,kH,2,2,'S');
-        // valor grande
-        setTxt(k.color); doc.setFontSize(18); doc.setFont('helvetica','bold');
-        txt(String(k.val), kx+kW/2, y+11, {align:'center'});
-        // label
-        setTxt(C.muted); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-        txt(k.label, kx+kW/2, y+16, {align:'center'});
-        // sub
-        doc.setFontSize(4.5); doc.setFont('helvetica','normal');
-        txt(k.sub, kx+kW/2, y+19, {align:'center'});
+        sf(C.surface);rct(kx,y,kW,kH,2);
+        doc.setDrawColor(...k.color);doc.setLineWidth(0.4);doc.roundedRect(kx,y,kW,kH,2,2,'S');
+        st(k.color);doc.setFontSize(18);doc.setFont('helvetica','bold');txt(String(k.val),kx+kW/2,y+11,{align:'center'});
+        st(C.muted);doc.setFontSize(5.5);doc.setFont('helvetica','bold');txt(k.label,kx+kW/2,y+16,{align:'center'});
+        doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(k.sub,kx+kW/2,y+19,{align:'center'});
     });
-    y += kH + 6;
+    y+=kH+6;
 
-    // ── DISTRIBUIÇÃO ATAQUE/DEFESA ────────────────
-    const secLabel = (label) => {
-        setTxt(C.muted); doc.setFontSize(6); doc.setFont('helvetica','bold');
-        txt(label, ML, y);
-        setStroke(C.border); line(ML+doc.getTextWidth(label)+2, y-0.5, ML+CW, y-0.5, 0.2);
-        y += 4;
-    };
     secLabel('DISTRIBUICAO ATAQUE / DEFESA');
+    const total=totalAtk+totalDef,pAtk=total>0?(totalAtk/total):0.5;
+    sf(C.accent);rct(ML,y,CW*pAtk,5,1);
+    sf(C.red);rct(ML+CW*pAtk,y,CW*(1-pAtk),5,1);
+    st(C.white);doc.setFontSize(5);doc.setFont('helvetica','bold');
+    if(pAtk>0.05)txt(String(totalAtk),ML+CW*pAtk-4,y+3.5,{align:'right'});
+    if((1-pAtk)>0.05)txt(String(totalDef),ML+CW*pAtk+4,y+3.5,{align:'left'});
+    y+=5+3;
+    st(C.accent);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(`ATAQUE (${totalAtk})`,ML,y);
+    st(C.red);txt(`DEFESA (${totalDef})`,ML+CW,y,{align:'right'});y+=6;
 
-    const total=totalAtk+totalDef;
-    const pAtk=total>0?(totalAtk/total):0.5;
-    const stackH=5, stackY=y;
-    // ataque (left)
-    setFill(C.accent); rect(ML, stackY, CW*pAtk, stackH, 1);
-    // defesa (right)
-    setFill(C.red); rect(ML+CW*pAtk, stackY, CW*(1-pAtk), stackH, 1);
-    // values inside
-    setTxt(C.white); doc.setFontSize(5); doc.setFont('helvetica','bold');
-    if(pAtk>0.05) txt(String(totalAtk), ML+CW*pAtk-4, stackY+3.5, {align:'right'});
-    if((1-pAtk)>0.05) txt(String(totalDef), ML+CW*pAtk+4, stackY+3.5, {align:'left'});
-    y += stackH+3;
-    // labels
-    setTxt(C.accent); doc.setFontSize(5); doc.setFont('helvetica','bold');
-    txt(`ATAQUE (${totalAtk})`, ML, y);
-    setTxt(C.red);
-    txt(`DEFESA (${totalDef})`, ML+CW, y, {align:'right'});
-    y += 6;
-
-    // ── RADAR + DONUTS (lado a lado) ──────────────
     secLabel('RADAR DE PERFORMANCE   /   INDICADORES');
+    const radarH=48,colL=ML,colR=ML+CW/2+2,colW=CW/2-2;
+    sf(C.surface);rct(colL,y,colW,radarH,2);
+    const rcx=colL+colW/2,rcy=y+radarH/2,rR=colW*0.28;
+    const axes2=[{key:'Golo',max:5},{key:'Remate',max:20},{key:'Rem. Enquad.',max:12},{key:'Cantos',max:10},{key:'Recuper.',max:15},{key:'Faltas',max:15}];
+    const N2=axes2.length,ang2=i=>(2*Math.PI*i/N2)-Math.PI/2;
+    const pt2=(i,rv)=>({x:rcx+rR*rv*Math.cos(ang2(i)),y:rcy+rR*rv*Math.sin(ang2(i))});
+    [0.25,0.5,0.75,1].forEach(rv=>{const pts=axes2.map((_,i)=>pt2(i,rv));ss(C.border);doc.setLineWidth(0.2);for(let i=0;i<N2;i++)doc.line(pts[i].x,pts[i].y,pts[(i+1)%N2].x,pts[(i+1)%N2].y);});
+    axes2.forEach((_,i)=>{const o=pt2(i,1);ss(C.border);doc.setLineWidth(0.2);doc.line(rcx,rcy,o.x,o.y);});
+    const dpts=axes2.map((ax,i)=>{const s=g.stats.find(s=>s.name===ax.key);const v=s?Math.min(s.count/ax.max,1):0;return pt2(i,v);});
+    doc.setDrawColor(...C.accent);doc.setLineWidth(0.5);
+    for(let i=0;i<N2;i++)doc.line(dpts[i].x,dpts[i].y,dpts[(i+1)%N2].x,dpts[(i+1)%N2].y);
+    sf(C.accent);dpts.forEach(p=>doc.circle(p.x,p.y,0.8,'F'));
+    axes2.forEach((ax,i)=>{
+        const lx=rcx+(rR+5)*Math.cos(ang2(i)),ly=rcy+(rR+5)*Math.sin(ang2(i));
+        const align=Math.abs(Math.cos(ang2(i)))<0.15?'center':Math.cos(ang2(i))>0?'left':'right';
+        const s=g.stats.find(s=>s.name===ax.key);const v=s?s.count:0;
+        st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','bold');txt(ax.key.toUpperCase().substring(0,8),lx,ly-1,{align});
+        st(C.accent);doc.setFontSize(5.5);txt(String(v),lx,ly+3,{align});
+    });
+    sf(C.surface);rct(colR,y,colW,radarH,2);
+    const donuts=[{val:golos,max:Math.max(remates,1),color:C.green,label:'CONVERSAO'},{val:remEnq,max:Math.max(remates,1),color:C.accent,label:'ENQUADRAM.'},{val:recuper,max:Math.max(totalDef,1),color:C.gold,label:'RECUPERACAO'},{val:sofr,max:Math.max(remConc,1),color:C.red,label:'SOFR./CONC.'}];
+    donuts.forEach((d,i)=>{const col=i%2,row=Math.floor(i/2);const dcx=colR+col*(colW/2)+colW/4;const dcy=y+row*(radarH/2)+radarH/4+1;drawDonut(dcx,dcy,6,d.max>0?Math.min(d.val/d.max,1):0,d.color,String(d.val),d.label);});
+    y+=radarH+7;
 
-    const radarH=48;
-    const colL=ML, colR=ML+CW/2+2, colHalfW=CW/2-2;
+    checkPage(38);secLabel('INTENSIDADE POR MINUTO');
+    const intH=20;sf(C.surface);rct(ML,y,CW,intH+14,2);
+    drawIntensity(ML+4,y+intH,CW-8,intH-2,g.events,g.time);y+=intH+18;
 
-    // Radar (esquerda)
-    {
-        const rcx=colL+colHalfW/2, rcy=y+radarH/2, rR=colHalfW*0.28;
-        setFill(C.surface); rect(colL, y, colHalfW, radarH, 2);
-        drawRadar(rcx, rcy, rR, g.stats);
-    }
-
-    // Donuts 2×2 (direita)
-    {
-        setFill(C.surface); rect(colR, y, colHalfW, radarH, 2);
-        const dW=colHalfW/2, dH=radarH/2;
-        const donuts=[
-            {val:golos,  max:Math.max(remates,1), color:C.green, label:'Conversao',     sub:'Golos'},
-            {val:remEnq, max:Math.max(remates,1), color:C.accent,label:'Enquadramento', sub:'Remates'},
-            {val:recuper,max:Math.max(totalDef,1),color:C.gold,  label:'Recuperacao',   sub:'de Bola'},
-            {val:sofr,   max:Math.max(remConc,1), color:C.red,   label:'Sofr./Conc.',   sub:'Golos'},
-        ];
-        donuts.forEach((d,i)=>{
-            const col=i%2, row=Math.floor(i/2);
-            const dcx=colR+col*dW+dW/2;
-            const dcy=y+row*dH+dH/2+1;
-            const ratio=d.max>0?Math.min(d.val/d.max,1):0;
-            drawDonut(dcx, dcy, 6, ratio, d.color, String(d.val), d.label);
-        });
-    }
-    y += radarH+7;
-
-    // ── INTENSIDADE POR MINUTO ────────────────────
-    checkPage(38);
-    secLabel('INTENSIDADE POR MINUTO');
-    const intH=20;
-    setFill(C.surface); rect(ML, y, CW, intH+14, 2);
-    drawIntensityLine(ML+4, y+intH, CW-8, intH-2, g.events, g.time);
-    y += intH+18;
-
-    // ════════════════════════════════════════════════
-    // SECÇÃO: BARRAS ATAQUE + DEFESA
-    // ════════════════════════════════════════════════
-    checkPage(50);
-    secLabel('ESTATISTICAS DETALHADAS');
-
-    const atkStats=g.stats.filter(s=>s.type==='ataque');
-    const defStats=g.stats.filter(s=>s.type==='defesa');
-    const maxRows=Math.max(atkStats.length,defStats.length);
-    const bH=5.5, bGap=1.5;
-    const bColW=(CW-6)/2;
-    const bSectionH=maxRows*(bH+bGap)+10;
-
-    // col headers
-    setFill(C.surface); rect(ML,y,bColW,bSectionH,2); rect(ML+bColW+6,y,bColW,bSectionH,2);
-    setTxt(C.accent); doc.setFontSize(6); doc.setFont('helvetica','bold');
-    txt('ATAQUE', ML+bColW/2, y+4, {align:'center'});
-    setTxt(C.red);
-    txt('DEFESA', ML+bColW+6+bColW/2, y+4, {align:'center'});
-    y += 7;
-
+    checkPage(50);secLabel('ESTATISTICAS DETALHADAS');
+    const atkStats=g.stats.filter(s=>s.type==='ataque'),defStats=g.stats.filter(s=>s.type==='defesa');
+    const maxRows=Math.max(atkStats.length,defStats.length),bH=5.5,bGap=1.5,bColW=(CW-6)/2,bSectionH=maxRows*(bH+bGap)+10;
+    sf(C.surface);rct(ML,y,bColW,bSectionH,2);rct(ML+bColW+6,y,bColW,bSectionH,2);
+    st(C.accent);doc.setFontSize(6);doc.setFont('helvetica','bold');txt('ATAQUE',ML+bColW/2,y+4,{align:'center'});
+    st(C.red);txt('DEFESA',ML+bColW+6+bColW/2,y+4,{align:'center'});y+=7;
     const atkC=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
     const defC=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
-
-    const hexToRgb = hex => {
-        const r=parseInt(hex.slice(1,3),16);
-        const g=parseInt(hex.slice(3,5),16);
-        const b=parseInt(hex.slice(5,7),16);
-        return [r,g,b];
-    };
-
-    const drawBarList = (stats, cx, colors) => {
-        const maxV=Math.max(...stats.map(s=>s.count),1);
-        const labelW=22, barAreaW=bColW-labelW-10, vW=8;
+    const drawBars=(stats,cx,colors)=>{
+        const maxV=Math.max(...stats.map(s=>s.count),1),lW=22,bAW=bColW-lW-10;
         stats.forEach((s,i)=>{
-            const by=y+i*(bH+bGap);
-            const ratio=s.count/maxV;
-            const rgb=hexToRgb(colors[i%colors.length]);
-            // label
-            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
-            txt(s.name.toUpperCase().substring(0,12), cx+labelW-1, by+bH-1.2, {align:'right'});
-            // bar bg
-            setFill(C.bg); rect(cx+labelW, by, barAreaW, bH, 0.8);
-            // bar fill
-            if(ratio>0){ doc.setFillColor(...rgb); rect(cx+labelW, by, Math.max(barAreaW*ratio,1), bH, 0.8); }
-            // value
-            setTxt(C.text); doc.setFontSize(4.5); doc.setFont('helvetica','bold');
-            txt(String(s.count), cx+labelW+barAreaW+2, by+bH-1.2);
+            const by=y+i*(bH+bGap),ratio=s.count/maxV,rgb=hexToRgb(colors[i%colors.length]);
+            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(s.name.toUpperCase().substring(0,12),cx+lW-1,by+bH-1.2,{align:'right'});
+            sf(C.bg);rct(cx+lW,by,bAW,bH,0.8);
+            if(ratio>0){doc.setFillColor(...rgb);rct(cx+lW,by,Math.max(bAW*ratio,1),bH,0.8);}
+            st(C.text);doc.setFontSize(4.5);doc.setFont('helvetica','bold');txt(String(s.count),cx+lW+bAW+2,by+bH-1.2);
         });
     };
+    drawBars(atkStats,ML+2,atkC);drawBars(defStats,ML+bColW+8,defC);
+    y+=maxRows*(bH+bGap)+6;
 
-    drawBarList(atkStats, ML+2, atkC);
-    drawBarList(defStats, ML+bColW+8, defC);
-    y += maxRows*(bH+bGap)+6;
-
-    // ════════════════════════════════════════════════
-    // SECÇÃO: TIMELINE DE EVENTOS
-    // ════════════════════════════════════════════════
-    checkPage(30);
-    secLabel('CRONOLOGIA DE EVENTOS');
-    setFill(C.surface); rect(ML, y, CW, 22, 2);
-    drawTimeline(ML+4, y+5, CW-8, g.events, g.time);
-    y += 28;
-
-    // goal stamps
-    const goals=g.events.filter(e=>e.isGoal);
-    if(goals.length){
-        goals.forEach((e,i)=>{
-            const gx=ML+i*18;
-            setFill([249,199,79,0.1]);
-            doc.setFillColor(249,199,79,0.1);
-            setStroke(C.gold); doc.setLineWidth(0.3); doc.roundedRect(gx,y,15,5,1,1,'S');
-            setTxt(C.gold); doc.setFontSize(5.5); doc.setFont('helvetica','bold');
-            txt(`GOLO ${fmtMin(e.time)}`, gx+7.5, y+3.5, {align:'center'});
+    checkPage(30);secLabel('CRONOLOGIA DE EVENTOS');
+    sf(C.surface);rct(ML,y,CW,22,2);
+    drawTimeline(ML+4,y+5,CW-8,g.events,g.time);y+=28;
+    const goals2=g.events.filter(e=>e.isGoal);
+    if(goals2.length){
+        goals2.forEach((e,i)=>{
+            const gx=ML+i*18;ss(C.gold);doc.setLineWidth(0.3);doc.roundedRect(gx,y,15,5,1,1,'S');
+            st(C.gold);doc.setFontSize(5.5);doc.setFont('helvetica','bold');txt(`GOLO ${fmtMin(e.time)}`,gx+7.5,y+3.5,{align:'center'});
         });
-        y += 8;
+        y+=8;
     }
-
-    // ════════════════════════════════════════════════
-    // SECÇÃO: LISTA DE EVENTOS
-    // ════════════════════════════════════════════════
     if(g.events.length){
-        checkPage(20);
-        secLabel(`LISTA DE EVENTOS (${g.events.length})`);
-        const evCols=4, evW=(CW-evCols*2)/evCols, evH=6;
+        checkPage(20);secLabel(`LISTA DE EVENTOS (${g.events.length})`);
+        const evCols=4,evW=(CW-evCols*2)/evCols,evH=6;
         g.events.forEach((e,i)=>{
             checkPage(evH+2);
-            const col=i%evCols, row=Math.floor(i/evCols);
-            if(col===0&&row>0&&i<g.events.length) {}
-            const ex=ML+col*(evW+2);
-            const ey=y+Math.floor(i/evCols)*(evH+1.5);
+            const col=i%evCols,ex=ML+col*(evW+2),ey=y+Math.floor(i/evCols)*(evH+1.5);
             const evColor=e.isGoal?C.gold:e.type==='ataque'?C.accent:C.red;
-            setFill(C.surface); rect(ex,ey,evW,evH,1);
-            // dot
-            setFill(evColor); doc.circle(ex+2.5,ey+evH/2,0.9,'F');
-            // time
-            setTxt(C.muted); doc.setFontSize(4.5); doc.setFont('helvetica','normal');
-            txt(fmtMin(e.time), ex+5, ey+2.8);
-            // name
-            setTxt(C.text); doc.setFontSize(5); doc.setFont('helvetica','bold');
-            txt(e.name.toUpperCase().substring(0,14), ex+5, ey+5.2);
+            sf(C.surface);rct(ex,ey,evW,evH,1);
+            sf(evColor);doc.circle(ex+2.5,ey+evH/2,0.9,'F');
+            st(C.muted);doc.setFontSize(4.5);doc.setFont('helvetica','normal');txt(fmtMin(e.time),ex+5,ey+2.8);
+            st(C.text);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(e.name.toUpperCase().substring(0,14),ex+5,ey+5.2);
         });
-        const evRows=Math.ceil(g.events.length/evCols);
-        y += evRows*(evH+1.5)+6;
+        const evRows=Math.ceil(g.events.length/evCols);y+=evRows*(evH+1.5)+6;
     }
-
-    // ════════════════════════════════════════════════
-    // SECÇÃO: NOTAS
-    // ════════════════════════════════════════════════
     const hasNotes=g.notes||(g.notesHistory||[]).length>0;
     if(hasNotes){
-        checkPage(25);
-        secLabel('NOTAS');
+        checkPage(25);secLabel('NOTAS');
         if(g.notes){
-            setFill(C.surface); rect(ML,y,CW,10,2);
-            setTxt(C.text); doc.setFontSize(6.5); doc.setFont('helvetica','italic');
-            const lines=doc.splitTextToSize(`"${g.notes}"`, CW-8);
-            lines.slice(0,3).forEach((l,i)=>txt(l,ML+4,y+4+i*4));
-            y += 14;
+            sf(C.surface);rct(ML,y,CW,10,2);
+            st(C.text);doc.setFontSize(6.5);doc.setFont('helvetica','italic');
+            const lines=doc.splitTextToSize(`"${g.notes}"`,CW-8);
+            lines.slice(0,3).forEach((l,i)=>txt(l,ML+4,y+4+i*4));y+=14;
         }
         (g.notesHistory||[]).forEach(n=>{
-            checkPage(16);
-            setFill(C.surface2); rect(ML,y,CW,12,2);
-            setFill(C.accent); rect(ML,y,1.5,12,0.5);
-            setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','bold');
-            txt(n.label.toUpperCase(), ML+4, y+4);
-            setTxt(C.text); doc.setFontSize(6); doc.setFont('helvetica','italic');
-            const nLines=doc.splitTextToSize(`"${n.text}"`, CW-8);
-            nLines.slice(0,2).forEach((l,i)=>txt(l,ML+4,y+8+i*3.5));
-            y += 16;
+            checkPage(16);sf(C.surface2);rct(ML,y,CW,12,2);sf(C.accent);rct(ML,y,1.5,12,0.5);
+            st(C.muted);doc.setFontSize(5);doc.setFont('helvetica','bold');txt(n.label.toUpperCase(),ML+4,y+4);
+            st(C.text);doc.setFontSize(6);doc.setFont('helvetica','italic');
+            const nLines=doc.splitTextToSize(`"${n.text}"`,CW-8);
+            nLines.slice(0,2).forEach((l,i)=>txt(l,ML+4,y+8+i*3.5));y+=16;
         });
     }
-
-    // ════════════════════════════════════════════════
-    // RODAPÉ em todas as páginas
-    // ════════════════════════════════════════════════
     const totalPages=doc.getNumberOfPages();
     for(let p=1;p<=totalPages;p++){
-        doc.setPage(p);
-        setFill(C.surface); rect(0,PH-8,PW,8);
-        setStroke(C.border); line(0,PH-8,PW,PH-8,0.3);
-        setTxt(C.muted); doc.setFontSize(5); doc.setFont('helvetica','normal');
-        txt('SoccerAnalyst Pro', ML, PH-3);
-        txt(new Date().toLocaleDateString('pt-PT'), PW/2, PH-3, {align:'center'});
-        txt(`${p} / ${totalPages}`, PW-MR, PH-3, {align:'right'});
+        doc.setPage(p);sf(C.surface);rct(0,PH-8,PW,8);
+        ss(C.border);doc.setLineWidth(0.3);doc.line(0,PH-8,PW,PH-8);
+        st(C.muted);doc.setFontSize(5);doc.setFont('helvetica','normal');
+        txt('SoccerAnalyst Pro',ML,PH-3);
+        txt(new Date().toLocaleDateString('pt-PT'),PW/2,PH-3,{align:'center'});
+        txt(`${p} / ${totalPages}`,PW-MR,PH-3,{align:'right'});
     }
-
     return doc;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   APP
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ APP ═══════════════════ */
 function App() {
     const [view,            setView]            = useState('folders');
     const [folders,         setFolders]         = useState(loadDB);
@@ -1159,23 +1323,23 @@ function App() {
     const [toast,           setToast]           = useState(null);
     const [searchTerm,      setSearchTerm]      = useState('');
     const [sortBy,          setSortBy]          = useState('date');
-    const [eventFilter,     setEventFilter]     = useState('all');
+    const [showFilter,      setShowFilter]      = useState(false);
     const [dateFrom,        setDateFrom]        = useState('');
     const [dateTo,          setDateTo]          = useState('');
-    const [minGoalsFor,     setMinGoalsFor]     = useState('');
-    const [minGoalsAgainst, setMinGoalsAgainst] = useState('');
-    const importRef  = useRef(null);
-    const isLandscape = useOrientation();
+    const [minGF,           setMinGF]           = useState('');
+    const [minGA,           setMinGA]           = useState('');
+    const [eventFilter,     setEventFilter]     = useState('all');
+    const importRef = useRef(null);
 
-    const currentGame = (currentGameId && currentFolderId)
-        ? (folders.find(f=>f.id===currentFolderId)?.games||[]).find(g=>g.id===currentGameId)||null
-        : null;
+    const currentFolder = currentFolderId ? folders.find(f=>f.id===currentFolderId)||null : null;
+    const currentGame   = (currentGameId && currentFolder)
+        ? (currentFolder.games||[]).find(g=>g.id===currentGameId)||null : null;
 
-    useEffect(() => { saveDB(folders); }, [folders]);
+    useEffect(()=>{ saveDB(folders); },[folders]);
 
-    useEffect(() => {
-        if (!isActive||!currentGameId) return;
-        const iv = setInterval(()=>{
+    useEffect(()=>{
+        if(!isActive||!currentGameId) return;
+        const iv=setInterval(()=>{
             setFolders(prev=>prev.map(f=>{
                 if(f.id!==currentFolderId) return f;
                 return{...f,games:f.games.map(g=>g.id!==currentGameId?g:{...g,time:g.time+1})};
@@ -1187,7 +1351,7 @@ function App() {
     useEffect(()=>{
         const h=e=>{
             if(view==='tracking'&&e.code==='Space'&&!e.target.matches('textarea,input')){
-                e.preventDefault(); setIsActive(p=>!p);
+                e.preventDefault();setIsActive(p=>!p);
             }
         };
         window.addEventListener('keydown',h);
@@ -1203,38 +1367,36 @@ function App() {
         }));
     },[currentFolderId,currentGameId]);
 
-    const getFolderTemplate = useCallback(folderId=>{
-        const folder=folders.find(f=>f.id===folderId);
-        return folder?.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}));
+    const getFolderTemplate = useCallback(fid=>{
+        const f=folders.find(x=>x.id===fid);
+        return f?.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}));
     },[folders]);
 
-    const syncStatToFolder = useCallback((folderId,newStat)=>{
+    const syncStatToFolder = useCallback((fid,newStat)=>{
         setFolders(prev=>prev.map(f=>{
-            if(f.id!==folderId) return f;
-            const template=f.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}));
-            const tplIdx=template.findIndex(t=>t.id===newStat.id);
-            const newTemplate=tplIdx>=0
-                ?template.map(t=>t.id===newStat.id?{...t,name:newStat.name,type:newStat.type}:t)
-                :[...template,{id:newStat.id,name:newStat.name,type:newStat.type}];
-            const updatedGames=f.games.map(g=>{
+            if(f.id!==fid) return f;
+            const tpl=f.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}));
+            const idx=tpl.findIndex(t=>t.id===newStat.id);
+            const newTpl=idx>=0?tpl.map(t=>t.id===newStat.id?{...t,...newStat}:t):[...tpl,{id:newStat.id,name:newStat.name,type:newStat.type}];
+            const updGames=f.games.map(g=>{
                 if(g.stats.find(s=>s.id===newStat.id)) return g;
                 return{...g,stats:[...g.stats,{id:newStat.id,name:newStat.name,type:newStat.type,count:0}]};
             });
-            return{...f,statTemplate:newTemplate,games:updatedGames};
+            return{...f,statTemplate:newTpl,games:updGames};
         }));
     },[]);
 
-    const renameStatAcrossFolder = useCallback((folderId,statId,newName)=>{
+    const renameStatAcrossFolder = useCallback((fid,statId,newName)=>{
         setFolders(prev=>prev.map(f=>{
-            if(f.id!==folderId) return f;
-            const template=(f.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}))).map(t=>t.id===statId?{...t,name:newName}:t);
+            if(f.id!==fid) return f;
+            const tpl=(f.statTemplate||DEFAULT_TEMPLATE.map(s=>({...s}))).map(t=>t.id===statId?{...t,name:newName}:t);
             const games=f.games.map(g=>({...g,stats:g.stats.map(s=>s.id===statId?{...s,name:newName}:s)}));
-            return{...f,statTemplate:template,games};
+            return{...f,statTemplate:tpl,games};
         }));
     },[]);
 
     const addStat = id=>{
-        if(!isActive){showToast('Inicia o Cronometro!');return;}
+        if(!isActive){showToast('▶ Inicia o cronómetro!');return;}
         let statName='',isGoal=false;
         updateGame(g=>{
             const stat=g.stats.find(s=>s.id===id);
@@ -1247,8 +1409,8 @@ function App() {
                 events:[...g.events,{time:g.time,type:stat.type,name:stat.name,isGoal,statId:id}],
             };
         });
-        if(navigator.vibrate) navigator.vibrate(isGoal?[50,50,50]:25);
-        if(statName) showToast(isGoal?'GOLOOO!':`${statName}`,isGoal);
+        if(navigator.vibrate) navigator.vibrate(isGoal?[40,30,40]:20);
+        if(statName) showToast(isGoal?'⚽ GOLOOO!':statName,isGoal);
     };
 
     const removeStat = id=>{
@@ -1270,6 +1432,24 @@ function App() {
         removeStat(currentGame.events[currentGame.events.length-1].statId);
     };
 
+    const adjustTime=delta=>updateGame(g=>({...g,time:Math.max(0,g.time+delta)}));
+
+    const addCustomStat=type=>{
+        const n=promptText(`Nome da nova ação (${type}):`);
+        if(!n) return;
+        const newStat={id:Date.now(),name:n,type,count:0};
+        updateGame(g=>({...g,stats:[...g.stats,newStat]}));
+        syncStatToFolder(currentFolderId,newStat);
+        showToast(`"${n}" adicionado`);
+    };
+
+    const renameStat=(statId,currentName)=>{
+        const n=promptText('Novo nome:',currentName);
+        if(!n||n===currentName) return;
+        renameStatAcrossFolder(currentFolderId,statId,n);
+        showToast('Renomeado em todos os jogos');
+    };
+
     const compressImage=file=>new Promise(res=>{
         const r=new FileReader();
         r.onload=()=>{
@@ -1277,7 +1457,7 @@ function App() {
             img.onload=()=>{
                 const scale=Math.min(1,512/Math.max(img.width,img.height));
                 const c=document.createElement('canvas');
-                c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
+                c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
                 c.getContext('2d').drawImage(img,0,0,c.width,c.height);
                 res(c.toDataURL('image/jpeg',0.8));
             };
@@ -1285,6 +1465,39 @@ function App() {
         };
         r.readAsDataURL(file);
     });
+
+    const exportPDF=()=>{
+        if(!currentGame){showToast('Nenhum jogo carregado');return;}
+        showToast('A gerar PDF...');
+        try {
+            const doc=buildNativePDF(currentGame);
+            doc.save(`SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`);
+            showToast('✅ PDF guardado');
+        } catch(e) { console.error(e); showToast('Erro ao gerar PDF'); }
+    };
+
+    const handleExport=()=>{
+        const blob=new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),folders})],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;a.download=`socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+        showToast('Backup exportado');
+    };
+
+    const handleImport=file=>{
+        if(!file) return;
+        const r=new FileReader();
+        r.onload=()=>{
+            try{
+                const p=JSON.parse(r.result);
+                const imported=Array.isArray(p)?p:p?.folders;
+                if(!Array.isArray(imported)){showToast('Ficheiro inválido');return;}
+                setFolders(imported);showToast('✅ Dados importados');
+            } catch(_){showToast('Erro ao importar');}
+        };
+        r.readAsText(file);
+    };
 
     const getPeriodInfo=t=>{
         const m=Math.floor(t/60);
@@ -1296,300 +1509,431 @@ function App() {
     const getFolderSummary=folder=>{
         if(!folder.games.length) return null;
         const golos=folder.games.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
-        const sofr =folder.games.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
-        const rem  =folder.games.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Remate')?.count||0),0);
-        const ef   =rem>0?((golos/rem)*100).toFixed(1):0;
-        return{games:folder.games.length,golos,sofr,ef};
+        const sofr=folder.games.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
+        const rem=folder.games.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Remate')?.count||0),0);
+        return{games:folder.games.length,golos,sofr,ef:rem>0?((golos/rem)*100).toFixed(1):0};
     };
 
-    const handleExport=()=>{
-        const blob=new Blob([JSON.stringify({version:4,exportedAt:new Date().toISOString(),folders})],{type:'application/json'});
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url; a.download=`socceranalyst_backup_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a); a.click(); a.remove();
-        URL.revokeObjectURL(url);
-        showToast('Backup Exportado');
-    };
-
-    const handleImport=file=>{
-        if(!file) return;
-        const r=new FileReader();
-        r.onload=()=>{
-            try{
-                const p=JSON.parse(r.result);
-                const imported=Array.isArray(p)?p:p?.folders;
-                if(!Array.isArray(imported)){showToast('Ficheiro invalido');return;}
-                setFolders(imported); showToast('Dados Importados');
-            } catch(_){showToast('Erro ao importar');}
-        };
-        r.readAsText(file);
-    };
-
-    // ── NOVA EXPORTAÇÃO PDF NATIVA ─────────────────
-    const exportPDF = () => {
-        if(!currentGame){ showToast('Nenhum jogo carregado'); return; }
-        showToast('A gerar PDF...');
-        try {
-            const doc = buildNativePDF(currentGame);
-            const filename = `SoccerAnalyst_${currentGame.opponent.replace(/[^a-zA-Z0-9]/g,'_')}_${(currentGame.date||'').replace(/\//g,'-')}.pdf`;
-            doc.save(filename);
-            showToast('PDF Guardado');
-        } catch(e) {
-            console.error('PDF error:', e);
-            showToast('Erro ao gerar PDF');
-        }
-    };
-
-    /* ════════════════════════════════════════════════════
-       VIEW: FOLDERS
-    ════════════════════════════════════════════════════ */
-    if(view==='folders') return (
-        <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:32}}>
-                <h1 style={{fontFamily:'Bebas Neue',fontSize:32,color:'var(--accent)',letterSpacing:3,lineHeight:1}}>
-                    SoccerAnalyst<br/><span style={{color:'var(--text)',fontSize:18,letterSpacing:6}}>PRO</span>
-                </h1>
-                <div style={{display:'flex',gap:8}}>
-                    <button onClick={handleExport} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Exportar</button>
-                    <button onClick={()=>importRef.current?.click()} style={{padding:'8px 14px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',cursor:'pointer',letterSpacing:1}}>Importar</button>
-                    <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
-                </div>
-            </div>
-            <button onClick={()=>{const n=promptText('Nome da Pasta:');if(n){setFolders(prev=>[{id:Date.now(),name:n,games:[],statTemplate:DEFAULT_TEMPLATE.map(s=>({...s}))},...prev]);showToast('Pasta Criada');}}}
-                style={{width:'100%',padding:18,marginBottom:24,border:'2px dashed var(--border)',borderRadius:16,background:'transparent',color:'var(--muted)',fontWeight:700,fontSize:13,textTransform:'uppercase',letterSpacing:2,cursor:'pointer'}}
-                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}
-            >+ Nova Pasta</button>
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                {folders.map(f=>{
-                    const s=getFolderSummary(f);
-                    return(
-                        <div key={f.id} onClick={()=>{setCurrentFolderId(f.id);setView('games');}} className="card active-btn"
-                            style={{cursor:'pointer',transition:'all 0.2s'}}
-                            onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                            onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}>
-                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:s?16:0}}>
-                                <div>
-                                    <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2}}>{f.name}</div>
-                                    <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogos</div>
-                                </div>
-                                <button onClick={e=>{e.stopPropagation();if(confirm('Apagar pasta e todos os jogos?')){setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('Eliminada');}}}
-                                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:8,fontSize:10,color:'var(--muted)',cursor:'pointer',fontWeight:700}}>x</button>
-                            </div>
-                            {s&&(
-                                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
-                                    {[{val:s.golos,label:'Golos',color:'var(--green)'},{val:s.sofr,label:'Sofridos',color:'var(--red)'},{val:`${s.ef}%`,label:'Eficacia',color:'var(--accent)'}].map(x=>(
-                                        <div key={x.label} style={{textAlign:'center',padding:10,background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)'}}>
-                                            <div style={{fontFamily:'Bebas Neue',fontSize:26,color:x.color,lineHeight:1}}>{x.val}</div>
-                                            <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',marginTop:2,letterSpacing:1}}>{x.label}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-            {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
-        </div>
-    );
-
-    /* ════════════════════════════════════════════════════
-       VIEW: GAMES
-    ════════════════════════════════════════════════════ */
-    if(view==='games'){
-        const folder=folders.find(f=>f.id===currentFolderId);
-        if(!folder){setView('folders');return null;}
+    /* ── Filtered games ── */
+    const filteredGames = useMemo(()=>{
+        if(!currentFolder) return [];
         const fromD=dateFrom?new Date(dateFrom):null;
         const toD=dateTo?(()=>{const d=new Date(dateTo);d.setHours(23,59,59,999);return d;})():null;
-        const filtered=folder.games.filter(g=>{
+        return currentFolder.games.filter(g=>{
             if(!g.opponent.toLowerCase().includes(searchTerm.toLowerCase())) return false;
             const gd=parsePtDate(g.date);
             if(fromD&&(!gd||gd<fromD)) return false;
             if(toD&&(!gd||gd>toD)) return false;
             const gf=g.stats.find(s=>s.name==='Golo')?.count||0;
             const ga=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-            if(minGoalsFor&&gf<Number(minGoalsFor)) return false;
-            if(minGoalsAgainst&&ga<Number(minGoalsAgainst)) return false;
+            if(minGF&&gf<Number(minGF)) return false;
+            if(minGA&&ga<Number(minGA)) return false;
             return true;
         }).sort((a,b)=>sortBy==='date'?(parsePtDate(b.date)-parsePtDate(a.date)):a.opponent.localeCompare(b.opponent));
-        const sumGF=filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
-        const sumGA=filtered.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
-        const addGame=()=>{
-            const o=promptText('Adversario:');
-            if(!o) return;
-            const template=getFolderTemplate(currentFolderId);
-            const newGame={id:Date.now(),opponent:o,time:0,stats:statsFromTemplate(template),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT')};
-            setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[newGame,...f.games]}));
-            showToast('Jogo Adicionado');
-        };
-        return(
-            <div style={{padding:24,height:'100vh',overflowY:'auto',background:'var(--bg)'}} className="slide-enter no-scrollbar">
-                <button onClick={()=>setView('folders')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer',marginBottom:20}}>← Voltar</button>
-                <h2 style={{fontFamily:'Bebas Neue',fontSize:28,letterSpacing:3,color:'var(--accent)',marginBottom:24,borderLeft:'4px solid var(--accent)',paddingLeft:12}}>{folder.name}</h2>
-                <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:24}}>
-                    <input type="text" placeholder="Pesquisar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} style={{padding:'12px 16px',borderRadius:12,fontSize:13,width:'100%'}}/>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="date" value={dateTo}   onChange={e=>setDateTo(e.target.value)}   style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="number" min="0" placeholder="Min. Golos" value={minGoalsFor}     onChange={e=>setMinGoalsFor(e.target.value)}     style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                        <input type="number" min="0" placeholder="Min. Sofr." value={minGoalsAgainst} onChange={e=>setMinGoalsAgainst(e.target.value)} style={{padding:'10px 12px',borderRadius:10,fontSize:12}}/>
-                    </div>
-                    <div style={{display:'flex',gap:8}}>
-                        {['date','name'].map(s=>(
-                            <button key={s} onClick={()=>setSortBy(s)} style={{flex:1,padding:8,borderRadius:10,border:'1px solid var(--border)',background:sortBy===s?'var(--accent)':'var(--surface)',color:'white',fontSize:10,fontWeight:700,textTransform:'uppercase',cursor:'pointer',letterSpacing:1}}>
-                                {s==='date'?'Data':'Nome'}
-                            </button>
-                        ))}
-                    </div>
+    },[currentFolder,searchTerm,dateFrom,dateTo,minGF,minGA,sortBy]);
+
+    const hasActiveFilter = dateFrom||dateTo||minGF||minGA;
+
+    /* ════════════════════════════════════
+       RENDER HELPERS
+    ════════════════════════════════════ */
+    const setGameAndView=(gameId,v)=>{
+        setCurrentGameId(gameId);
+        setView(v);
+    };
+
+    /* ════════════════════════════════════
+       VIEW: FOLDERS
+    ════════════════════════════════════ */
+    const renderFolders=()=>(
+        <div className="screen slide-in no-scrollbar" style={{padding:'0 0 16px'}}>
+            <div className="page-header">
+                <div>
+                    <div style={{fontFamily:'Bebas Neue',fontSize:28,letterSpacing:3,color:'var(--accent)',lineHeight:1}}>SoccerAnalyst</div>
+                    <div style={{fontFamily:'Bebas Neue',fontSize:14,letterSpacing:6,color:'var(--muted)'}}>PRO</div>
                 </div>
-                <button onClick={addGame} style={{width:'100%',padding:16,marginBottom:20,borderRadius:14,border:'none',background:'linear-gradient(135deg, var(--accent), var(--accent2))',color:'white',fontFamily:'Bebas Neue',fontSize:18,letterSpacing:3,cursor:'pointer',boxShadow:'0 8px 24px rgba(67,97,238,0.3)'}}>
-                    + Adicionar Jogo
-                </button>
-                {filtered.length>0&&(
-                    <div className="card" style={{marginBottom:24}}>
-                        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:2,marginBottom:12}}>Resumo</div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,textAlign:'center'}}>
-                            {[{val:filtered.length,label:'Jogos',color:'var(--accent)'},{val:(sumGF/filtered.length).toFixed(2),label:'Media Golos',color:'var(--green)'},{val:(sumGA/filtered.length).toFixed(2),label:'Media Sofr.',color:'var(--red)'}].map(x=>(
-                                <div key={x.label}>
-                                    <div style={{fontFamily:'Bebas Neue',fontSize:24,color:x.color}}>{x.val}</div>
-                                    <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1}}>{x.label}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                <div style={{display:'flex',gap:8}}>
+                    <button className="btn-ghost" onClick={handleExport}>Exportar</button>
+                    <button className="btn-ghost" onClick={()=>importRef.current?.click()}>Importar</button>
+                    <input ref={importRef} type="file" accept=".json" style={{display:'none'}} onChange={e=>handleImport(e.target.files[0])}/>
+                </div>
+            </div>
+            <div style={{padding:'16px 16px 0'}}>
+                <button className="btn-primary" style={{marginBottom:16}} onClick={()=>{
+                    const n=promptText('Nome da pasta:');
+                    if(n){setFolders(prev=>[{id:Date.now(),name:n,games:[],statTemplate:DEFAULT_TEMPLATE.map(s=>({...s}))},...prev]);showToast('Pasta criada');}
+                }}>+ Nova Pasta</button>
                 <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                    {filtered.map(g=>{
-                        const gf=g.stats.find(s=>s.name==='Golo')?.count||0;
-                        const ga=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-                        const rc={W:'var(--green)',L:'var(--red)',D:'var(--gold)'}[gf>ga?'W':gf<ga?'L':'D'];
+                    {folders.length===0&&(
+                        <div className="empty"><div className="empty-icon">🗂</div><div className="empty-text">Nenhuma pasta criada</div></div>
+                    )}
+                    {folders.map(f=>{
+                        const s=getFolderSummary(f);
                         return(
-                            <div key={g.id} onClick={()=>{setCurrentGameId(g.id);setView('tracking');}} className="card active-btn"
-                                style={{cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center',transition:'all 0.2s'}}
-                                onMouseOver={e=>e.currentTarget.style.borderColor='var(--accent)'}
-                                onMouseOut={e=>e.currentTarget.style.borderColor='var(--border)'}>
-                                <div style={{flex:1}}>
-                                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
-                                        <div style={{width:6,height:6,borderRadius:'50%',background:rc,flexShrink:0}}/>
-                                        <span style={{fontFamily:'Bebas Neue',fontSize:18,letterSpacing:1}}>{g.opponent}</span>
-                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--green)'}}>{gf}</span>
-                                        <span style={{color:'var(--muted)',fontSize:11}}>–</span>
-                                        <span style={{fontFamily:'Space Mono',fontSize:13,fontWeight:700,color:'var(--red)'}}>{ga}</span>
+                            <div key={f.id} className="folder-card" onClick={()=>{setCurrentFolderId(f.id);setView('games');}}>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:s?14:0}}>
+                                    <div>
+                                        <div style={{fontFamily:'Bebas Neue',fontSize:22,letterSpacing:2}}>{f.name}</div>
+                                        <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--accent)',letterSpacing:2,marginTop:2}}>{f.games.length} Jogo{f.games.length!==1?'s':''}</div>
                                     </div>
-                                    <div style={{fontSize:10,color:'var(--muted)',fontWeight:600}}>{g.date} · {fmt(g.time)}</div>
+                                    <button className="icon-btn" style={{background:'rgba(239,35,60,0.08)',borderColor:'rgba(239,35,60,0.2)',color:'var(--red)'}}
+                                        onClick={e=>{e.stopPropagation();if(confirm('Apagar pasta e todos os jogos?')){setFolders(prev=>prev.filter(x=>x.id!==f.id));showToast('Eliminada');}}}>✕</button>
                                 </div>
-                                <div style={{display:'flex',gap:6}}>
-                                    <button onClick={e=>{e.stopPropagation();const template=getFolderTemplate(currentFolderId);const ng={...g,id:Date.now(),opponent:`${g.opponent} (Copia)`,time:0,stats:statsFromTemplate(template),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')};setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));showToast('Duplicado');}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(67,97,238,0.1)',border:'1px solid rgba(67,97,238,0.2)',color:'var(--accent)',cursor:'pointer',fontSize:14}}>C</button>
-                                    <button onClick={e=>{e.stopPropagation();if(confirm('Eliminar jogo?')){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('Eliminado');}}}
-                                        style={{width:36,height:36,borderRadius:10,background:'rgba(239,35,60,0.1)',border:'1px solid rgba(239,35,60,0.2)',color:'var(--red)',cursor:'pointer',fontSize:14}}>X</button>
-                                </div>
+                                {s&&(
+                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+                                        {[{val:s.golos,label:'Golos',c:'var(--green)'},{val:s.sofr,label:'Sofridos',c:'var(--red)'},{val:`${s.ef}%`,label:'Eficácia',c:'var(--accent)'}].map(x=>(
+                                            <div key={x.label} style={{textAlign:'center',padding:'10px 6px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)'}}>
+                                                <div style={{fontFamily:'Bebas Neue',fontSize:24,color:x.c,lineHeight:1}}>{x.val}</div>
+                                                <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',marginTop:2,letterSpacing:1}}>{x.label}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
                 </div>
-                {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
+            </div>
+        </div>
+    );
+
+    /* ════════════════════════════════════
+       VIEW: GAMES
+    ════════════════════════════════════ */
+    const renderGames=()=>{
+        if(!currentFolder) return <div className="empty"><div className="empty-text">Seleciona uma pasta</div></div>;
+        const sumGF=filteredGames.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo')?.count||0),0);
+        const sumGA=filteredGames.reduce((s,g)=>s+(g.stats.find(x=>x.name==='Golo Sofr.')?.count||0),0);
+        return(
+            <div className="screen slide-in no-scrollbar" style={{padding:'0 0 16px'}}>
+                <div className="page-header">
+                    <div>
+                        <div className="page-title" style={{color:'var(--accent)'}}>{currentFolder.name}</div>
+                        <div style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:2,marginTop:2}}>{currentFolder.games.length} Jogos</div>
+                    </div>
+                    <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                        <button className="icon-btn" style={{background:hasActiveFilter?'rgba(67,97,238,0.2)':'var(--surface)',borderColor:hasActiveFilter?'var(--accent)':'var(--border)',color:hasActiveFilter?'var(--accent)':'var(--muted)',width:40,height:40,fontSize:17}}
+                            onClick={()=>setShowFilter(true)}>⚙</button>
+                    </div>
+                </div>
+                <div style={{padding:'12px 16px 0'}}>
+                    <div style={{display:'flex',gap:8,marginBottom:14}}>
+                        <input type="text" placeholder="🔍  Pesquisar adversário..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
+                            style={{flex:1,padding:'11px 14px',fontSize:13,borderRadius:12}}/>
+                        <div style={{display:'flex',gap:6}}>
+                            {['date','name'].map(s=>(
+                                <button key={s} onClick={()=>setSortBy(s)} style={{padding:'0 12px',height:44,borderRadius:12,border:'1px solid var(--border)',background:sortBy===s?'var(--accent)':'var(--surface)',color:'white',fontSize:10,fontWeight:700,textTransform:'uppercase',cursor:'pointer'}}>
+                                    {s==='date'?'Data':'A-Z'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <button className="btn-primary" style={{marginBottom:16}} onClick={()=>{
+                        const o=promptText('Nome do adversário:');
+                        if(!o) return;
+                        const tpl=getFolderTemplate(currentFolderId);
+                        const ng={id:Date.now(),opponent:o,time:0,stats:statsFromTemplate(tpl),events:[],notes:'',notesHistory:[],pic:null,date:new Date().toLocaleDateString('pt-PT')};
+                        setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));
+                        setGameAndView(ng.id,'tracking');
+                        showToast('Jogo criado');
+                    }}>+ Adicionar Jogo</button>
+
+                    {filteredGames.length>0&&(
+                        <div className="card" style={{marginBottom:14}}>
+                            <div className="section-label">Resumo</div>
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12,textAlign:'center'}}>
+                                {[{val:filteredGames.length,label:'Jogos',c:'var(--accent)'},{val:(sumGF/filteredGames.length).toFixed(2),label:'Méd. Golos',c:'var(--green)'},{val:(sumGA/filteredGames.length).toFixed(2),label:'Méd. Sofr.',c:'var(--red)'}].map(x=>(
+                                    <div key={x.label}>
+                                        <div style={{fontFamily:'Bebas Neue',fontSize:22,color:x.c}}>{x.val}</div>
+                                        <div style={{fontSize:8,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1}}>{x.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                        {filteredGames.length===0&&(
+                            <div className="empty"><div className="empty-icon">📋</div><div className="empty-text">Sem jogos{searchTerm?' encontrados':''}</div></div>
+                        )}
+                        {filteredGames.map(g=>{
+                            const gf=g.stats.find(s=>s.name==='Golo')?.count||0;
+                            const ga=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+                            const rc=gf>ga?'var(--green)':gf<ga?'var(--red)':'var(--muted)';
+                            return(
+                                <div key={g.id} className="game-card" onClick={()=>setGameAndView(g.id,'tracking')}>
+                                    <div className="game-result-dot" style={{background:rc}}/>
+                                    <div className="game-info">
+                                        <div className="game-opponent">{g.opponent}</div>
+                                        <div className="game-meta">{g.date} · {fmt(g.time)}</div>
+                                    </div>
+                                    <div className="game-score">
+                                        <span className="game-score-num" style={{color:'var(--green)'}}>{gf}</span>
+                                        <span style={{color:'var(--muted)',fontSize:11,fontWeight:700}}>–</span>
+                                        <span className="game-score-num" style={{color:'var(--red)'}}>{ga}</span>
+                                    </div>
+                                    <div className="game-card-actions" onClick={e=>e.stopPropagation()}>
+                                        <button className="icon-btn" style={{background:'rgba(67,97,238,0.08)',borderColor:'rgba(67,97,238,0.2)',color:'var(--accent)',fontSize:12}}
+                                            onClick={()=>{const tpl=getFolderTemplate(currentFolderId);const ng={...g,id:Date.now(),opponent:`${g.opponent} (Cópia)`,time:0,stats:statsFromTemplate(tpl),events:[],notes:'',notesHistory:[],date:new Date().toLocaleDateString('pt-PT')};setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:[ng,...f.games]}));showToast('Duplicado');}}>C</button>
+                                        <button className="icon-btn" style={{background:'rgba(239,35,60,0.08)',borderColor:'rgba(239,35,60,0.2)',color:'var(--red)',fontSize:12}}
+                                            onClick={()=>{if(confirm('Eliminar jogo?')){setFolders(prev=>prev.map(f=>f.id!==currentFolderId?f:{...f,games:f.games.filter(x=>x.id!==g.id)}));showToast('Eliminado');}}}>✕</button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {showFilter&&(
+                    <div className="filter-overlay" onClick={()=>setShowFilter(false)}>
+                        <div className="filter-drawer" onClick={e=>e.stopPropagation()}>
+                            <div className="drawer-handle"/>
+                            <div className="drawer-title">Filtros</div>
+                            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                                <div>
+                                    <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginBottom:6}}>Data</div>
+                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                                        <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{padding:'10px 12px'}}/>
+                                        <input type="date" value={dateTo}   onChange={e=>setDateTo(e.target.value)}   style={{padding:'10px 12px'}}/>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginBottom:6}}>Mínimo de Golos</div>
+                                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                                        <input type="number" min="0" placeholder="Marcados" value={minGF} onChange={e=>setMinGF(e.target.value)} style={{padding:'10px 12px'}}/>
+                                        <input type="number" min="0" placeholder="Sofridos"  value={minGA} onChange={e=>setMinGA(e.target.value)} style={{padding:'10px 12px'}}/>
+                                    </div>
+                                </div>
+                                <div style={{display:'flex',gap:8,marginTop:4}}>
+                                    <button onClick={()=>{setDateFrom('');setDateTo('');setMinGF('');setMinGA('');}} className="btn-ghost" style={{flex:1}}>Limpar</button>
+                                    <button onClick={()=>setShowFilter(false)} className="btn-save" style={{flex:1}}>Aplicar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         );
-    }
+    };
 
-    /* ════════════════════════════════════════════════════
-       VIEW: REPORT  (ecrã web – inalterado)
-    ════════════════════════════════════════════════════ */
-    if(view==='report'&&currentGame){
+    /* ════════════════════════════════════
+       VIEW: TRACKING
+    ════════════════════════════════════ */
+    const renderTracking=()=>{
+        if(!currentGame) return(
+            <div className="screen">
+                <div className="empty" style={{height:'100%'}}>
+                    <div className="empty-icon">⚽</div>
+                    <div className="empty-text">Seleciona um jogo para começar</div>
+                    <button className="btn-ghost" onClick={()=>setView('games')}>Ir para Jogos</button>
+                </div>
+            </div>
+        );
+        const period=getPeriodInfo(currentGame.time);
+        const gf=currentGame.stats.find(s=>s.name==='Golo')?.count||0;
+        const ga=currentGame.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+        const scoreColor=gf>ga?'var(--green)':gf<ga?'var(--red)':'var(--muted)';
+        return(
+            <div className="screen" style={{display:'flex',flexDirection:'column',overflow:'hidden'}}>
+                {/* Header */}
+                <div className="track-header">
+                    <div className="timer-pill">
+                        <span className="timer-digits">{fmt(currentGame.time)}</span>
+                        <span className="period-badge" style={{color:period.color,background:`${period.color}22`}}>{period.label}</span>
+                    </div>
+                    <div className="score-pill" style={{borderColor:`${scoreColor}44`}}>
+                        <span className="score-num" style={{color:'var(--green)'}}>{gf}</span>
+                        <span style={{fontFamily:'Space Mono',fontSize:11,color:'var(--muted)',fontWeight:700}}>–</span>
+                        <span className="score-num" style={{color:'var(--red)'}}>{ga}</span>
+                    </div>
+                    <div className="header-actions">
+                        <button className="hbtn hbtn-sq" title="Desfazer último" onClick={undoLast}
+                            style={{fontSize:17}}>↩</button>
+                        <button className="hbtn hbtn-sq" title="Notas"
+                            style={{background:currentGame.notes?'rgba(67,97,238,0.25)':'var(--bg)',borderColor:currentGame.notes?'var(--accent)':'var(--border)',fontSize:17}}
+                            onClick={()=>setShowNotes(p=>!p)}>📝</button>
+                        <button className="hbtn hbtn-rect" style={{color:'var(--muted)',fontSize:12}} onClick={()=>adjustTime(-10)}>-10s</button>
+                        <button className="hbtn hbtn-rect" style={{color:'var(--muted)',fontSize:12}} onClick={()=>adjustTime(60)}>+1m</button>
+                        <button className="hbtn hbtn-start" onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('⏸ Pausado');return n;})}
+                            style={{background:isActive?'var(--red)':'var(--green)',color:'white',minWidth:70}}>
+                            {isActive?'STOP':'START'}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Notes panel */}
+                {showNotes&&(
+                    <div className="notes-panel">
+                        <textarea value={currentGame.notes} onChange={e=>updateGame({notes:e.target.value})}
+                            placeholder="Observações sobre o jogo..."/>
+                        <div className="notes-footer">
+                            <button className="btn-save" onClick={()=>{
+                                if(!currentGame.notes?.trim()){showToast('Nota vazia');return;}
+                                const label=`${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
+                                updateGame(g=>({...g,notesHistory:[...(g.notesHistory||[]),{label,text:g.notes.trim()}]}));
+                                showToast('✅ Nota guardada');
+                            }}>Guardar</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Columns */}
+                <div className="track-cols">
+                    {['ataque','defesa'].map(type=>(
+                        <div key={type} className="track-col">
+                            <div className="col-header">
+                                <span className="col-title" style={{color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type.toUpperCase()}</span>
+                                <button className="col-add-btn" onClick={()=>addCustomStat(type)} title={`Nova ação de ${type}`}>+</button>
+                            </div>
+                            <div className="stats-scroll no-scrollbar">
+                                {currentGame.stats.filter(s=>s.type===type).map(s=>{
+                                    const isGoalStat=s.name.toLowerCase().includes('golo')&&type==='ataque';
+                                    const hasCount=s.count>0;
+                                    const activeClass=hasCount?(isGoalStat?'goal-active':type==='ataque'?'atk-active':'def-active'):'';
+                                    return(
+                                        <div key={s.id} className="stat-row">
+                                            <button className={`stat-main ${activeClass}`}
+                                                onPointerDown={e=>e.currentTarget.style.transform='scale(0.96)'}
+                                                onPointerUp={e=>{e.currentTarget.style.transform='';addStat(s.id);}}
+                                                onPointerLeave={e=>e.currentTarget.style.transform=''}>
+                                                <span className={`stat-count${hasCount?'':' zero'}`} style={{color:hasCount?(isGoalStat?'var(--gold)':type==='ataque'?'var(--accent)':'var(--red)'):''}}>
+                                                    {s.count}
+                                                </span>
+                                                <span className="stat-name">{s.name}</span>
+                                                {isActive&&<span style={{fontSize:9,color:'var(--muted)',opacity:0.6,flexShrink:0}}>+</span>}
+                                            </button>
+                                            <div className="stat-actions">
+                                                <button className="stat-side-btn sbtn-minus" onClick={()=>removeStat(s.id)}>−</button>
+                                                <button className="stat-side-btn sbtn-edit" onClick={()=>renameStat(s.id,s.name)}>E</button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    /* ════════════════════════════════════
+       VIEW: REPORT
+    ════════════════════════════════════ */
+    const renderReport=()=>{
+        if(!currentGame) return(
+            <div className="screen">
+                <div className="empty" style={{height:'100%'}}>
+                    <div className="empty-icon">📊</div>
+                    <div className="empty-text">Seleciona um jogo para ver o relatório</div>
+                    <button className="btn-ghost" onClick={()=>setView('games')}>Ir para Jogos</button>
+                </div>
+            </div>
+        );
         const g=currentGame;
-        const golos  =g.stats.find(s=>s.name==='Golo')?.count||0;
-        const sofr   =g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
+        const golos=g.stats.find(s=>s.name==='Golo')?.count||0;
+        const sofr=g.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
         const remates=g.stats.find(s=>s.name==='Remate')?.count||0;
-        const ef     =remates>0?((golos/remates)*100).toFixed(1):0;
+        const ef=remates>0?((golos/remates)*100).toFixed(1):0;
         const totalAtk=g.stats.filter(s=>s.type==='ataque').reduce((a,s)=>a+s.count,0);
         const totalDef=g.stats.filter(s=>s.type==='defesa').reduce((a,s)=>a+s.count,0);
-        const filteredEvents=eventFilter==='all'?g.events:eventFilter==='golos'?g.events.filter(e=>e.isGoal):g.events.filter(e=>e.type===eventFilter);
-        const atkColors=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
-        const defColors=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
+        const filtEv=eventFilter==='all'?g.events:eventFilter==='golos'?g.events.filter(e=>e.isGoal):g.events.filter(e=>e.type===eventFilter);
+        const atkC=['#4361ee','#3a0ca3','#4cc9f0','#560bad','#7209b7','#4895ef'];
+        const defC=['#ef233c','#d90429','#e63946','#c1121f','#ff595e','#ff6b6b'];
         return(
-            <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)'}}>
-                <div style={{padding:'12px 20px',background:'var(--surface)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexShrink:0}}>
-                    <button onClick={()=>setView('tracking')} style={{fontSize:10,fontWeight:700,color:'var(--muted)',textTransform:'uppercase',letterSpacing:3,background:'none',border:'none',cursor:'pointer'}}>← Painel</button>
-                    <div style={{display:'flex',gap:8}}>
-                        <select value={eventFilter} onChange={e=>setEventFilter(e.target.value)} style={{padding:'8px 12px',borderRadius:10,fontSize:11,fontWeight:700,cursor:'pointer'}}>
+            <div className="screen no-scrollbar" style={{padding:'0 0 16px'}}>
+                <div className="page-header">
+                    <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:3}}>Relatório</div>
+                        <div style={{fontFamily:'Bebas Neue',fontSize:26,letterSpacing:2,color:'var(--accent)',lineHeight:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{g.opponent}</div>
+                        <div style={{fontFamily:'Space Mono',fontSize:9,color:'var(--muted)',marginTop:2}}>{g.date} · {fmt(g.time)}</div>
+                    </div>
+                    <div style={{display:'flex',gap:8,flexShrink:0}}>
+                        <select value={eventFilter} onChange={e=>setEventFilter(e.target.value)}
+                            style={{padding:'8px 10px',fontSize:11,fontWeight:700,cursor:'pointer',borderRadius:10}}>
                             <option value="all">Todos</option>
                             <option value="golos">Golos</option>
                             <option value="ataque">Ataque</option>
                             <option value="defesa">Defesa</option>
                         </select>
-                        <button onClick={exportPDF} style={{padding:'8px 18px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:14,letterSpacing:2,cursor:'pointer',border:'none'}}>PDF</button>
+                        <button onClick={exportPDF} style={{padding:'8px 16px',borderRadius:10,background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:15,letterSpacing:2,cursor:'pointer',border:'none',fontWeight:700}}>PDF</button>
                     </div>
                 </div>
-                <div id="report-area" style={{flex:1,overflowY:'auto',padding:'32px 24px',background:'var(--bg)'}} className="no-scrollbar">
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32}}>
-                        <div>
-                            <div style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:3,marginBottom:8}}>Relatorio de Jogo</div>
-                            <h2 style={{fontFamily:'Bebas Neue',fontSize:42,letterSpacing:3,color:'var(--accent)',lineHeight:1,marginBottom:8}}>{g.opponent}</h2>
-                            <div style={{fontFamily:'Space Mono',fontSize:10,color:'var(--muted)'}}>{g.date} · {fmt(g.time)}</div>
-                        </div>
-                        {g.pic&&<img src={g.pic} style={{width:80,height:80,borderRadius:12,objectFit:'cover',border:'1px solid var(--border)'}}/>}
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:32}}>
-                        {[{val:golos,label:'Golos',color:'var(--green)',sub:'marcados'},{val:sofr,label:'Sofr.',color:'var(--red)',sub:'sofridos'},{val:remates,label:'Remates',color:'var(--accent)',sub:'total'},{val:`${ef}%`,label:'Eficacia',color:'var(--gold)',sub:'golo/remate'}].map(k=>(
-                            <div key={k.label} style={{padding:'16px 12px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,textAlign:'center'}}>
-                                <div style={{fontFamily:'Bebas Neue',fontSize:32,color:k.color,lineHeight:1}}>{k.val}</div>
-                                <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',color:'var(--muted)',letterSpacing:1,marginTop:4}}>{k.label}</div>
-                                <div style={{fontSize:8,color:'var(--muted)',fontStyle:'italic',marginTop:2}}>{k.sub}</div>
+
+                <div style={{padding:'16px'}}>
+                    {/* KPIs */}
+                    <div className="report-kpis">
+                        {[{val:golos,label:'Golos',c:'var(--green)',sub:'marcados'},{val:sofr,label:'Sofr.',c:'var(--red)',sub:'sofridos'},{val:remates,label:'Remates',c:'var(--accent)',sub:'total'},{val:`${ef}%`,label:'Eficácia',c:'var(--gold)',sub:'golo/remate'}].map(k=>(
+                            <div key={k.label} className="kpi-card">
+                                <div className="kpi-val" style={{color:k.c}}>{k.val}</div>
+                                <div className="kpi-label">{k.label}</div>
+                                <div className="kpi-sub">{k.sub}</div>
                             </div>
                         ))}
                     </div>
-                    <div className="card" style={{marginBottom:24}}>
-                        <div className="report-section-title">Distribuicao Ataque / Defesa</div>
-                        <StackedBar leftVal={totalAtk} rightVal={totalDef} leftColor="var(--accent)" rightColor="var(--red)" leftLabel={`Ataque (${totalAtk})`} rightLabel={`Defesa (${totalDef})`}/>
+
+                    {/* Ataque / Defesa */}
+                    <div className="card" style={{marginBottom:14}}>
+                        <div className="section-label">Distribuição Ataque / Defesa</div>
+                        <StackedBar left={totalAtk} right={totalDef} lColor="var(--accent)" rColor="var(--red)" lLabel={`Ataque (${totalAtk})`} rLabel={`Defesa (${totalDef})`}/>
                     </div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+
+                    {/* Radar + Donuts */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
                         <div className="card">
-                            <div className="report-section-title">Radar de Performance</div>
-                            <RadarChart stats={g.stats} size={220}/>
+                            <div className="section-label">Radar</div>
+                            <Radar stats={g.stats} size={180}/>
                         </div>
                         <div className="card">
-                            <div className="report-section-title">Indicadores</div>
-                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,paddingTop:4}}>
-                                <DonutChart value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversao" sublabel="Golos" size={80}/>
-                                <DonutChart value={g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0} max={Math.max(remates,1)} color="var(--accent)" label="Enquadram." sublabel="Remates" size={80}/>
-                                <DonutChart value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuperacao" sublabel="de Bola" size={80}/>
-                                <DonutChart value={sofr} max={Math.max(g.stats.find(s=>s.name==='Rem. Conc.')?.count||1,sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={80}/>
+                            <div className="section-label">Indicadores</div>
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,paddingTop:4}}>
+                                <Donut value={golos} max={Math.max(remates,1)} color="var(--green)" label="Conversão" sublabel="Golos" size={72}/>
+                                <Donut value={g.stats.find(s=>s.name==='Rem. Enquad.')?.count||0} max={Math.max(remates,1)} color="var(--accent)" label="Enquadram." sublabel="Remates" size={72}/>
+                                <Donut value={g.stats.find(s=>s.name==='Recuper.')?.count||0} max={Math.max(totalDef,1)} color="var(--gold)" label="Recuper." sublabel="de Bola" size={72}/>
+                                <Donut value={sofr} max={Math.max(g.stats.find(s=>s.name==='Rem. Conc.')?.count||1,sofr)} color="var(--red)" label="Sofr./Conc." sublabel="Golos" size={72}/>
                             </div>
                         </div>
                     </div>
-                    <div className="card" style={{marginBottom:24}}>
-                        <div className="report-section-title">Intensidade por Minuto</div>
-                        <IntensityChart events={filteredEvents} totalTime={g.time}/>
+
+                    {/* Intensity */}
+                    <div className="card" style={{marginBottom:14}}>
+                        <div className="section-label">Intensidade por Minuto</div>
+                        <IntensityChart events={filtEv} totalTime={g.time}/>
                     </div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:24}}>
+
+                    {/* Bars */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:14}}>
                         <div className="card">
-                            <div className="report-section-title" style={{color:'var(--accent)'}}>Ataque</div>
-                            <BarChart data={g.stats.filter(s=>s.type==='ataque').map(s=>({label:s.name,value:s.count}))} colorFn={(_,i)=>atkColors[i%atkColors.length]}/>
+                            <div className="section-label" style={{color:'var(--accent)'}}>Ataque</div>
+                            <BarChart data={g.stats.filter(s=>s.type==='ataque').map(s=>({label:s.name,value:s.count}))} colorFn={(_,i)=>atkC[i%atkC.length]}/>
                         </div>
                         <div className="card">
-                            <div className="report-section-title" style={{color:'var(--red)'}}>Defesa</div>
-                            <BarChart data={g.stats.filter(s=>s.type==='defesa').map(s=>({label:s.name,value:s.count}))} colorFn={(_,i)=>defColors[i%defColors.length]}/>
+                            <div className="section-label" style={{color:'var(--red)'}}>Defesa</div>
+                            <BarChart data={g.stats.filter(s=>s.type==='defesa').map(s=>({label:s.name,value:s.count}))} colorFn={(_,i)=>defC[i%defC.length]}/>
                         </div>
                     </div>
-                    <div className="card" style={{marginBottom:24}}>
-                        <div className="report-section-title">Cronologia de Eventos</div>
-                        <Timeline events={filteredEvents} totalTime={g.time}/>
-                        <div style={{marginTop:20,display:'flex',flexWrap:'wrap',gap:8}}>
-                            {filteredEvents.filter(e=>e.isGoal).map((e,i)=>(
-                                <div key={i} style={{padding:'6px 12px',background:'rgba(249,199,79,0.1)',border:'1px solid rgba(249,199,79,0.3)',borderRadius:8,fontFamily:'Space Mono',fontSize:10,color:'var(--gold)'}}>
-                                    {fmtMin(e.time)}
-                                </div>
-                            ))}
-                        </div>
+
+                    {/* Timeline */}
+                    <div className="card" style={{marginBottom:14}}>
+                        <div className="section-label">Cronologia</div>
+                        <Timeline events={filtEv} totalTime={g.time}/>
+                        {filtEv.filter(e=>e.isGoal).length>0&&(
+                            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:12}}>
+                                {filtEv.filter(e=>e.isGoal).map((e,i)=>(
+                                    <div key={i} style={{padding:'5px 10px',background:'rgba(249,199,79,0.1)',border:'1px solid rgba(249,199,79,0.3)',borderRadius:8,fontFamily:'Space Mono',fontSize:10,color:'var(--gold)'}}>
+                                        ⚽ {fmtMin(e.time)}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    {filteredEvents.length>0&&(
-                        <div className="card" style={{marginBottom:24}}>
-                            <div className="report-section-title">Lista de Eventos ({filteredEvents.length})</div>
-                            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))',gap:6}}>
-                                {filteredEvents.map((e,i)=>(
+
+                    {/* Events list */}
+                    {filtEv.length>0&&(
+                        <div className="card" style={{marginBottom:14}}>
+                            <div className="section-label">Eventos ({filtEv.length})</div>
+                            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:6}}>
+                                {filtEv.map((e,i)=>(
                                     <div key={i} style={{padding:'6px 10px',background:'var(--bg)',borderRadius:8,border:`1px solid ${e.isGoal?'rgba(249,199,79,0.3)':e.type==='ataque'?'rgba(67,97,238,0.2)':'rgba(239,35,60,0.2)'}`,display:'flex',alignItems:'center',gap:8}}>
                                         <div style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:e.isGoal?'var(--gold)':e.type==='ataque'?'var(--accent)':'var(--red)'}}/>
                                         <div>
@@ -1601,9 +1945,11 @@ function App() {
                             </div>
                         </div>
                     )}
+
+                    {/* Notes */}
                     {(g.notes||(g.notesHistory||[]).length>0)&&(
-                        <div className="card" style={{marginBottom:24}}>
-                            <div className="report-section-title">Notas</div>
+                        <div className="card" style={{marginBottom:14}}>
+                            <div className="section-label">Notas</div>
                             {g.notes&&<p style={{fontSize:12,color:'var(--text)',fontStyle:'italic',lineHeight:1.6,marginBottom:12}}>"{g.notes}"</p>}
                             {(g.notesHistory||[]).map((n,i)=>(
                                 <div key={i} style={{marginBottom:10,paddingLeft:12,borderLeft:'2px solid var(--border)'}}>
@@ -1613,155 +1959,36 @@ function App() {
                             ))}
                         </div>
                     )}
-                    <div style={{textAlign:'center',fontSize:9,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:3,padding:'20px 0'}}>
+
+                    <div style={{textAlign:'center',fontSize:9,color:'var(--muted)',fontWeight:700,textTransform:'uppercase',letterSpacing:3,padding:'12px 0'}}>
                         SoccerAnalyst Pro · {new Date().toLocaleDateString('pt-PT')}
                     </div>
                 </div>
-                {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
             </div>
         );
-    }
+    };
 
-    /* ════════════════════════════════════════════════════
-       VIEW: TRACKING
-    ════════════════════════════════════════════════════ */
-    if(!currentGame){setView('games');return null;}
-    const period=getPeriodInfo(currentGame.time);
-
-    const headerPad   = isLandscape ? '6px 12px'  : '10px 16px';
-    const timerSize   = isLandscape ? 18           : 22;
-    const btnSize     = isLandscape ? 32           : 40;
-    const btnFontSize = isLandscape ? 9            : 10;
-    const startH      = isLandscape ? 32           : 40;
-
-    return(
-        <div style={{height:'100vh',display:'flex',flexDirection:'column',background:'var(--bg)',overflow:'hidden'}}>
-            <header className="ls-header" style={{padding:headerPad,background:'var(--surface)',borderBottom:'1px solid var(--border)',flexShrink:0,display:'flex',flexWrap:'wrap',gap:isLandscape?6:10,alignItems:'center',justifyContent:'space-between'}}>
-                <div style={{display:'flex',alignItems:'center',gap:6}}>
-                    <div style={{padding:isLandscape?'5px 12px':'8px 16px',background:'var(--bg)',borderRadius:10,border:'1px solid var(--border)',display:'flex',alignItems:'center',gap:8}}>
-                        <span className="ls-timer-block" style={{fontFamily:'Space Mono',fontSize:timerSize,fontWeight:700,color:'var(--accent)'}}>{fmt(currentGame.time)}</span>
-                        <span style={{fontSize:isLandscape?8:9,fontWeight:800,textTransform:'uppercase',letterSpacing:1,color:period.color,background:`${period.color}22`,padding:'3px 8px',borderRadius:6}}>{period.label}</span>
-                    </div>
-                    {/* ── PLACAR AO VIVO ── */}
-                    {(()=>{
-                        const gf = currentGame.stats.find(s=>s.name==='Golo')?.count||0;
-                        const ga = currentGame.stats.find(s=>s.name==='Golo Sofr.')?.count||0;
-                        const scoreColor = gf>ga?'var(--green)':gf<ga?'var(--red)':'var(--muted)';
-                        return (
-                            <div style={{
-                                padding: isLandscape?'4px 10px':'6px 14px',
-                                background:'var(--bg)',
-                                borderRadius:10,
-                                border:`1px solid ${scoreColor}44`,
-                                display:'flex',
-                                alignItems:'center',
-                                gap: isLandscape?6:8,
-                                flexShrink:0,
-                            }}>
-                                <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?20:26,lineHeight:1,color:'var(--green)',letterSpacing:1}}>{gf}</span>
-                                <span style={{fontFamily:'Space Mono',fontSize:isLandscape?9:11,color:'var(--muted)',fontWeight:700,lineHeight:1}}>–</span>
-                                <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?20:26,lineHeight:1,color:'var(--red)',letterSpacing:1}}>{ga}</span>
-                            </div>
-                        );
-                    })()}
-                    <button onClick={undoLast} className="ls-btn-sm"
-                        style={{width:btnSize,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:14,display:'flex',alignItems:'center',justifyContent:'center'}}>↩</button>
-                </div>
-                <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'nowrap'}}>
-                    <div style={{width:btnSize,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',overflow:'hidden',position:'relative',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-                        {currentGame.pic?<img src={currentGame.pic} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<span style={{fontSize:isLandscape?14:18}}>P</span>}
-                        <input type="file" accept="image/*" onChange={async e=>{const f=e.target.files[0];if(f){const c=await compressImage(f);updateGame({pic:c});showToast('Foto');} }} style={{position:'absolute',inset:0,opacity:0,cursor:'pointer'}}/>
-                    </div>
-                    <button onClick={()=>setShowNotes(p=>!p)} className="ls-btn-sm"
-                        style={{width:btnSize,height:btnSize,borderRadius:10,background:currentGame.notes?'rgba(67,97,238,0.3)':'var(--bg)',border:`1px solid ${currentGame.notes?'var(--accent)':'var(--border)'}`,cursor:'pointer',fontSize:isLandscape?14:16,display:'flex',alignItems:'center',justifyContent:'center'}}>N</button>
-                    <button onClick={()=>adjustTime(-10)} className="ls-btn-sm"
-                        style={{width:isLandscape?36:38,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:btnFontSize,fontWeight:700}}>-10s</button>
-                    <button onClick={()=>adjustTime(60)} className="ls-btn-sm"
-                        style={{width:isLandscape?36:38,height:btnSize,borderRadius:10,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontFamily:'Space Mono',fontSize:btnFontSize,fontWeight:700}}>+1m</button>
-                    <button className="ls-start-btn" onClick={()=>setIsActive(p=>{const n=!p;if(!n)showToast('Pausado');return n;})}
-                        style={{padding:`0 ${isLandscape?10:16}px`,height:startH,borderRadius:10,border:'none',background:isActive?'var(--red)':'var(--green)',color:'white',fontFamily:'Bebas Neue',fontSize:isLandscape?14:16,letterSpacing:2,cursor:'pointer'}}>
-                        {isActive?'STOP':'START'}
-                    </button>
-                    <button className="ls-pdf-btn" onClick={()=>setView('report')}
-                        style={{padding:`0 ${isLandscape?10:14}px`,height:startH,borderRadius:10,border:'none',background:'white',color:'black',fontFamily:'Bebas Neue',fontSize:isLandscape?12:14,letterSpacing:2,cursor:'pointer'}}>PDF</button>
-                </div>
-            </header>
-
-            {showNotes&&(
-                <div className="ls-notes" style={{padding:'12px 16px',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-                    <textarea value={currentGame.notes} onChange={e=>updateGame({notes:e.target.value})} placeholder="Observacoes..."
-                        style={{width:'100%',height:isLandscape?48:72,borderRadius:10,padding:'10px 14px',fontSize:12,resize:'none',lineHeight:1.5}}/>
-                    <div style={{display:'flex',justifyContent:'flex-end',marginTop:6}}>
-                        <button onClick={()=>{
-                            if(!currentGame.notes?.trim()){showToast('Nota vazia');return;}
-                            const label=`${fmt(currentGame.time)} · ${new Date().toLocaleDateString('pt-PT')}`;
-                            updateGame(g=>({...g,notesHistory:[...(g.notesHistory||[]),{label,text:g.notes.trim()}]}));
-                            showToast('Nota guardada');
-                        }} style={{padding:'6px 16px',borderRadius:10,background:'var(--accent)',border:'none',color:'white',fontWeight:700,fontSize:11,textTransform:'uppercase',letterSpacing:1,cursor:'pointer'}}>
-                            Guardar
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            <div style={{flex:1,display:'flex',overflow:'hidden'}}>
-                {['ataque','defesa'].map(type=>(
-                    <div key={type} style={{flex:1,display:'flex',flexDirection:'column',borderRight:type==='ataque'?'1px solid var(--border)':'none'}}>
-                        <div className="ls-col-header" style={{padding:isLandscape?'5px 10px':'8px 12px',display:'flex',justifyContent:'space-between',alignItems:'center',background:'var(--surface2)',borderBottom:'1px solid var(--border)',flexShrink:0}}>
-                            <span style={{fontFamily:'Bebas Neue',fontSize:isLandscape?13:16,letterSpacing:3,color:type==='ataque'?'var(--accent)':'var(--red)'}}>{type.toUpperCase()}</span>
-                            <button onClick={()=>addCustomStat(type)}
-                                style={{width:isLandscape?24:28,height:isLandscape?24:28,borderRadius:8,background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',cursor:'pointer',fontSize:13,display:'flex',alignItems:'center',justifyContent:'center'}}>+</button>
-                        </div>
-                        <div style={{flex:1,overflowY:'auto',padding:isLandscape?4:8}} className="no-scrollbar">
-                            {currentGame.stats.filter(s=>s.type===type).map(s=>(
-                                <div key={s.id} style={{display:'flex',gap:4,marginBottom:isLandscape?3:6}}>
-                                    <button className="stat-btn active-btn" onClick={()=>addStat(s.id)}
-                                        style={{borderLeft:`3px solid ${s.count>0?(type==='ataque'?'var(--accent)':'var(--red)'):'var(--border)'}`,padding:isLandscape?'6px 10px':'12px 14px'}}>
-                                        <span className="stat-count" style={{color:s.count>0?'var(--text)':'var(--border)',fontSize:isLandscape?22:32}}>{s.count}</span>
-                                        <span className="stat-name" style={{fontSize:isLandscape?9:10}}>{s.name}</span>
-                                    </button>
-                                    <div style={{display:'flex',flexDirection:'column',gap:4,width:isLandscape?24:28,flexShrink:0}}>
-                                        <button onClick={()=>removeStat(s.id)} style={{flex:1,background:'rgba(239,35,60,0.08)',border:'1px solid rgba(239,35,60,0.2)',borderRadius:8,color:'var(--red)',cursor:'pointer',fontSize:13,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>-</button>
-                                        <button onClick={()=>renameStat(s.id,s.name)} title="Renomear em todos os jogos" style={{flex:1,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,color:'var(--muted)',cursor:'pointer',fontSize:10,display:'flex',alignItems:'center',justifyContent:'center'}}>E</button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <button className="ls-home-btn" onClick={()=>setView('folders')}
-                style={{position:'absolute',bottom:24,left:24,width:52,height:52,borderRadius:'50%',background:'var(--surface)',border:'1px solid var(--border)',fontSize:22,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(0,0,0,0.4)'}}>H</button>
-
-            {isLandscape&&(
-                <button onClick={()=>setView('folders')}
-                    style={{position:'absolute',top:6,left:6,background:'transparent',border:'none',color:'var(--muted)',fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:2,cursor:'pointer',zIndex:10}}>H</button>
-            )}
-
+    /* ════════════════════════════════════
+       MAIN RENDER
+    ════════════════════════════════════ */
+    return (
+        <div style={{position:'relative',width:'100%',height:'100vh',background:'var(--bg)',overflow:'hidden'}}>
+            {view==='folders' && renderFolders()}
+            {view==='games'   && renderGames()}
+            {view==='tracking'&& renderTracking()}
+            {view==='report'  && renderReport()}
+            <BottomNav
+                view={view}
+                setView={setView}
+                hasGame={!!currentGame}
+                hasFolder={!!currentFolder}
+            />
             {toast&&<Toast message={toast.msg} isGoal={toast.goal} onClose={()=>setToast(null)}/>}
         </div>
     );
-
-    function adjustTime(delta){ updateGame(g=>({...g,time:Math.max(0,g.time+delta)})); }
-    function addCustomStat(type){
-        const n=promptText(`Nova acao de ${type}:\n(propagada a todos os jogos desta pasta)`);
-        if(!n) return;
-        const newStat={id:Date.now(),name:n,type,count:0};
-        updateGame(g=>({...g,stats:[...g.stats,newStat]}));
-        syncStatToFolder(currentFolderId,newStat);
-        showToast(`"${n}" em todos os jogos`);
-    }
-    function renameStat(statId,currentName){
-        const n=promptText('Novo nome:',currentName);
-        if(!n||n===currentName) return;
-        renameStatAcrossFolder(currentFolderId,statId,n);
-        showToast('Renomeado em todos os jogos');
-    }
 }
 
-const root=ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
